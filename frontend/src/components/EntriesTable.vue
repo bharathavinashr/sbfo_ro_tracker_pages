@@ -809,9 +809,9 @@ const phasedColumns = computed((): PhasedCol[] => {
 function getImpactForPeriod(row: Entry, period: string, year: string): number {
   if (row.childImpacts?.length) {
     const ci = row.childImpacts.find(c => c.impactPeriod === period && c.impactYear === year);
-    return ci ? (parseFloat(ci.impact) || 0) : 0;
+    return ci ? (parseFloat((ci.impact as string) || "0") || 0) : 0;
   }
-  return (row.impactPeriod === period && row.impactYear === year) ? (parseFloat(row.impact) || 0) : 0;
+  return (row.impactPeriod === period && row.impactYear === year) ? (parseFloat((row.impact as string) || "0") || 0) : 0;
 }
 
 function getAggregatedImpact(row: Entry, col: PhasedCol): number {
@@ -822,7 +822,7 @@ function formatPhasedCell(val: number): string {
   return val !== 0 ? val.toLocaleString() : "-";
 }
 
-function formatPhasedCellChild(ci: Entry["childImpacts"][0], col: PhasedCol): string {
+function formatPhasedCellChild(ci: NonNullable<Entry["childImpacts"]>[number], col: PhasedCol): string {
   if (!ci) return "-";
   if (col.periods.includes(ci.impactPeriod) && ci.impactYear === col.year)
     return parseFloat(ci.impact || "0").toLocaleString();
@@ -838,7 +838,7 @@ function formatImpactPeriods(
   if (!childImpacts?.length) {
     return period && year ? `${periodToMonthAbbr(period)} ${year}` : "-";
   }
-  if (childImpacts.length === 1) {
+  if (childImpacts && childImpacts.length === 1) {
     const c = childImpacts[0];
     return `${periodToMonthAbbr(c.impactPeriod)} ${c.impactYear}`;
   }
@@ -865,8 +865,8 @@ function formatImpactPeriods(
 }
 
 // ─── Row expand ───────────────────────────────────────────────────────────────
-const expandedRows = ref<Set<string>>(new Set());
-function toggleExpand(id: string) {
+const expandedRows = ref<Set<string | number>>(new Set());
+function toggleExpand(id: string | number) {
   const s = new Set(expandedRows.value);
   s.has(id) ? s.delete(id) : s.add(id);
   expandedRows.value = s;

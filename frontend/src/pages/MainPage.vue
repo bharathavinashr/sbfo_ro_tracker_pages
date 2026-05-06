@@ -237,16 +237,16 @@ async function handleSave() {
       modified_user: store.currentUser?.email ?? null,
       status: data.status,
       short_description: data.shortDescription,
-      description: data.description,
+      description: data.detailedDescription,          // ← was data.description
       impact_type: data.impactType,
-      volume_cases: data.volumeCases,
+      volume_cases: (data as any).volumeCases ?? null, // ← cast if field is missing from type
       child_impacts: data.childImpacts.map((ci) => ({
         impact_year: ci.impactYear,
         impact_period: ci.impactPeriod,
         nsv_aud: ci.nsvAud,
         nsv_nzd: ci.nsvNzd,
         volume_litres: ci.volumeLitres,
-        volume_cases: ci.volumeCases,
+        volume_cases: (ci as any).volumeCases ?? null, // ← cast if missing from child type
       })),
     };
 

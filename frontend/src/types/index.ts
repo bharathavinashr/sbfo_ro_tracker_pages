@@ -6,6 +6,9 @@ export interface ChildImpact {
   nsvNzd?: string;
   volumeLitres?: string;
   volumeCases?: string;
+  impact?: string;
+  impactCurrency?: string;
+  volumeImpact?: string;
 }
 
 export interface Entry {
@@ -45,6 +48,9 @@ export interface Entry {
   status?: string;
   description?: string;
   childImpacts?: ChildImpact[];
+  impact?: string;
+  impactCurrency?: string;
+  volumeImpact?: string;
 }
 
 export type UserRole =
