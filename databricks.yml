@@ -4,10 +4,16 @@ resources:
       name: sbfo-ro-tracker
       description: SBFO Risk & Opportunities Tracker - Vue + FastAPI Application
 
+      resources:
+        - name: db_url_secret
+          secret:
+            scope: my-app-secrets
+            key: DATABASE_URL
+            permission: READ
+
       config:
         env:
           - name: DATABASE_URL
-            value: ${var.database_url}
-          # AUTH_MODE is forced to DBX inside databricks_app.py
+            valueFrom: db_url_secret
 
       source_code_path: .
