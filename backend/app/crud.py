@@ -136,6 +136,9 @@ def _new_version_with_status(db: Session, entry_id: int, new_status: str, modifi
         owner=current.owner,
         creator=current.creator,
         description=current.description,
+        short_description=current.short_description,
+        impact_type=current.impact_type,
+        volume_cases=current.volume_cases,
         status=new_status,
         modified_user=modified_user,
     )
@@ -150,6 +153,7 @@ def _new_version_with_status(db: Session, entry_id: int, new_status: str, modifi
             nsv_aud=ci.nsv_aud,
             nsv_nzd=ci.nsv_nzd,
             volume_litres=ci.volume_litres,
+            volume_cases=ci.volume_cases,
         ))
 
     db.commit()

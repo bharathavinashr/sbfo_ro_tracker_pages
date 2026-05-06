@@ -34,7 +34,7 @@ export const useLookupStore = defineStore("lookup", () => {
     const topLevel = [
       "division", "country", "channel", "sub_channel", "account",
       "brand_family", "brand", "categorisation", "probability",
-      "status", "department",
+      "status", "ibp_step", "department"
     ];
     await Promise.all(topLevel.map((c) => getOptions(c)));
   }

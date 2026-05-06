@@ -58,3 +58,14 @@ export const lookupApi = {
       })
       .then((r) => r.data.options.map((o) => o.value)),
 };
+
+export const snapshotApi = {
+  create: (data: { period: string; year: string; department: string }) =>
+    api.post("/api/snapshots", data).then((r) => r.data),
+  getAll: () =>
+    api.get<{ snapshots: any[] }>("/api/snapshots").then((r) => r.data),
+  getById: (snapshotId: string) =>
+    api.get(`/api/snapshots/${snapshotId}`).then((r) => r.data),
+  delete: (snapshotId: string) =>
+    api.delete(`/api/snapshots/${snapshotId}`).then((r) => r.data),
+};

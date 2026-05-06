@@ -9,6 +9,7 @@ class ChildImpactBase(BaseModel):
     nsv_aud: Optional[str] = None
     nsv_nzd: Optional[str] = None
     volume_litres: Optional[str] = None
+    volume_cases: Optional[str] = None
 
 
 class ChildImpactOut(ChildImpactBase):
@@ -29,7 +30,7 @@ class EntryBase(BaseModel):
     sub_channel: str
     account: str
     brand: str
-    brand_family: Optional[str] = None
+    brand_family: Optional[list[str]] = None
     r_and_o: str
     probability: str
     categorisation: str
@@ -42,7 +43,10 @@ class EntryBase(BaseModel):
     owner: str
     modified_user: Optional[str] = None
     status: Optional[str] = "Open"
+    short_description: Optional[str] = None
     description: Optional[str] = None
+    impact_type: Optional[str] = "NSV"
+    volume_cases: Optional[str] = None
 
 
 class EntryCreate(EntryBase):

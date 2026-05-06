@@ -1,0 +1,231 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from sqlalchemy import func
+from pydantic import BaseModel
+from typing import Optional, List
+from datetime import datetime
+import uuid
+
+from ..database import get_db
+from ..models import Snapshot, Entry, ChildImpact
+from ..crud import get_latest_entries, get_child_impacts
+
+# router = APIRouter(prefix="/api/snapshots", tags=["snapshots"])
+router = APIRouter()
+
+
+class SnapshotCreate(BaseModel):
+    period: str
+    year: str
+    department: str
+
+
+@router.post("")
+def create_snapshot(data: SnapshotCreate, db: Session = Depends(get_db)):
+    # Generate unique snapshot ID and name
+    snapshot_id = f"SNAP-{data.year}-{data.period}-{data.department.replace(' ', '_')}-{uuid.uuid4().hex[:8]}".upper()
+    snapshot_name = f"{data.department} - {data.period} {data.year}"
+    
+    # Get all entries matching the filter criteria
+    filters = {"department": data.department}
+    entries = get_latest_entries(db, filters=filters)
+    
+    if not entries:
+        raise HTTPException(status_code=404, detail="No entries found for the specified filters")
+    
+    # Create snapshot records for each entry
+    snapshots = []
+    for entry in entries:
+        entry_data = {
+            "id": entry.id,
+            "original_entry_id": entry.original_entry_id,
+            "version": entry.version,
+            "creation_date": entry.creation_date,
+            "creation_date_period": entry.creation_date_period,
+            "creation_date_year": entry.creation_date_year,
+            "division": entry.division,
+            "department": entry.department,
+            "country": entry.country,
+            "channel": entry.channel,
+            "sub_channel": entry.sub_channel,
+            "account": entry.account,
+            "brand": entry.brand,
+            "brand_family": entry.brand_family,
+            "r_and_o": entry.r_and_o,
+            "probability": entry.probability,
+            "categorisation": entry.categorisation,
+            "impact_period": entry.impact_period,
+            "impact_year": entry.impact_year,
+            "nsv_aud": entry.nsv_aud,
+            "nsv_nzd": entry.nsv_nzd,
+            "volume_litres": entry.volume_litres,
+            "volume_cases": entry.volume_cases,
+            "owner": entry.owner,
+            "creator": entry.creator,
+            "status": entry.status,
+            "short_description": entry.short_description,
+            "description": entry.description,
+        }
+        
+        snapshot = Snapshot(
+            snapshot_id=snapshot_id,
+            entry_id=entry.id,
+            period=data.period,
+            year=data.year,
+            department=data.department,
+            entry_data=entry_data,
+        )
+        snapshots.append(snapshot)
+    
+    try:
+        db.add_all(snapshots)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to create snapshot: {str(e)}")
+    
+    return {
+        "snapshot_id": snapshot_id,
+        "name": snapshot_name,
+        "entries_count": len(snapshots),
+        "created_at": datetime.now().isoformat(),
+    }
+
+
+@router.get("")
+def get_all_snapshots(db: Session = Depends(get_db)):
+    # Get unique snapshots grouped by snapshot_id
+    snapshots = (
+        db.query(
+            Snapshot.snapshot_id,
+            Snapshot.period,
+            Snapshot.year,
+            Snapshot.department,
+            func.count(Snapshot.id).label("entries_count"),
+            func.min(Snapshot.created_at).label("created_at"),
+        )
+        .group_by(Snapshot.snapshot_id, Snapshot.period, Snapshot.year, Snapshot.department)
+        .order_by(func.min(Snapshot.created_at).desc())
+        .all()
+    )
+    
+    result = []
+    for snap in snapshots:
+        name = f"{snap.department} - {snap.period} {snap.year}"
+        result.append({
+            "snapshot_id": snap.snapshot_id,
+            "name": name,
+            "period": snap.period,
+            "year": snap.year,
+            "department": snap.department,
+            "entries_count": snap.entries_count,
+            "created_at": snap.created_at.isoformat() if snap.created_at else None,
+        })
+    
+    return {"snapshots": result}
+
+
+@router.get("/{snapshot_id}")
+def get_snapshot_by_id(snapshot_id: str, db: Session = Depends(get_db)):
+    # Get all snapshot records for this snapshot_id
+    snapshot_records = (
+        db.query(Snapshot)
+        .filter(Snapshot.snapshot_id == snapshot_id)
+        .all()
+    )
+    
+    if not snapshot_records:
+        raise HTTPException(status_code=404, detail="Snapshot not found")
+    
+    # Get snapshot metadata from first record
+    first_record = snapshot_records[0]
+    snapshot_name = f"{first_record.department} - {first_record.period} {first_record.year}"
+    
+    # Get entry IDs from snapshot records
+    entry_ids = [snap.entry_id for snap in snapshot_records]
+    
+    # Fetch actual entries from entries table
+    entries = db.query(Entry).filter(Entry.id.in_(entry_ids)).all()
+    
+    # Convert entries to dict format
+    entries_data = []
+    for entry in entries:
+        # Get child impacts for this entry
+        child_impacts = get_child_impacts(db, entry.id)
+        child_impacts_data = []
+        for ci in child_impacts:
+            child_impacts_data.append({
+                "id": ci.id,
+                "impactYear": ci.impact_year,
+                "impactPeriod": ci.impact_period,
+                "nsvAud": ci.nsv_aud,
+                "nsvNzd": ci.nsv_nzd,
+                "volumeLitres": ci.volume_litres,
+                "volumeCases": ci.volume_cases,
+            })
+        
+        entries_data.append({
+            "id": entry.id,
+            "originalEntryId": entry.original_entry_id,
+            "version": entry.version,
+            "creationDate": entry.creation_date,
+            "creationDatePeriod": entry.creation_date_period,
+            "creationDateYear": entry.creation_date_year,
+            "addToForecastByPeriod": entry.add_to_forecast_by_period,
+            "addToForecastByYear": entry.add_to_forecast_by_year,
+            "division": entry.division,
+            "department": entry.department,
+            "country": entry.country,
+            "channel": entry.channel,
+            "subChannel": entry.sub_channel,
+            "account": entry.account,
+            "brand": entry.brand,
+            "brandFamily": entry.brand_family,
+            "rAndO": entry.r_and_o,
+            "probability": entry.probability,
+            "categorisation": entry.categorisation,
+            "impactPeriod": entry.impact_period,
+            "impactYear": entry.impact_year,
+            "nsvAud": entry.nsv_aud,
+            "nsvNzd": entry.nsv_nzd,
+            "volumeLitres": entry.volume_litres,
+            "volumeCases": entry.volume_cases,
+            "primaryImpact": entry.primary_impact,
+            "owner": entry.owner,
+            "creator": entry.creator,
+            "modifiedUser": entry.modified_user,
+            "status": entry.status,
+            "shortDescription": entry.short_description,
+            "description": entry.description,
+            "impactType": entry.impact_type,
+            "lastModified": entry.last_modified.isoformat() if entry.last_modified else None,
+            "childImpacts": child_impacts_data,
+        })
+    
+    return {
+        "snapshot": {
+            "snapshot_id": snapshot_id,
+            "name": snapshot_name,
+            "period": first_record.period,
+            "year": first_record.year,
+            "department": first_record.department,
+            "created_at": first_record.created_at.isoformat() if first_record.created_at else None,
+            "entries": entries_data,
+        }
+    }
+
+
+@router.delete("/{snapshot_id}")
+def delete_snapshot(snapshot_id: str, db: Session = Depends(get_db)):
+    # Delete all entries with this snapshot_id
+    deleted_count = db.query(Snapshot).filter(Snapshot.snapshot_id == snapshot_id).delete()
+    
+    if deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Snapshot not found")
+    
+    db.commit()
+    
+    return {
+        "message": "Snapshot deleted successfully",
+        "deleted_entries": deleted_count,
+    }

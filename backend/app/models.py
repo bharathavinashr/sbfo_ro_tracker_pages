@@ -47,7 +47,10 @@ class Entry(Base):
     modified_user = Column(String(100), nullable=True)
 
     status = Column(String(50), nullable=True, default="Open")
+    short_description = Column(String(100), nullable=True)
     description = Column(Text, nullable=True)
+    impact_type = Column(String(10), nullable=True, default="NSV")
+    volume_cases = Column(String(50), nullable=True)
 
     last_modified = Column(DateTime, server_default=func.now(), onupdate=func.now())
     created_at = Column(DateTime, server_default=func.now())
@@ -69,6 +72,7 @@ class ChildImpact(Base):
     nsv_aud = Column(String(50), nullable=True)
     nsv_nzd = Column(String(50), nullable=True)
     volume_litres = Column(String(50), nullable=True)
+    volume_cases = Column(String(50), nullable=True)
 
 
 class AppUser(Base):
@@ -94,5 +98,19 @@ class LookupOption(Base):
     parent_value = Column(String(200), nullable=True)
     sort_order = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)
+
+
+class Snapshot(Base):
+    __tablename__ = "snapshots"
+    __table_args__ = {"schema": SCHEMA}
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    snapshot_id = Column(String(100), nullable=False, index=True)
+    entry_id = Column(Integer, nullable=False)
+    period = Column(String(10), nullable=False)
+    year = Column(String(4), nullable=False)
+    department = Column(String(100), nullable=False)
+    entry_data = Column(JSON, nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
 
 

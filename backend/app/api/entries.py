@@ -38,7 +38,10 @@ def _entry_to_dict(entry, child_impacts) -> dict:
         "creator": entry.creator,
         "modifiedUser": entry.modified_user,
         "status": entry.status,
+        "shortDescription": entry.short_description,
         "description": entry.description,
+        "impactType": entry.impact_type,
+        "volumeCases": entry.volume_cases,
         "lastModified": entry.last_modified.isoformat() + "Z" if entry.last_modified else None,
         "childImpacts": [
             {
@@ -48,6 +51,7 @@ def _entry_to_dict(entry, child_impacts) -> dict:
                 "nsvAud": ci.nsv_aud,
                 "nsvNzd": ci.nsv_nzd,
                 "volumeLitres": ci.volume_litres,
+                "volumeCases": ci.volume_cases,
             }
             for ci in child_impacts
         ],

@@ -5,14 +5,14 @@
       <div class="header-left">
         <h1 class="page-title">Risk and Opportunities Tracker</h1>
         <p class="page-subtitle">
-          Create and manage Risks and Opportunities across your business units
+          Create and manage Risks and Opportunities with comprehensive filtering capabilities
         </p>
       </div>
       <div class="header-right">
         <div class="role-switcher">
           <el-icon class="role-icon"><User /></el-icon>
           <div class="role-meta">
-            <span class="role-label">Logged in as</span>
+            <span class="role-label">User Type</span>
             <!-- LOCAL: manual user selector -->
             <el-select
               v-if="authMode === 'LOCAL'"
@@ -65,13 +65,26 @@
         </div>
 
         <el-button
+          :icon="Lock"
+          @click="lockViewOpen = true"
+        >
+          Lock View
+        </el-button>
+
+        <el-button
+          @click="router.push('/snapshots')"
+        >
+          Cycle Snapshots
+        </el-button>
+
+        <!-- <el-button
           v-if="store.canCreate"
           type="primary"
           :icon="Plus"
           @click="openCreate"
         >
           Add Entry
-        </el-button>
+        </el-button> -->
       </div>
     </div>
 
@@ -79,6 +92,7 @@
     <EntriesTable
       :entries="store.displayEntries"
       :can-approve="store.canApprove"
+      @add="openCreate"
       @edit="openEdit"
       @duplicate="openDuplicate"
       @delete="handleDelete"
@@ -89,8 +103,7 @@
     <!-- Entry Form Dialog -->
     <el-dialog
       v-model="formOpen"
-      :title="editingEntry ? 'Edit Entry' : 'New Entry'"
-      width="900px"
+      width="90%"
       :close-on-click-modal="false"
       @closed="editingEntry = null"
     >
@@ -103,6 +116,9 @@
       </template>
     </el-dialog>
 
+    <!-- Lock View Dialog -->
+    <LockView v-model="lockViewOpen" />
+
   </div>
 </template>
 
@@ -110,11 +126,12 @@
 import { ref, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Plus, User } from "@element-plus/icons-vue";
+import { Plus, User, Lock } from "@element-plus/icons-vue";
 import { useEntryStore } from "@/stores/entryStore";
 import { authApi, entryApi } from "@/services/api";
 import EntriesTable from "@/components/EntriesTable.vue";
 import EntryForm from "@/components/EntryForm.vue";
+import LockView from "@/components/LockView.vue";
 import type { Entry } from "@/types";
 import { ROLE_MAP } from "@/types";
 
@@ -127,6 +144,7 @@ const saving = ref(false);
 const formRef = ref<InstanceType<typeof EntryForm> | null>(null);
 const authMode = ref<"LOCAL" | "DBX">("LOCAL");
 const dbxAdminUser = ref<import("@/types").AppUser | null>(null);
+const lockViewOpen = ref(false);
 
 onMounted(async () => {
   try {
@@ -218,13 +236,17 @@ async function handleSave() {
       creator: data.creator,
       modified_user: store.currentUser?.email ?? null,
       status: data.status,
+      short_description: data.shortDescription,
       description: data.description,
+      impact_type: data.impactType,
+      volume_cases: data.volumeCases,
       child_impacts: data.childImpacts.map((ci) => ({
         impact_year: ci.impactYear,
         impact_period: ci.impactPeriod,
         nsv_aud: ci.nsvAud,
         nsv_nzd: ci.nsvNzd,
         volume_litres: ci.volumeLitres,
+        volume_cases: ci.volumeCases,
       })),
     };
 
@@ -269,12 +291,11 @@ async function handleApprove(entry: Entry) {
     ElMessage.success("Entry approved");
   } catch {
     ElMessage.error("Unable to verify entry status. Please refresh and try again.");
-    await store.fetchEntries();
   }
 }
 
 function goToHistory(entry: Entry) {
-  router.push(`/entry/${entry.originalEntryId || entry.id}/history`);
+  router.push(`/entry/${entry.originalEntryId ?? entry.id}/history`);
 }
 </script>
 
@@ -293,7 +314,7 @@ function goToHistory(entry: Entry) {
   gap: 16px;
   flex-wrap: wrap;
   background: var(--bg-primary);
-  border: 1px solid var(--border-color);
+  /* border: 1px solid var(--border-color); */
   border-radius: calc(var(--radius) + 4px);
   box-shadow: var(--shadow-sm);
   padding: 20px;
@@ -320,10 +341,11 @@ function goToHistory(entry: Entry) {
 
 .header-right {
   display: flex;
+  flex-direction: column;
   gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  align-items: flex-end;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
 }
 
 .role-switcher {
@@ -368,6 +390,10 @@ function goToHistory(entry: Entry) {
   font-weight: 500;
   color: var(--text-primary);
   padding: 0 4px;
+}
+
+.header-right :deep(.el-button) {
+  width: 100%;
 }
 
 @media (max-width: 768px) {
