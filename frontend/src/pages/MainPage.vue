@@ -107,7 +107,7 @@
       :close-on-click-modal="false"
       @closed="editingEntry = null"
     >
-      <EntryForm ref="formRef" :entry="editingEntry" />
+      <EntryForm :key="formKey" ref="formRef" :entry="editingEntry" />
       <template #footer>
         <el-button @click="formOpen = false">Cancel</el-button>
         <el-button type="primary" :loading="saving" @click="handleSave">
@@ -145,6 +145,7 @@ const formRef = ref<InstanceType<typeof EntryForm> | null>(null);
 const authMode = ref<"LOCAL" | "DBX">("LOCAL");
 const dbxAdminUser = ref<import("@/types").AppUser | null>(null);
 const lockViewOpen = ref(false);
+const formKey = ref(0);
 
 onMounted(async () => {
   try {
@@ -176,6 +177,7 @@ watch(() => store.currentUser, () => { store.fetchEntries(); });
 
 function openCreate() {
   editingEntry.value = null;
+  formKey.value++; // Force EntryForm to reset by destroying and recreating it
   formOpen.value = true;
 }
 

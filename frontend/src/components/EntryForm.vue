@@ -317,7 +317,7 @@
       <!-- Brand Family – multi-select combobox -->
       <el-col :span="8">
         <el-form-item label="Brand Family" prop="brandFamily">
-          <div class="combo-wrap">
+          <div class="combo-wrap" ref="brandFamilyRef">
             <div
               class="combo-trigger"
               @click="brandFamilyOpen = !brandFamilyOpen"
@@ -327,7 +327,7 @@
               </span>
               <el-icon class="combo-arrow"><ArrowDown /></el-icon>
             </div>
-            <div v-if="brandFamilyOpen" class="combo-dropdown brand-family-dropdown" v-click-outside="() => brandFamilyOpen = false">
+            <div v-if="brandFamilyOpen" class="combo-dropdown brand-family-dropdown">
               <el-input
                 v-model="brandFamilySearch"
                 placeholder="Type to search or add custom..."
@@ -693,7 +693,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, onMounted, nextTick } from "vue";
+import { ref, watch, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { Delete, InfoFilled, ArrowDown, Plus } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import type { FormInstance, FormRules } from "element-plus";
@@ -716,6 +716,10 @@ const ownerOptions = computed(() =>
 onMounted(() => {
   lookupStore.preload();
   if (entryStore.users.length === 0) entryStore.fetchUsers();
+  document.addEventListener("mousedown", handleBrandFamilyClickOutside);
+});
+onBeforeUnmount(() => {
+  document.removeEventListener("mousedown", handleBrandFamilyClickOutside);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -778,6 +782,13 @@ const brandFamilyOpen  = ref(false);
 const brandFamilySearch = ref("");
 const accountOpen      = ref(false);
 const accountSearch    = ref("");
+const brandFamilyRef = ref<HTMLElement | null>(null);
+
+function handleBrandFamilyClickOutside(event: MouseEvent) {
+  if (brandFamilyRef.value && !brandFamilyRef.value.contains(event.target as Node)) {
+    brandFamilyOpen.value = false;
+  }
+}
 
 // Filtered lists
 const filteredChannels    = computed(() => channelOptions.value.filter(c => c.toLowerCase().includes(channelSearch.value.toLowerCase())));
@@ -865,7 +876,7 @@ interface FormData {
   primaryImpact:         string;
   secondaryValue:        string;
   secondaryUnit:         string;
-  impactType:            string;   // "NSV" | "OI"
+  impactType:            string;
   owner:                 string;
   creator:               string;
   status:                string;
@@ -902,7 +913,6 @@ const currentMonth = new Date().getMonth() + 1;
 const currentPeriod = `F${String(currentMonth).padStart(2, "0")}`;
 const yearOptions   = Array.from({ length: 10 }, (_, i) => currentYear - 2 + i);
 
-// Month name helper (mirrors React periodToMonth)
 const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 function periodToMonth(period: string): string {
   if (!period) return period;
@@ -974,7 +984,6 @@ const unitLabels = computed<Record<string, string>>(() => ({
   Volume: isAlcohol.value ? "Vol. (9L)" : "Vol. (L)",
 }));
 
-// Get label for selected impact type (NSV, COGS, LOGS, OI)
 function getImpactTypeLabel(impactType: string): string {
   const currency = formData.value.primaryImpact === "NZD" ? "NZD" : "AUD";
   const labels: Record<string, string> = {
@@ -1014,7 +1023,6 @@ const secondaryTotalVisible = computed(() =>
   formData.value.childImpacts.some(ci => ci.secondaryValue.trim())
 );
 
-// Period summary string for child mode (mirrors React calculateImpactPeriodRange)
 const impactPeriodSummary = computed(() => {
   const valid = formData.value.childImpacts.filter(ci => ci.impactPeriod && ci.impactYear);
   if (!valid.length) return "";
@@ -1038,7 +1046,6 @@ watch(currentUserEmail, (email) => {
 
 watch(() => formData.value.country, (country) => {
   const opts = getUnitOptions(country);
-  // Auto-update currency like React prototype
   if (country === "New Zealand" && !opts.includes(formData.value.primaryImpact)) {
     formData.value.primaryImpact = "NZD";
   } else if (country === "Australia" && !opts.includes(formData.value.primaryImpact)) {
@@ -1103,7 +1110,6 @@ watch(() => formData.value.brand, (val) => {
 watch(() => formData.value.department, (val) => {
   if (isInitialLoadRef.value) return;
   if (!CATEG_ACTIVE_DEPTS.includes(val)) formData.value.categorisation = "";
-  // NSV auto-switch like React prototype
   if (val === "Demand Review") {
     formData.value.impactType = "NSV";
   } else if (formData.value.impactType === "NSV") {
@@ -1111,7 +1117,6 @@ watch(() => formData.value.department, (val) => {
   }
 });
 
-// Risk/Opportunity sign flip (mirrors React prototype)
 watch(() => formData.value.rAndO, (val) => {
   if (isInitialLoadRef.value) return;
   function applySign(v: string, shouldBeNeg: boolean): string {
@@ -1124,7 +1129,6 @@ watch(() => formData.value.rAndO, (val) => {
   formData.value.childImpacts.forEach(ci => { ci.impactValue = applySign(ci.impactValue, neg); });
 });
 
-// Entry prop watcher (edit mode)
 watch(
   () => props.entry,
   async (entry) => {
@@ -1139,7 +1143,6 @@ watch(
         return isNaN(n) ? val : String(n / 9);
       };
 
-      // Parse brandFamily (string | string[] | JSON string)
       let brandFamilyArray: string[] = [];
       if (entry.brandFamily) {
         if (Array.isArray(entry.brandFamily)) {
@@ -1269,7 +1272,6 @@ const rules: FormRules = {
 function addChild() {
   const isFirst = formData.value.childImpacts.length === 0;
   if (isFirst) {
-    // transfer parent values to first two children, then clear parent
     const count = 2;
     for (let i = 0; i < count; i++) {
       formData.value.childImpacts.push({
@@ -1434,7 +1436,6 @@ async function validate() {
           ElMessage.error(`Row ${i+1}: Secondary Impact must be a valid number.`);
           return null;
         }
-        // Period-after-forecast check
         if (!isPeriodAfter(ci.impactPeriod, ci.impactYear, formData.value.addToForecastByPeriod, formData.value.addToForecastByYear)) {
           ElMessage.error(`Row ${i+1}: Impact Period must be after Add to Forecast By period`);
           return null;
