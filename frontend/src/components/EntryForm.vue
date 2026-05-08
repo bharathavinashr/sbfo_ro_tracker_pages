@@ -12,7 +12,6 @@
     <!-- ───────────────────────────────────────────────
          SECTION 1 · Entry Owner
     ─────────────────────────────────────────────── -->
-    <!-- <el-divider content-position="left">Entry Owner</el-divider> -->
     <el-row :gutter="16">
       <!-- Creator (read-only) -->
       <el-col :span="12">
@@ -464,7 +463,6 @@
         </el-form-item>
       </el-col>
 
-      <!-- Categorisation (already shown above; kept here for grouping if needed) -->
       <el-col :span="8" />
     </el-row>
 
@@ -497,9 +495,16 @@
               class="mt-2"
             />
 
-            <!-- Period range mode -->
+            <!-- ─── FIX 1: Period range mode now includes the checkbox so user can uncheck ─── -->
             <template v-else-if="usePeriodRange">
               <div class="range-block mt-2">
+                <!-- Checkbox is rendered here too so the user can uncheck/cancel -->
+                <div class="period-range-check" style="margin-bottom: 10px;">
+                  <el-checkbox v-model="usePeriodRange" @change="onCancelPeriodRange">
+                    Use Period Range
+                  </el-checkbox>
+                </div>
+
                 <div class="range-label">Start Period</div>
                 <div class="period-pair">
                   <el-select v-model="periodRangeStart.period" class="period-select">
@@ -518,10 +523,12 @@
                     <el-option v-for="y in yearOptions" :key="y" :value="String(y)" :label="String(y)" />
                   </el-select>
                 </div>
+
+                <!-- ─── FIX 2: Removed !formData.impactValue from :disabled ─── -->
                 <el-button
                   type="primary"
                   style="width: 100%; margin-top: 10px"
-                  :disabled="!periodRangeStart.period || !periodRangeStart.year || !periodRangeEnd.period || !periodRangeEnd.year || !formData.impactValue"
+                  :disabled="!periodRangeStart.period || !periodRangeStart.year || !periodRangeEnd.period || !periodRangeEnd.year"
                   @click="createChildImpactsFromRange"
                 >Generate Prorated Impacts</el-button>
               </div>
@@ -729,16 +736,16 @@ const divisionOptions    = computed(() => lookupStore.getCached("division"));
 const countryOptions     = computed(() => lookupStore.getCached("country"));
 const probabilityOptions = computed(() => lookupStore.getCached("probability"));
 const ibpStepOptions     = computed(() => lookupStore.getCached("ibp_step"));
-const departmentOptions   = computed(() => lookupStore.getCached("department"));
+const departmentOptions  = computed(() => lookupStore.getCached("department"));
 
-// Categorisation: switches list based on department + division (mirrors React prototype)
+// Categorisation: switches list based on department + division
 const CATEG_ACTIVE_DEPTS = ["Portfolio Review", "Demand Review", "Supply Review", "Overheads (Pre-Exec)"];
 const categActive = computed(() => CATEG_ACTIVE_DEPTS.includes(formData.value.department));
 
-const supplyCategorisations   = ["Conversion (Wiri)", "Conversion (Swanbank)", "Co-Pack", "Agency", "Materials", "Stock", "Int/TT Freight", "Other"];
+const supplyCategorisations    = ["Conversion (Wiri)", "Conversion (Swanbank)", "Co-Pack", "Agency", "Materials", "Stock", "Int/TT Freight", "Other"];
 const overheadsCategorisations = ["People Costs", "Other People Costs", "Total People Costs", "Strategic Projects", "Vehicles", "Travel & Entertainment", "Communication", "Leases & Rentals", "Utilities", "Repairs & Maintenance", "Depreciation", "Printing & Stationery", "Administration", "Professional Fees", "IT Supplies", "Market Research", "3rd Party Merchandisers", "Insurance", "Group recharges / Sundry Income"];
-const alcoholCategorisations  = ["Customer SOH", "Ranging", "Phasing", "Excise", "Rate", "Allocations"];
-const baseCategorisations     = ["Baseline/Run Rates", "Brand Activations", "Deletions", "Long Term Forecast", "NPD", "New Business", "OOS", "Promotional Pricing", "Strategic/MTP/Trading Terms"];
+const alcoholCategorisations   = ["Customer SOH", "Ranging", "Phasing", "Excise", "Rate", "Allocations"];
+const baseCategorisations      = ["Baseline/Run Rates", "Brand Activations", "Deletions", "Long Term Forecast", "NPD", "New Business", "OOS", "Promotional Pricing", "Strategic/MTP/Trading Terms"];
 
 const categOptions = computed(() => {
   if (formData.value.department === "Supply Review") return supplyCategorisations;
@@ -764,7 +771,7 @@ const accountOptions    = computed(() =>
     ? lookupStore.getCached("account", formData.value.subChannel)
     : lookupStore.getCached("account")
 );
-const brandOptions      = computed(() => lookupStore.getCached("brand"));
+const brandOptions       = computed(() => lookupStore.getCached("brand"));
 const brandFamilyOptions = computed(() =>
   formData.value.brand
     ? lookupStore.getCached("brand_family", formData.value.brand)
@@ -772,17 +779,17 @@ const brandFamilyOptions = computed(() =>
 );
 
 // Combobox open/search state
-const channelOpen      = ref(false);
-const channelSearch    = ref("");
-const subChannelOpen   = ref(false);
-const subChannelSearch = ref("");
-const brandOpen        = ref(false);
-const brandSearch      = ref("");
-const brandFamilyOpen  = ref(false);
+const channelOpen       = ref(false);
+const channelSearch     = ref("");
+const subChannelOpen    = ref(false);
+const subChannelSearch  = ref("");
+const brandOpen         = ref(false);
+const brandSearch       = ref("");
+const brandFamilyOpen   = ref(false);
 const brandFamilySearch = ref("");
-const accountOpen      = ref(false);
-const accountSearch    = ref("");
-const brandFamilyRef = ref<HTMLElement | null>(null);
+const accountOpen       = ref(false);
+const accountSearch     = ref("");
+const brandFamilyRef    = ref<HTMLElement | null>(null);
 
 function handleBrandFamilyClickOutside(event: MouseEvent) {
   if (brandFamilyRef.value && !brandFamilyRef.value.contains(event.target as Node)) {
@@ -791,10 +798,10 @@ function handleBrandFamilyClickOutside(event: MouseEvent) {
 }
 
 // Filtered lists
-const filteredChannels    = computed(() => channelOptions.value.filter(c => c.toLowerCase().includes(channelSearch.value.toLowerCase())));
-const filteredSubChannels = computed(() => subChannelOptions.value.filter(s => s.toLowerCase().includes(subChannelSearch.value.toLowerCase())));
-const filteredBrands      = computed(() => brandOptions.value.filter(b => b.toLowerCase().includes(brandSearch.value.toLowerCase())));
-const filteredAccounts    = computed(() => accountOptions.value.filter(a => a.toLowerCase().includes(accountSearch.value.toLowerCase())));
+const filteredChannels      = computed(() => channelOptions.value.filter(c => c.toLowerCase().includes(channelSearch.value.toLowerCase())));
+const filteredSubChannels   = computed(() => subChannelOptions.value.filter(s => s.toLowerCase().includes(subChannelSearch.value.toLowerCase())));
+const filteredBrands        = computed(() => brandOptions.value.filter(b => b.toLowerCase().includes(brandSearch.value.toLowerCase())));
+const filteredAccounts      = computed(() => accountOptions.value.filter(a => a.toLowerCase().includes(accountSearch.value.toLowerCase())));
 const filteredBrandFamilies = computed(() =>
   brandFamilyOptions.value.filter(f => f.toLowerCase().includes(brandFamilySearch.value.toLowerCase()))
 );
@@ -810,8 +817,8 @@ function isChannelDisabled(ch: string) {
 function selectChannel(ch: string) {
   if (!isChannelDisabled(ch)) {
     formData.value.channel = ch;
-    channelSearch.value = "";
-    channelOpen.value = false;
+    channelSearch.value    = "";
+    channelOpen.value      = false;
   }
 }
 function onChannelBlur()    { setTimeout(() => { channelOpen.value    = false; }, 120); }
@@ -900,16 +907,24 @@ function onOwnerCheckboxChange(val: boolean) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Period range state
 // ─────────────────────────────────────────────────────────────────────────────
-const usePeriodRange    = ref(false);
-const periodRangeStart  = ref({ period: "", year: "" });
-const periodRangeEnd    = ref({ period: "", year: "" });
+const usePeriodRange   = ref(false);
+const periodRangeStart = ref({ period: "", year: "" });
+const periodRangeEnd   = ref({ period: "", year: "" });
+
+// ─── FIX 1 HANDLER: resets range selectors when user unchecks the checkbox ───
+function onCancelPeriodRange(val: boolean) {
+  if (!val) {
+    periodRangeStart.value = { period: "", year: "" };
+    periodRangeEnd.value   = { period: "", year: "" };
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Form ref & year options
 // ─────────────────────────────────────────────────────────────────────────────
-const formRef      = ref<FormInstance>();
-const currentYear  = new Date().getFullYear();
-const currentMonth = new Date().getMonth() + 1;
+const formRef       = ref<FormInstance>();
+const currentYear   = new Date().getFullYear();
+const currentMonth  = new Date().getMonth() + 1;
 const currentPeriod = `F${String(currentMonth).padStart(2, "0")}`;
 const yearOptions   = Array.from({ length: 10 }, (_, i) => currentYear - 2 + i);
 
@@ -931,30 +946,30 @@ function defaultForm(): FormData {
     creationDateYear:      String(currentYear),
     addToForecastByPeriod: currentPeriod,
     addToForecastByYear:   String(currentYear),
-    division:       "",
-    department:     "",
-    country:        "",
-    channel:        "",
-    subChannel:     "",
-    account:        "",
-    brand:          "",
-    brandFamily:    [],
-    rAndO:          "Risk",
-    probability:    "",
-    categorisation: "",
-    impactPeriod:   currentPeriod,
-    impactYear:     String(currentYear),
-    impactValue:    "",
-    primaryImpact:  "AUD",
-    secondaryValue: "",
-    secondaryUnit:  "Volume",
-    impactType:     "NSV",
-    owner:          email,
-    creator:        email,
-    status:         "Open",
-    shortDescription:   "",
-    detailedDescription:"",
-    childImpacts:   [],
+    division:        "",
+    department:      "",
+    country:         "",
+    channel:         "",
+    subChannel:      "",
+    account:         "",
+    brand:           "",
+    brandFamily:     [],
+    rAndO:           "Risk",
+    probability:     "",
+    categorisation:  "",
+    impactPeriod:    currentPeriod,
+    impactYear:      String(currentYear),
+    impactValue:     "",
+    primaryImpact:   "AUD",
+    secondaryValue:  "",
+    secondaryUnit:   "Volume",
+    impactType:      "NSV",
+    owner:           email,
+    creator:         email,
+    status:          "Open",
+    shortDescription:    "",
+    detailedDescription: "",
+    childImpacts:    [],
   };
 }
 
@@ -1092,7 +1107,7 @@ watch(() => formData.value.secondaryUnit, (val) => {
 watch(() => formData.value.channel, (val) => {
   if (!isLoadingEntry.value) {
     formData.value.subChannel = "";
-    formData.value.account = "";
+    formData.value.account    = "";
   }
   if (val) lookupStore.loadChildren("sub_channel", val);
 });
@@ -1157,8 +1172,8 @@ watch(
         }
       }
 
-      const creator = entry.creator || currentUserEmail.value;
-      const owner   = entry.owner   || currentUserEmail.value;
+      const creator     = entry.creator || currentUserEmail.value;
+      const owner       = entry.owner   || currentUserEmail.value;
       const shouldBeSame = owner === creator;
       ownerSameAsCreator.value = shouldBeSame;
 
@@ -1183,7 +1198,7 @@ watch(
         primaryImpact:  entry.primaryImpact || "AUD",
         impactType:     entry.impactType    || "OI",
         impactValue: formatNumStr(
-          entry.primaryImpact === "NZD" ? (entry.nsvNzd || "")
+          entry.primaryImpact === "NZD"    ? (entry.nsvNzd || "")
           : entry.primaryImpact === "Volume" ? fromStorage("Volume", entry.volumeLitres || "")
           : (entry.nsvAud || "")
         ),
@@ -1215,7 +1230,7 @@ watch(
             impactPeriod:   ci.impactPeriod || "",
             impactUnit:     primary,
             impactValue: formatNumStr(
-              primary === "NZD" ? (ci.nsvNzd || "")
+              primary === "NZD"    ? (ci.nsvNzd || "")
               : primary === "Volume" ? fromStorage("Volume", ci.volumeLitres || "")
               : (ci.nsvAud || "")
             ),
@@ -1229,9 +1244,9 @@ watch(
     } else {
       formData.value = defaultForm();
       ownerSameAsCreator.value = true;
-      usePeriodRange.value = false;
-      periodRangeStart.value = { period: "", year: "" };
-      periodRangeEnd.value   = { period: "", year: "" };
+      usePeriodRange.value     = false;
+      periodRangeStart.value   = { period: "", year: "" };
+      periodRangeEnd.value     = { period: "", year: "" };
     }
     isLoadingEntry.value = false;
   },
@@ -1342,6 +1357,9 @@ function generatePeriodRange(sp: string, sy: string, ep: string, ey: string) {
   return result;
 }
 
+// ─── FIX 2: Button :disabled no longer requires formData.impactValue ─────────
+// The total value to prorate is optional (defaults to 0 gracefully).
+// The only hard requirement is that both start and end periods are chosen.
 function createChildImpactsFromRange() {
   const { period: sp, year: sy } = periodRangeStart.value;
   const { period: ep, year: ey } = periodRangeEnd.value;
@@ -1375,9 +1393,9 @@ function createChildImpactsFromRange() {
   formData.value.impactPeriod   = "";
   formData.value.impactValue    = "";
   formData.value.secondaryValue = "";
-  usePeriodRange.value    = false;
-  periodRangeStart.value  = { period: "", year: "" };
-  periodRangeEnd.value    = { period: "", year: "" };
+  usePeriodRange.value          = false;
+  periodRangeStart.value        = { period: "", year: "" };
+  periodRangeEnd.value          = { period: "", year: "" };
   ElMessage.success(`Created ${periods.length} child impacts with prorated values`);
 }
 
@@ -1428,10 +1446,10 @@ async function validate() {
     if (hasChildImpacts.value) {
       for (let i = 0; i < formData.value.childImpacts.length; i++) {
         const ci = formData.value.childImpacts[i];
-        if (!ci.impactPeriod)               { ElMessage.error(`Row ${i+1}: Impact Period is required.`);            return null; }
-        if (!ci.impactYear)                  { ElMessage.error(`Row ${i+1}: Impact Year is required.`);              return null; }
-        if (!ci.impactValue.trim())          { ElMessage.error(`Row ${i+1}: Primary Impact value is required.`);     return null; }
-        if (!isValidNum(ci.impactValue))     { ElMessage.error(`Row ${i+1}: Primary Impact must be a valid number.`);return null; }
+        if (!ci.impactPeriod)               { ElMessage.error(`Row ${i+1}: Impact Period is required.`);             return null; }
+        if (!ci.impactYear)                  { ElMessage.error(`Row ${i+1}: Impact Year is required.`);               return null; }
+        if (!ci.impactValue.trim())          { ElMessage.error(`Row ${i+1}: Primary Impact value is required.`);      return null; }
+        if (!isValidNum(ci.impactValue))     { ElMessage.error(`Row ${i+1}: Primary Impact must be a valid number.`); return null; }
         if (ci.secondaryValue.trim() && !isValidNum(ci.secondaryValue)) {
           ElMessage.error(`Row ${i+1}: Secondary Impact must be a valid number.`);
           return null;
@@ -1444,10 +1462,10 @@ async function validate() {
         ci.secondaryValue = cleanNumStr(ci.secondaryValue);
       }
     } else {
-      if (!formData.value.impactPeriod)             { ElMessage.error("Impact Period is required.");                 return null; }
-      if (!formData.value.impactYear)               { ElMessage.error("Impact Year is required.");                   return null; }
-      if (!formData.value.impactValue.trim())       { ElMessage.error("Primary Impact value is required.");          return null; }
-      if (!isValidNum(formData.value.impactValue))  { ElMessage.error("Primary Impact must be a valid number.");     return null; }
+      if (!formData.value.impactPeriod)            { ElMessage.error("Impact Period is required.");             return null; }
+      if (!formData.value.impactYear)              { ElMessage.error("Impact Year is required.");               return null; }
+      if (!formData.value.impactValue.trim())      { ElMessage.error("Primary Impact value is required.");      return null; }
+      if (!isValidNum(formData.value.impactValue)) { ElMessage.error("Primary Impact must be a valid number."); return null; }
       if (formData.value.secondaryValue.trim() && !isValidNum(formData.value.secondaryValue)) {
         ElMessage.error("Secondary Impact must be a valid number."); return null;
       }
@@ -1476,9 +1494,11 @@ async function validate() {
 }
 
 function reset() {
-  formData.value = defaultForm();
+  formData.value           = defaultForm();
   ownerSameAsCreator.value = true;
-  usePeriodRange.value = false;
+  usePeriodRange.value     = false;
+  periodRangeStart.value   = { period: "", year: "" };
+  periodRangeEnd.value     = { period: "", year: "" };
   formRef.value?.clearValidate();
 }
 
@@ -1611,7 +1631,7 @@ defineExpose({ validate, reset });
   font-size: 14px;
   box-sizing: border-box;
 }
-.combo-trigger .has-value { color: var(--el-text-color-regular); }
+.combo-trigger .has-value  { color: var(--el-text-color-regular); }
 .combo-trigger .placeholder { color: var(--el-text-color-placeholder); }
 .brand-family-dropdown { padding: 8px 0; }
 .bf-search { padding: 0 8px; margin-bottom: 6px; }

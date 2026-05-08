@@ -7,7 +7,49 @@ from .. import crud, schemas, models
 router = APIRouter()
 
 
+def _calculate_impact(entry, child_impacts) -> tuple:
+    """
+    Calculate impact value and currency based on:
+    1. If child_impacts exist: sum the corresponding nsv_aud or nsv_nzd
+    2. Otherwise: use entry's own nsv_aud or nsv_nzd
+    3. Based on primary_impact field (AUD/NZD)
+    
+    Returns: (impact_value, impact_currency)
+    """
+    primary_impact = entry.primary_impact or ""
+    impact_value = None
+    impact_currency = primary_impact if primary_impact in ["AUD", "NZD"] else None
+    
+    if child_impacts:
+        # Sum child impacts based on primary_impact type
+        total = 0
+        for ci in child_impacts:
+            if primary_impact == "AUD" and ci.nsv_aud:
+                try:
+                    total += float(ci.nsv_aud)
+                except (ValueError, TypeError):
+                    pass
+            elif primary_impact == "NZD" and ci.nsv_nzd:
+                try:
+                    total += float(ci.nsv_nzd)
+                except (ValueError, TypeError):
+                    pass
+        if total != 0:
+            impact_value = str(total)
+    else:
+        # Use entry's own value
+        if primary_impact == "AUD" and entry.nsv_aud:
+            impact_value = entry.nsv_aud
+        elif primary_impact == "NZD" and entry.nsv_nzd:
+            impact_value = entry.nsv_nzd
+    
+    return impact_value, impact_currency
+
+
 def _entry_to_dict(entry, child_impacts) -> dict:
+    impact_value, impact_currency = _calculate_impact(entry, child_impacts)
+    primary_impact = entry.primary_impact or ""
+    
     return {
         "id": entry.id,
         "originalEntryId": entry.original_entry_id,
@@ -42,6 +84,8 @@ def _entry_to_dict(entry, child_impacts) -> dict:
         "description": entry.description,
         "impactType": entry.impact_type,
         "volumeCases": entry.volume_cases,
+        "impact": impact_value,
+        "impactCurrency": impact_currency,
         "lastModified": entry.last_modified.isoformat() + "Z" if entry.last_modified else None,
         "childImpacts": [
             {
@@ -52,6 +96,8 @@ def _entry_to_dict(entry, child_impacts) -> dict:
                 "nsvNzd": ci.nsv_nzd,
                 "volumeLitres": ci.volume_litres,
                 "volumeCases": ci.volume_cases,
+                "impact": ci.nsv_aud if (primary_impact == "AUD" and ci.nsv_aud) else (ci.nsv_nzd if (primary_impact == "NZD" and ci.nsv_nzd) else None),
+                "impactCurrency": primary_impact if primary_impact in ["AUD", "NZD"] else None,
             }
             for ci in child_impacts
         ],

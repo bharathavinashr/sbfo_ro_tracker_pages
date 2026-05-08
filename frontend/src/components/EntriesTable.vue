@@ -1,7 +1,6 @@
 <template>
   <div class="entries-table-wrapper">
 
-    <!-- ── Quick Filters ──────────────────────────────── -->
     <div class="quick-filters-section">
       <p class="section-label" style="font-size:16px; font-weight:700; margin-bottom:6px">Database Entries</p>
       <p class="section-label">Quick Filters</p>
@@ -23,7 +22,6 @@
       </div>
     </div>
 
-    <!-- ── All Filters (collapsible) ─────────────────── -->
     <div class="all-filters-section">
       <div class="all-filters-header" @click="allFiltersOpen = !allFiltersOpen">
         <span class="all-filters-title">All Filters</span>
@@ -35,7 +33,6 @@
       </div>
 
       <div v-show="allFiltersOpen" class="all-filters-body">
-        <!-- Row 1 -->
         <el-row :gutter="16" class="filter-row">
           <el-col :span="6">
             <label class="filter-label">Div.</label>
@@ -63,7 +60,6 @@
           </el-col>
         </el-row>
 
-        <!-- Row 2 -->
         <el-row :gutter="16" class="filter-row">
           <el-col :span="6">
             <label class="filter-label">Owner</label>
@@ -77,7 +73,6 @@
           </el-col>
         </el-row>
 
-        <!-- Customer Filters -->
         <p class="filter-group-label">Customer Filters</p>
         <el-row :gutter="16" class="filter-row">
           <el-col :span="8">
@@ -100,7 +95,6 @@
           </el-col>
         </el-row>
 
-        <!-- Product Filters -->
         <p class="filter-group-label">Product Filters</p>
         <el-row :gutter="16" class="filter-row">
           <el-col :span="12">
@@ -123,16 +117,14 @@
       </div>
     </div>
 
-    <!-- ── Table Toolbar ──────────────────────────────── -->
     <div class="table-toolbar">
       <span class="entry-count">All Entries ({{ filteredEntries.length }})</span>
 
       <div class="toolbar-right">
 
-        <!-- Split View multi-select popover -->
         <div class="split-view-control">
           <span class="split-view-label">Split view by:</span>
-          <div class="group-by-wrap" v-click-outside="() => groupByOpen = false">
+          <div class="group-by-wrap" v-click-outside="closeGroupBy">
             <button class="group-by-trigger" @click.stop="groupByOpen = !groupByOpen">
               <span :class="splitBy.length ? 'has-value' : 'placeholder'">
                 {{ splitBy.length ? `${splitBy.length} selected` : 'No grouping' }}
@@ -142,7 +134,6 @@
               </svg>
             </button>
             <div v-if="groupByOpen" class="group-by-dropdown" @click.stop>
-              <!-- Select All -->
               <label class="gbd-item gbd-all">
                 <el-checkbox
                   :model-value="splitBy.length === splitByOptions.length"
@@ -163,7 +154,6 @@
           </div>
         </div>
 
-        <!-- Columns popover -->
         <el-popover placement="bottom-end" :width="240" trigger="click" popper-class="column-popover">
           <template #reference>
             <el-button size="small" plain style="color: black;">
@@ -200,34 +190,42 @@
           </div>
         </el-popover>
 
-        <!-- Phased Impact View -->
-        <el-button 
-          size="small" 
-          plain 
-          :class="{ 'phased-view-active': phasedImpactView !== 'none' }"
-          @click="togglePhasedView">
-          <svg style="width:14px;height:14px;margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-            <circle cx="12" cy="12" r="3"/>
-          </svg>
-          <span class="phased-view-text">View Phased Impact</span>
-        </el-button>
-        <!-- <div class="phased-wrap">
-          <span class="split-view-label">Phased view:</span>
-          <el-select v-model="phasedImpactView" size="small" style="width:150px"
-            @click="groupByOpen = false"
-            @change="onPhasedViewChange">
-            <el-option value="none"       label="No Phased View" />
-            <el-option value="month"      label="Month" />
-            <el-option value="quarter"    label="Quarter" />
-            <el-option value="half-year"  label="Half Year" />
-            <el-option value="year"       label="Year" />
-          </el-select>
-        </div> -->
+        <div class="phased-view-control" v-click-outside="closePhasedMenu">
+          <button
+            class="phased-view-trigger"
+            :class="{ 'phased-view-active': phasedImpactViews.length > 0 }"
+            @click.stop="phasedMenuOpen = !phasedMenuOpen">
+            <svg style="width:14px;height:14px;margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <span class="phased-view-text">
+              {{ phasedImpactViews.length === 0 ? 'View Phased Impact' : `${phasedImpactViews.length} selected` }}
+            </span>
+            <svg class="chevron-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div v-if="phasedMenuOpen" class="phased-view-dropdown" @click.stop>
+            <label class="gbd-item gbd-all">
+              <el-checkbox
+                :model-value="phasedImpactViews.length === phasedViewOptions.length"
+                :indeterminate="phasedImpactViews.length > 0 && phasedImpactViews.length < phasedViewOptions.length"
+                @change="toggleAllPhasedViews"
+              />
+              <span class="gbd-label-bold">Select All</span>
+            </label>
+            <div class="gbd-divider" />
+            <label v-for="opt in phasedViewOptions" :key="opt.key" class="gbd-item">
+              <el-checkbox
+                :model-value="phasedImpactViews.includes(opt.key)"
+                @change="togglePhasedView(opt.key)"
+              />
+              <span>{{ opt.label }}</span>
+            </label>
+          </div>
+        </div>
 
-        
-
-        <!-- Add Entry -->
         <el-button v-if="!isReadOnly" size="small" plain @click="$emit('add')" style="color: black;">
           <svg style="width:14px;height:14px;margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="12" y1="5" x2="12" y2="19"/>
@@ -236,7 +234,6 @@
           Add New Entry
         </el-button>
 
-        <!-- Export CSV -->
         <el-button v-if="!isReadOnly" size="small" plain @click="exportToCSV(filteredEntries)" style="color: black;">
           <svg style="width:14px;height:14px;margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Export CSV
@@ -244,7 +241,6 @@
       </div>
     </div>
 
-    <!-- ── Grouped view ───────────────────────────────── -->
     <template v-if="splitBy.length">
       <div v-for="group in groupedEntries" :key="group.key" class="split-group">
         <div class="split-group-header">
@@ -287,8 +283,7 @@
               <th v-if="colVisible.currency"       class="col-sm">Currency</th>
               <th v-if="colVisible.impact"         class="col-md tr">Impact</th>
               <th v-if="colVisible.volumeCases"    class="col-md tr">Volume (Cases)</th>
-              <!-- Phased columns -->
-              <template v-if="phasedImpactView !== 'none'">
+              <template v-if="phasedImpactViews.length > 0">
                 <th v-for="col in phasedColumns" :key="col.label" class="col-phased tc">{{ col.label }}</th>
               </template>
               <th v-else-if="colVisible.impactPeriods" class="col-lg">Impact Period(s)</th>
@@ -342,7 +337,7 @@
                   <td v-if="colVisible.currency">{{ row.impactCurrency || '-' }}</td>
                   <td v-if="colVisible.impact" class="tr fw">{{ row.impact ? Number(row.impact).toLocaleString() : '-' }}</td>
                   <td v-if="colVisible.volumeCases" class="tr">{{ row.volumeImpact ? Number(row.volumeImpact).toLocaleString() : '-' }}</td>
-                  <template v-if="phasedImpactView !== 'none'">
+                  <template v-if="phasedImpactViews.length > 0">
                     <td v-for="col in phasedColumns" :key="col.label" class="tc phased-cell">
                       {{ formatPhasedCell(getAggregatedImpact(row, col)) }}
                     </td>
@@ -369,7 +364,6 @@
                     </div>
                   </td>
                 </tr>
-                <!-- Inline child rows -->
                 <template v-if="expandedRows.has(row.id) && row.childImpacts?.length">
                   <tr v-for="(ci, cIdx) in row.childImpacts" :key="`${row.id}-c${cIdx}`" class="child-row">
                     <td class="col-expand"></td>
@@ -400,7 +394,7 @@
                     <td v-if="colVisible.currency"       class="cell-muted">{{ row.impactCurrency || '-' }}</td>
                     <td v-if="colVisible.impact"         class="tr fw cell-muted">{{ ci.impact ? Number(ci.impact).toLocaleString() : '-' }}</td>
                     <td v-if="colVisible.volumeCases"    class="tr cell-muted">{{ ci.volumeImpact ? Number(ci.volumeImpact).toLocaleString() : '-' }}</td>
-                    <template v-if="phasedImpactView !== 'none'">
+                    <template v-if="phasedImpactViews.length > 0">
                       <td v-for="col in phasedColumns" :key="col.label" class="tc cell-muted phased-cell">
                         {{ formatPhasedCellChild(ci, col) }}
                       </td>
@@ -418,7 +412,6 @@
       </div>
     </template>
 
-    <!-- ── Flat table ─────────────────────────────────── -->
     <div v-else class="table-scroll-wrap" v-loading="isReadOnly ? false : store.loading">
       <table class="data-table">
         <thead><tr>
@@ -441,7 +434,7 @@
           <th v-if="colVisible.currency"       class="col-sm">Currency</th>
           <th v-if="colVisible.impact"         class="col-md tr">Impact</th>
           <th v-if="colVisible.volumeCases"    class="col-md tr">Volume (Cases)</th>
-          <template v-if="phasedImpactView !== 'none'">
+          <template v-if="phasedImpactViews.length > 0">
             <th v-for="col in phasedColumns" :key="col.label" class="col-phased tc">{{ col.label }}</th>
           </template>
           <th v-else-if="colVisible.impactPeriods" class="col-lg">Impact Period(s)</th>
@@ -498,7 +491,7 @@
               <td v-if="colVisible.currency">{{ row.impactCurrency || '-' }}</td>
               <td v-if="colVisible.impact" class="tr fw">{{ row.impact ? Number(row.impact).toLocaleString() : '-' }}</td>
               <td v-if="colVisible.volumeCases" class="tr">{{ row.volumeImpact ? Number(row.volumeImpact).toLocaleString() : '-' }}</td>
-              <template v-if="phasedImpactView !== 'none'">
+              <template v-if="phasedImpactViews.length > 0">
                 <td v-for="col in phasedColumns" :key="col.label" class="tc phased-cell">
                   {{ formatPhasedCell(getAggregatedImpact(row, col)) }}
                 </td>
@@ -526,7 +519,6 @@
               </td>
             </tr>
 
-            <!-- Inline child rows -->
             <template v-if="expandedRows.has(row.id) && row.childImpacts?.length">
               <tr v-for="(ci, cIdx) in row.childImpacts" :key="`${row.id}-c${cIdx}`" class="child-row">
                 <td class="col-expand"></td>
@@ -556,7 +548,7 @@
                 <td v-if="colVisible.currency"       class="cell-muted">{{ row.impactCurrency || '-' }}</td>
                 <td v-if="colVisible.impact"         class="tr fw cell-muted">{{ ci.impact ? Number(ci.impact).toLocaleString() : '-' }}</td>
                 <td v-if="colVisible.volumeCases"    class="tr cell-muted">{{ ci.volumeImpact ? Number(ci.volumeImpact).toLocaleString() : '-' }}</td>
-                <template v-if="phasedImpactView !== 'none'">
+                <template v-if="phasedImpactViews.length > 0">
                   <td v-for="col in phasedColumns" :key="col.label" class="tc cell-muted phased-cell">
                     {{ formatPhasedCellChild(ci, col) }}
                   </td>
@@ -576,7 +568,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
-import { ElMessage } from "element-plus";
+import { ElMessage, ClickOutside as vClickOutside } from "element-plus";
 import { useEntryStore } from "@/stores/entryStore";
 import { useLookupStore } from "@/stores/lookupStore";
 import { entryApi } from "@/services/api";
@@ -602,7 +594,7 @@ const emit = defineEmits<{
 }>();
 
 // ─── Stores ───────────────────────────────────────────────────────────────────
-const store       = useEntryStore();
+const store        = useEntryStore();
 const lookupStore = useLookupStore();
 
 onMounted(() => {
@@ -696,6 +688,10 @@ const splitByOptions = [
 const splitBy    = ref<string[]>(props.defaultSplitBy.length ? props.defaultSplitBy : ["country", "division"]);
 const groupByOpen = ref(false);
 
+const closeGroupBy = () => {
+  groupByOpen.value = false;
+};
+
 function toggleSplitBy(key: string) {
   const i = splitBy.value.indexOf(key);
   if (i === -1) splitBy.value.push(key);
@@ -753,18 +749,35 @@ const colVisible = ref({
   lastModified:   true,
 });
 
-// ─── Phased Impact View ───────────────────────────────────────────────────────
-const phasedImpactView = ref<"none"|"month"|"quarter"|"half-year"|"year">("none");
+// ─── Phased Impact View (multi-select) ───────────────────────────────────────
+const phasedImpactViews = ref<string[]>([]);
+const phasedMenuOpen    = ref(false);
 
-function onPhasedViewChange(val: string) {
-  if (val !== "none") colVisible.value.impactType = true;
+const closePhasedMenu = () => {
+  phasedMenuOpen.value = false;
+};
+
+const phasedViewOptions = [
+  { key: "month",     label: "Month" },
+  { key: "quarter",   label: "Quarter" },
+  { key: "half-year", label: "Half Year" },
+  { key: "year",      label: "Year" },
+];
+
+function togglePhasedView(key: string) {
+  const i = phasedImpactViews.value.indexOf(key);
+  if (i === -1) phasedImpactViews.value.push(key);
+  else          phasedImpactViews.value.splice(i, 1);
 }
 
-function togglePhasedView() {
-  groupByOpen.value = false;
-  phasedImpactView.value = phasedImpactView.value === "none" ? "month" : "none";
-  onPhasedViewChange(phasedImpactView.value);
+function toggleAllPhasedViews(checked: boolean) {
+  phasedImpactViews.value = checked ? phasedViewOptions.map(o => o.key) : [];
 }
+
+// Auto-enable Impact Type column when any phased view is active
+watch(phasedImpactViews, (val) => {
+  if (val.length > 0) colVisible.value.impactType = true;
+});
 
 interface PhasedCol {
   label:   string;
@@ -779,29 +792,35 @@ function periodToMonthAbbr(period: string): string {
   return (i >= 0 && i < 12) ? MONTH_ABBRS[i] : period;
 }
 
+// Build columns for all currently-selected phased views, in definition order
 const phasedColumns = computed((): PhasedCol[] => {
   const cols: PhasedCol[] = [];
   const years = [2026, 2027];
-  if (phasedImpactView.value === "month") {
-    for (const y of years)
-      for (let m = 1; m <= 12; m++)
-        cols.push({ label: `${MONTH_ABBRS[m-1]} ${y}`, periods: [`F${String(m).padStart(2,"0")}`], year: String(y) });
-  } else if (phasedImpactView.value === "quarter") {
-    for (const y of years)
-      for (let q = 1; q <= 4; q++) {
-        const sm = (q-1)*3 + 1;
-        cols.push({ label: `Q${q} ${y}`, year: String(y),
-          periods: [sm, sm+1, sm+2].map(m => `F${String(m).padStart(2,"0")}`) });
+  // Preserve the order defined in phasedViewOptions
+  const activeKeys = phasedViewOptions.map(o => o.key).filter(k => phasedImpactViews.value.includes(k));
+
+  for (const view of activeKeys) {
+    if (view === "month") {
+      for (const y of years)
+        for (let m = 1; m <= 12; m++)
+          cols.push({ label: `${MONTH_ABBRS[m-1]} ${y}`, periods: [`F${String(m).padStart(2,"0")}`], year: String(y) });
+    } else if (view === "quarter") {
+      for (const y of years)
+        for (let q = 1; q <= 4; q++) {
+          const sm = (q-1)*3 + 1;
+          cols.push({ label: `Q${q} ${y}`, year: String(y),
+            periods: [sm, sm+1, sm+2].map(m => `F${String(m).padStart(2,"0")}`) });
+        }
+    } else if (view === "half-year") {
+      for (const y of years) {
+        cols.push({ label: `H1 ${y}`, year: String(y), periods: ["F01","F02","F03","F04","F05","F06"] });
+        cols.push({ label: `H2 ${y}`, year: String(y), periods: ["F07","F08","F09","F10","F11","F12"] });
       }
-  } else if (phasedImpactView.value === "half-year") {
-    for (const y of years) {
-      cols.push({ label: `H1 ${y}`, year: String(y), periods: ["F01","F02","F03","F04","F05","F06"] });
-      cols.push({ label: `H2 ${y}`, year: String(y), periods: ["F07","F08","F09","F10","F11","F12"] });
+    } else if (view === "year") {
+      for (const y of years)
+        cols.push({ label: `FY ${y}`, year: String(y),
+          periods: Array.from({length:12},(_,i) => `F${String(i+1).padStart(2,"0")}`) });
     }
-  } else if (phasedImpactView.value === "year") {
-    for (const y of years)
-      cols.push({ label: `FY ${y}`, year: String(y),
-        periods: Array.from({length:12},(_,i) => `F${String(i+1).padStart(2,"0")}`) });
   }
   return cols;
 });
@@ -998,7 +1017,7 @@ function exportToCSV(rows: Entry[], filename = `entries_${new Date().toISOString
   if (cv.currency)        headers.push("Currency");
   if (cv.impact)          headers.push("Impact");
   if (cv.volumeCases)     headers.push("Volume (Cases)");
-  if (phasedImpactView.value !== "none") {
+  if (phasedImpactViews.value.length > 0) {
     phasedColumns.value.forEach(c => headers.push(c.label));
   } else if (cv.impactPeriods) {
     headers.push("Impact Period(s)");
@@ -1027,7 +1046,7 @@ function exportToCSV(rows: Entry[], filename = `entries_${new Date().toISOString
     if (cv.currency)        r.push(escapeCSV(e.impactCurrency || ""));
     if (cv.impact)          r.push(e.impact ? String(parseFloat(e.impact)) : "");
     if (cv.volumeCases)     r.push((e as any).volumeImpact ? String(parseFloat((e as any).volumeImpact)) : "");
-    if (phasedImpactView.value !== "none") {
+    if (phasedImpactViews.value.length > 0) {
       phasedColumns.value.forEach(col => {
         const v = getAggregatedImpact(e, col);
         r.push(v !== 0 ? String(v) : "");
@@ -1129,6 +1148,23 @@ function clearFilters() {
 
 .phased-view-active svg {
   stroke: #fff !important;
+}
+
+/* ── Phased view dropdown (now multi-select) ──────────── */
+.phased-view-control { position:relative; }
+.phased-view-trigger {
+  display:flex; align-items:center; gap:6px;
+  padding:5px 10px 5px 12px;
+  border:1px solid var(--border-color); border-radius:6px;
+  background:var(--bg-primary); font-size:13px; cursor:pointer;
+  justify-content:space-between; min-width:160px;
+}
+.phased-view-trigger svg { width:14px; height:14px; flex-shrink:0; }
+.phased-view-dropdown {
+  position:absolute; top:calc(100% + 4px); right:0; z-index:9999;
+  background:var(--el-bg-color-overlay); border:1px solid var(--el-border-color-light);
+  border-radius:6px; box-shadow:var(--el-box-shadow-light);
+  min-width:200px; padding:6px 0;
 }
 
 /* ── Group-by dropdown (multi-checkbox) ──────────────── */
