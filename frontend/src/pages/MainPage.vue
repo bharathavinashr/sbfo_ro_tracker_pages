@@ -104,6 +104,7 @@
     <el-dialog
       v-model="formOpen"
       width="90%"
+      text-align="center"
       :close-on-click-modal="false"
       @closed="editingEntry = null"
     >
@@ -395,7 +396,7 @@ function goToHistory(entry: Entry) {
 }
 
 .header-right :deep(.el-button) {
-  width: 100%;
+  width: 200px;
 }
 
 @media (max-width: 768px) {

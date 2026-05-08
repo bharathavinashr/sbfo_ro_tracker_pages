@@ -735,7 +735,7 @@ const colVisible = ref({
   addToForecastBy:false,
   categorisation: true,
   description:    true,
-  impactType:     false,
+  impactType:     true,
   currency:       false,
   impact:         true,
   volumeCases:    false,
@@ -744,9 +744,9 @@ const colVisible = ref({
   account:        true,
   brandFamily:    true,
   creator:        false,
-  owner:          true,
+  owner:          false,
   status:         true,
-  lastModified:   true,
+  lastModified:   false,
 });
 
 // ─── Phased Impact View (multi-select) ───────────────────────────────────────
@@ -795,7 +795,8 @@ function periodToMonthAbbr(period: string): string {
 // Build columns for all currently-selected phased views, in definition order
 const phasedColumns = computed((): PhasedCol[] => {
   const cols: PhasedCol[] = [];
-  const years = [2026, 2027];
+  const currentYear = new Date().getFullYear();
+  const years = [currentYear, currentYear + 1];
   // Preserve the order defined in phasedViewOptions
   const activeKeys = phasedViewOptions.map(o => o.key).filter(k => phasedImpactViews.value.includes(k));
 
@@ -818,7 +819,7 @@ const phasedColumns = computed((): PhasedCol[] => {
       }
     } else if (view === "year") {
       for (const y of years)
-        cols.push({ label: `FY ${y}`, year: String(y),
+        cols.push({ label: `${y} Total`, year: String(y),
           periods: Array.from({length:12},(_,i) => `F${String(i+1).padStart(2,"0")}`) });
     }
   }
@@ -1279,7 +1280,7 @@ function clearFilters() {
 
 /* Text alignment helpers */
 .tc { text-align:center; }
-.tr { text-align:right; }
+.tr { text-align:left; }
 .fw { font-weight:600; }
 
 /* ── Expand button ────────────────────────────────────── */
