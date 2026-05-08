@@ -409,7 +409,7 @@
                           v-model="prStartPeriodSearch"
                           :placeholder="periodRangeStart.period ? periodToMonth(periodRangeStart.period) : 'Select period'"
                           @focus="prStartPeriodOpen = true"
-                          @blur="setTimeout(() => prStartPeriodOpen = false, 120)"
+                          @blur="onPrStartPeriodBlur"
                           @input="prStartPeriodOpen = true"
                           clearable
                           @clear="periodRangeStart.period = ''; prStartPeriodSearch = ''"
@@ -426,7 +426,7 @@
                           v-model="prStartYearSearch"
                           :placeholder="periodRangeStart.year || 'Select year'"
                           @focus="prStartYearOpen = true"
-                          @blur="setTimeout(() => prStartYearOpen = false, 120)"
+                          @blur="onPrStartYearBlur"
                           @input="prStartYearOpen = true"
                           clearable
                           @clear="periodRangeStart.year = ''; prStartYearSearch = ''"
@@ -446,7 +446,7 @@
                           v-model="prEndPeriodSearch"
                           :placeholder="periodRangeEnd.period ? periodToMonth(periodRangeEnd.period) : 'Select period'"
                           @focus="prEndPeriodOpen = true"
-                          @blur="setTimeout(() => prEndPeriodOpen = false, 120)"
+                          @blur="onPrEndPeriodBlur"
                           @input="prEndPeriodOpen = true"
                           clearable
                           @clear="periodRangeEnd.period = ''; prEndPeriodSearch = ''"
@@ -463,7 +463,7 @@
                           v-model="prEndYearSearch"
                           :placeholder="periodRangeEnd.year || 'Select year'"
                           @focus="prEndYearOpen = true"
-                          @blur="setTimeout(() => prEndYearOpen = false, 120)"
+                          @blur="onPrEndYearBlur"
                           @input="prEndYearOpen = true"
                           clearable
                           @clear="periodRangeEnd.year = ''; prEndYearSearch = ''"
@@ -492,7 +492,7 @@
                         :placeholder="formData.impactPeriod ? periodToMonth(formData.impactPeriod) : 'Select period'"
                         :disabled="hasChildImpacts"
                         @focus="impactPeriodOpen = true"
-                        @blur="setTimeout(() => impactPeriodOpen = false, 120)"
+                        @blur="onImpactPeriodBlur"
                         @input="impactPeriodOpen = true"
                         clearable
                         @clear="formData.impactPeriod = ''; impactPeriodSearch = ''"
@@ -510,7 +510,7 @@
                         :placeholder="formData.impactYear || 'Select year'"
                         :disabled="hasChildImpacts"
                         @focus="impactYearOpen = true"
-                        @blur="setTimeout(() => impactYearOpen = false, 120)"
+                        @blur="onImpactYearBlur"
                         @input="impactYearOpen = true"
                         clearable
                         @clear="formData.impactYear = ''; impactYearSearch = ''"
@@ -583,7 +583,7 @@
                   v-model="child._periodSearch"
                   :placeholder="child.impactPeriod ? periodToMonth(child.impactPeriod) : 'Select period'"
                   @focus="child._periodOpen = true"
-                  @blur="setTimeout(() => child._periodOpen = false, 120)"
+                  @blur="onChildPeriodBlur(child)"
                   @input="child._periodOpen = true"
                   clearable
                   @clear="child.impactPeriod = ''; child._periodSearch = ''"
@@ -602,7 +602,7 @@
                   v-model="child._yearSearch"
                   :placeholder="child.impactYear || 'Select year'"
                   @focus="child._yearOpen = true"
-                  @blur="setTimeout(() => child._yearOpen = false, 120)"
+                  @blur="onChildYearBlur(child)"
                   @input="child._yearOpen = true"
                   clearable
                   @clear="child.impactYear = ''; child._yearSearch = ''"
@@ -657,9 +657,7 @@
         </div>
       </template>
 
-      <!-- <el-button class="submit-action-btn" @click="validate">Create Entry</el-button> -->
-
-    </el-form>
+      </el-form>
   </div>
 </template>
 
@@ -845,6 +843,15 @@ function onCreationPeriodBlur() { setTimeout(() => { creationPeriodOpen.value = 
 function onCreationYearBlur()   { setTimeout(() => { creationYearOpen.value = false; }, 120); }
 function onAtfbPeriodBlur()     { setTimeout(() => { atfbPeriodOpen.value = false; }, 120); }
 function onAtfbYearBlur()       { setTimeout(() => { atfbYearOpen.value = false; }, 120); }
+
+function onPrStartPeriodBlur() { setTimeout(() => { prStartPeriodOpen.value = false; }, 120); }
+function onPrStartYearBlur()   { setTimeout(() => { prStartYearOpen.value = false; }, 120); }
+function onPrEndPeriodBlur()   { setTimeout(() => { prEndPeriodOpen.value = false; }, 120); }
+function onPrEndYearBlur()     { setTimeout(() => { prEndYearOpen.value = false; }, 120); }
+function onImpactPeriodBlur()  { setTimeout(() => { impactPeriodOpen.value = false; }, 120); }
+function onImpactYearBlur()    { setTimeout(() => { impactYearOpen.value = false; }, 120); }
+function onChildPeriodBlur(child: ChildImpactForm) { setTimeout(() => { child._periodOpen = false; }, 120); }
+function onChildYearBlur(child: ChildImpactForm)   { setTimeout(() => { child._yearOpen = false; }, 120); }
 
 function toggleBrandFamily(f: string) {
   const idx = formData.value.brandFamily.indexOf(f);
@@ -1096,11 +1103,11 @@ watch(() => props.entry, async (entry) => {
       creationDateYear:      entry.creationDateYear      || String(currentYear),
       addToForecastByPeriod: entry.addToForecastByPeriod || currentPeriod,
       addToForecastByYear:   entry.addToForecastByYear   || String(currentYear),
-      division:       entry.division      || "", department:     entry.department    || "",
-      country:        entry.country       || "", channel:        entry.channel       || "",
-      subChannel:     entry.subChannel    || "", account:        entry.account       || "",
-      brand:          entry.brand         || "", brandFamily:    brandFamilyArray,
-      rAndO:          entry.rAndO         || "Risk", probability:    entry.probability   || "",
+      division:       entry.division      || "", department:      entry.department    || "",
+      country:        entry.country       || "", channel:         entry.channel       || "",
+      subChannel:     entry.subChannel    || "", account:         entry.account       || "",
+      brand:          entry.brand         || "", brandFamily:     brandFamilyArray,
+      rAndO:          entry.rAndO         || "Risk", probability:     entry.probability   || "",
       categorisation: entry.categorisation|| "", impactPeriod:   entry.impactPeriod  || "",
       impactYear:     entry.impactYear    || (entry.childImpacts?.length ? "" : String(currentYear)),
       primaryImpact:  entry.primaryImpact || "AUD", impactType:     entry.impactType    || "OI",
