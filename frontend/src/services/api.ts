@@ -57,6 +57,25 @@ export const lookupApi = {
         params: { category, ...(parentValue ? { parent_value: parentValue } : {}) },
       })
       .then((r) => r.data.options.map((o) => o.value)),
+  
+  getDivisions: (): Promise<string[]> =>
+    api
+      .get<{ options: { value: string; label: string }[] }>("/api/lookups/divisions")
+      .then((r) => r.data.options.map((o) => o.value)),
+  
+  getBrands: (division: string): Promise<string[]> =>
+    api
+      .get<{ options: { value: string; label: string }[] }>("/api/lookups/brands", {
+        params: { division },
+      })
+      .then((r) => r.data.options.map((o) => o.value)),
+  
+  getBrandFamilies: (brandName: string): Promise<string[]> =>
+    api
+      .get<{ options: { value: string; label: string }[] }>("/api/lookups/brand-families", {
+        params: { brand_name: brandName },
+      })
+      .then((r) => r.data.options.map((o) => o.value)),
 };
 
 export const snapshotApi = {

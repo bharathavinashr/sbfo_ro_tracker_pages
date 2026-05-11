@@ -50,6 +50,16 @@ def get_child_impacts(db: Session, entry_id: int):
 def create_entry(db: Session, data: schemas.EntryCreate):
     child_impacts_data = data.child_impacts or []
     entry_data = data.model_dump(exclude={"child_impacts"})
+    
+    # Get product codes if division, brand_name, and brand_family are provided
+    if data.division and data.brand and data.brand_family:
+        # Handle brand_family as either string or list
+        brand_family_list = data.brand_family if isinstance(data.brand_family, list) else [data.brand_family]
+        if brand_family_list and brand_family_list[0]:  # Check if not empty
+            codes = get_product_codes(db, data.division, data.brand, brand_family_list)
+            entry_data["brand_code"] = codes["brand_code"]
+            entry_data["brand_family_code"] = codes["brand_family_code"]
+    
     entry = models.Entry(**entry_data, version=1)
     db.add(entry)
     db.flush()
@@ -77,6 +87,15 @@ def update_entry(db: Session, entry_id: int, data: schemas.EntryUpdate):
 
     child_impacts_data = data.child_impacts or []
     entry_data = data.model_dump(exclude={"child_impacts"})
+    
+    # Get product codes if division, brand_name, and brand_family are provided
+    if data.division and data.brand and data.brand_family:
+        # Handle brand_family as either string or list
+        brand_family_list = data.brand_family if isinstance(data.brand_family, list) else [data.brand_family]
+        if brand_family_list and brand_family_list[0]:  # Check if not empty
+            codes = get_product_codes(db, data.division, data.brand, brand_family_list)
+            entry_data["brand_code"] = codes["brand_code"]
+            entry_data["brand_family_code"] = codes["brand_family_code"]
 
     new_entry = models.Entry(
         original_entry_id=current.original_entry_id,
@@ -123,7 +142,9 @@ def _new_version_with_status(db: Session, entry_id: int, new_status: str, modifi
         sub_channel=current.sub_channel,
         account=current.account,
         brand=current.brand,
+        brand_code=current.brand_code,
         brand_family=current.brand_family,
+        brand_family_code=current.brand_family_code,
         r_and_o=current.r_and_o,
         probability=current.probability,
         categorisation=current.categorisation,
@@ -181,6 +202,82 @@ def get_lookup_options(db: Session, category: str, parent_value: str = None):
     return q.order_by(models.LookupOption.sort_order, models.LookupOption.value).all()
 
 
+def get_divisions(db: Session):
+    """Get distinct divisions from ro_products table."""
+    return (
+        db.query(models.ROProduct.division)
+        .distinct()
+        .order_by(models.ROProduct.division)
+        .all()
+    )
+
+
+def get_brands_by_division(db: Session, division: str):
+    """Get distinct brand names from ro_products table filtered by division."""
+    return (
+        db.query(models.ROProduct.brand_name)
+        .filter(models.ROProduct.division == division)
+        .distinct()
+        .order_by(models.ROProduct.brand_name)
+        .all()
+    )
+
+
+def get_brand_families_by_brand(db: Session, brand_name: str):
+    """Get distinct brand families from ro_products table filtered by brand name."""
+    return (
+        db.query(models.ROProduct.brand_family)
+        .filter(models.ROProduct.brand_name == brand_name)
+        .distinct()
+        .order_by(models.ROProduct.brand_family)
+        .all()
+    )
+
+
+def get_product_codes(db: Session, division: str, brand_name: str, brand_family):
+    """Get brand_code and brand_family_code for a product.
+
+    Handles both single brand_family (string) and multiple (list).
+    Returns the unique brand_code and a list of unique brand_family_codes.
+    """
+    # Handle brand_family as either string or list
+    brand_families = brand_family if isinstance(brand_family, list) else [brand_family]
+    
+    # Remove empty strings
+    brand_families = [bf for bf in brand_families if bf]
+    
+    if not brand_families:
+        return {
+            "brand_code": None,
+            "brand_family_code": None,
+        }
+    
+    # Query for products matching division and brand_name
+    products = (
+        db.query(models.ROProduct)
+        .filter(
+            models.ROProduct.division == division,
+            models.ROProduct.brand_name == brand_name,
+            models.ROProduct.brand_family.in_(brand_families),
+        )
+        .all()
+    )
+
+    if products:
+        # Brand code is typically the same for all families of the same brand
+        brand_codes = list(dict.fromkeys(p.brand_code for p in products if p.brand_code))
+        family_codes = list(dict.fromkeys(p.brand_family_code for p in products if p.brand_family_code))
+        return {
+            "brand_code": brand_codes[0] if brand_codes else None,
+            "brand_family_code": family_codes,
+        }
+
+    return {
+        "brand_code": None,
+        "brand_family_code": None,
+    }
+
+
 def get_all_users(db: Session):
     return (
         db.query(models.AppUser)
@@ -188,4 +285,3 @@ def get_all_users(db: Session):
         .order_by(models.AppUser.email)
         .all()
     )
-

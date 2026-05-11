@@ -30,7 +30,9 @@ class EntryBase(BaseModel):
     sub_channel: str
     account: str
     brand: str
+    brand_code: Optional[str] = None
     brand_family: Optional[list[str]] = None
+    brand_family_code: Optional[str] = None
     r_and_o: str
     probability: str
     categorisation: str

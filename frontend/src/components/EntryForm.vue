@@ -670,6 +670,7 @@ import type { Entry } from "@/types";
 import { PERIODS } from "@/types";
 import { useLookupStore } from "@/stores/lookupStore";
 import { useEntryStore } from "@/stores/entryStore";
+import { lookupApi } from "@/services/api";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Stores & user info
@@ -682,9 +683,20 @@ const ownerOptions = computed(() =>
   entryStore.users.filter((u) => u.role === 0 || u.role === 1)
 );
 
-onMounted(() => {
+// Product-based lookup data (from API)
+const divisionOptions = ref<string[]>([]);
+const brandOptions = ref<string[]>([]);
+const brandFamilyOptions = ref<string[]>([]);
+
+onMounted(async () => {
   lookupStore.preload();
   if (entryStore.users.length === 0) entryStore.fetchUsers();
+  // Load initial divisions
+  try {
+    divisionOptions.value = await lookupApi.getDivisions();
+  } catch (error) {
+    console.error("Error loading divisions:", error);
+  }
   document.addEventListener("mousedown", handleBrandFamilyClickOutside);
 });
 onBeforeUnmount(() => {
@@ -694,7 +706,6 @@ onBeforeUnmount(() => {
 // ─────────────────────────────────────────────────────────────────────────────
 // Lookup options (from store)
 // ─────────────────────────────────────────────────────────────────────────────
-const divisionOptions    = computed(() => lookupStore.getCached("division"));
 const countryOptions     = computed(() => lookupStore.getCached("country"));
 const probabilityOptions = computed(() => lookupStore.getCached("probability"));
 const ibpStepOptions     = computed(() => lookupStore.getCached("ibp_step"));
@@ -731,12 +742,6 @@ const accountOptions    = computed(() =>
   formData.value.subChannel
     ? lookupStore.getCached("account", formData.value.subChannel)
     : lookupStore.getCached("account")
-);
-const brandOptions       = computed(() => lookupStore.getCached("brand"));
-const brandFamilyOptions = computed(() =>
-  formData.value.brand
-    ? lookupStore.getCached("brand_family", formData.value.brand)
-    : lookupStore.getCached("brand_family")
 );
 
 const channelOpen       = ref(false);
@@ -1054,7 +1059,35 @@ watch(() => formData.value.primaryImpact, (newUnit, oldUnit) => {
 watch(() => formData.value.secondaryUnit, (val) => { if (isLoadingEntry.value) return; formData.value.childImpacts.forEach(ci => { ci.secondaryUnit = val; }); });
 watch(() => formData.value.channel, (val) => { if (!isLoadingEntry.value) { formData.value.subChannel = ""; formData.value.account = ""; } if (val) lookupStore.loadChildren("sub_channel", val); });
 watch(() => formData.value.subChannel, (val) => { if (!isLoadingEntry.value) formData.value.account = ""; if (val) lookupStore.loadChildren("account", val); });
-watch(() => formData.value.brand, (val) => { if (!isLoadingEntry.value) formData.value.brandFamily = []; if (val) lookupStore.loadChildren("brand_family", val); });
+
+watch(() => formData.value.division, async (division) => {
+  if (!isLoadingEntry.value) formData.value.brand = "";
+  if (!isLoadingEntry.value) formData.value.brandFamily = [];
+  if (division) {
+    try {
+      brandOptions.value = await lookupApi.getBrands(division);
+    } catch (error) {
+      console.error("Error loading brands:", error);
+      brandOptions.value = [];
+    }
+  } else {
+    brandOptions.value = [];
+  }
+});
+
+watch(() => formData.value.brand, async (brand) => {
+  if (!isLoadingEntry.value) formData.value.brandFamily = [];
+  if (brand) {
+    try {
+      brandFamilyOptions.value = await lookupApi.getBrandFamilies(brand);
+    } catch (error) {
+      console.error("Error loading brand families:", error);
+      brandFamilyOptions.value = [];
+    }
+  } else {
+    brandFamilyOptions.value = [];
+  }
+});
 watch(() => formData.value.department, (val) => {
   if (isInitialLoadRef.value) return;
   if (!CATEG_ACTIVE_DEPTS.includes(val)) formData.value.categorisation = "";
@@ -1082,6 +1115,24 @@ watch(() => props.entry, async (entry) => {
       if (!val || unit !== "Volume" || !entryIsAlcohol) return val;
       const n = parseFloat(val); return isNaN(n) ? val : String(n / 9);
     };
+    
+    // Load brands for the entry's division
+    if (entry.division) {
+      try {
+        brandOptions.value = await lookupApi.getBrands(entry.division);
+      } catch (error) {
+        console.error("Error loading brands for division:", error);
+      }
+    }
+    
+    // Load brand families for the entry's brand
+    if (entry.brand) {
+      try {
+        brandFamilyOptions.value = await lookupApi.getBrandFamilies(entry.brand);
+      } catch (error) {
+        console.error("Error loading brand families:", error);
+      }
+    }
 
     let brandFamilyArray: string[] = [];
     if (entry.brandFamily) {
