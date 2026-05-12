@@ -67,8 +67,11 @@ export const useEntryStore = defineStore("entry", () => {
   async function fetchEntries() {
     loading.value = true;
     try {
-      const activeFilters = Object.fromEntries(
-        Object.entries(filters.value).filter(([, v]) => v !== "")
+      const activeFilters: any = Object.fromEntries(
+        Object.entries(filters.value).filter(([, v]) => {
+          if (Array.isArray(v)) return v.length > 0;
+          return v !== "";
+        })
       );
       if (userRole.value) activeFilters.role = userRole.value;
       // Pass department restriction for Department Approver (null = all, array = restricted)
