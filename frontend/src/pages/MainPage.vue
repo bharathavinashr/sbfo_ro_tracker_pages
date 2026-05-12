@@ -110,10 +110,12 @@
     >
       <EntryForm :key="formKey" ref="formRef" :entry="editingEntry" />
       <template #footer>
-        <el-button @click="formOpen = false">Cancel</el-button>
-        <el-button type="primary" :loading="saving" @click="handleSave">
-          {{ editingEntry ? "Save Changes" : "Create Entry" }}
-        </el-button>
+        <div class="dialog-footer-btns">
+          <el-button @click="formOpen = false">Cancel</el-button>
+          <el-button type="primary" :loading="saving" @click="handleSave">
+            {{ editingEntry ? "Save Changes" : "Create Entry" }}
+          </el-button>
+        </div>
       </template>
     </el-dialog>
 
@@ -413,5 +415,38 @@ function goToHistory(entry: Entry) {
     width: 100%;
     justify-content: flex-start;
   }
+}
+
+.dialog-footer-btns {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.dialog-footer-btns :deep(.el-button) {
+  flex: 1;
+  margin: 0;
+}
+
+.dialog-footer-btns :deep(.el-button) {
+  background-color: #000;
+  border-color: #000;
+  color: #fff;
+}
+
+.dialog-footer-btns :deep(.el-button:hover) {
+  background-color: #333;
+  border-color: #333;
+}
+
+.dialog-footer-btns :deep(.el-button--primary) {
+  background-color: #000;
+  border-color: #000;
+  color: #fff;
+}
+
+.dialog-footer-btns :deep(.el-button--primary:hover) {
+  background-color: #333;
+  border-color: #333;
 }
 </style>

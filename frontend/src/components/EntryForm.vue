@@ -25,6 +25,7 @@
                 <el-input
                   v-model="creationPeriodSearch"
                   :placeholder="formData.creationDatePeriod ? periodToMonth(formData.creationDatePeriod) : 'Select period'"
+                  :class="{ 'has-selected-value': !!formData.creationDatePeriod && !creationPeriodSearch }"
                   @focus="creationPeriodOpen = true"
                   @blur="onCreationPeriodBlur"
                   @input="creationPeriodOpen = true"
@@ -43,6 +44,7 @@
                 <el-input
                   v-model="creationYearSearch"
                   :placeholder="formData.creationDateYear || 'Select year'"
+                  :class="{ 'has-selected-value': !!formData.creationDateYear && !creationYearSearch }"
                   @focus="creationYearOpen = true"
                   @blur="onCreationYearBlur"
                   @input="creationYearOpen = true"
@@ -91,6 +93,7 @@
                 <el-input
                   v-model="atfbPeriodSearch"
                   :placeholder="formData.addToForecastByPeriod || 'Select period'"
+                  :class="{ 'has-selected-value': !!formData.addToForecastByPeriod && !atfbPeriodSearch }"
                   @focus="atfbPeriodOpen = true"
                   @blur="onAtfbPeriodBlur"
                   @input="atfbPeriodOpen = true"
@@ -109,6 +112,7 @@
                 <el-input
                   v-model="atfbYearSearch"
                   :placeholder="formData.addToForecastByYear || 'Select year'"
+                  :class="{ 'has-selected-value': !!formData.addToForecastByYear && !atfbYearSearch }"
                   @focus="atfbYearOpen = true"
                   @blur="onAtfbYearBlur"
                   @input="atfbYearOpen = true"
@@ -133,7 +137,8 @@
             <div class="combo-wrap">
               <el-input
                 v-model="deptSearch"
-                :placeholder="formData.department || 'Select or enter department'"
+                :placeholder="formData.department || 'Select department'"
+                :class="{ 'has-selected-value': !!formData.department && !deptSearch }"
                 @focus="deptOpen = true"
                 @blur="onDeptBlur"
                 @input="deptOpen = true"
@@ -154,7 +159,8 @@
             <div class="combo-wrap">
               <el-input
                 v-model="divSearch"
-                :placeholder="formData.division || 'Select or enter division'"
+                :placeholder="formData.division || 'Select division'"
+                :class="{ 'has-selected-value': !!formData.division && !divSearch }"
                 @focus="divOpen = true"
                 @blur="onDivBlur"
                 @input="divOpen = true"
@@ -178,7 +184,8 @@
             <div class="combo-wrap">
               <el-input
                 v-model="countrySearch"
-                :placeholder="formData.country || 'Select or enter country'"
+                :placeholder="formData.country || 'Select country'"
+                :class="{ 'has-selected-value': !!formData.country && !countrySearch }"
                 @focus="countryOpen = true"
                 @blur="onCountryBlur"
                 @input="countryOpen = true"
@@ -190,9 +197,9 @@
               <div v-if="countryOpen" class="combo-dropdown">
                 <div v-for="c in filteredCountries" :key="c" class="combo-item" @mousedown.prevent="formData.country = c; countrySearch = ''; countryOpen = false">{{ c }}</div>
                 <div v-if="filteredCountries.length === 0 && countrySearch" class="combo-custom" @mousedown.prevent="formData.country = countrySearch; countryOpen = false">Use custom value: "{{ countrySearch }}"</div>
+                </div>
               </div>
-            </div>
-          </el-form-item>
+            </el-form-item>
         </el-col>
         <el-col :span="12">
           <el-form-item
@@ -200,14 +207,25 @@
             prop="categorisation"
             :required="categActive"
           >
-            <el-select
-              v-model="formData.categorisation"
-              style="width: 100%"
-              :disabled="!categActive"
-              :placeholder="categActive ? 'Select categorisation' : 'Only available for Marketing, Demand, Supply, or Overheads'"
-            >
-              <el-option v-for="c in categOptions" :key="c" :value="c" :label="c" />
-            </el-select>
+            <div class="combo-wrap">
+              <el-input
+                v-model="categSearch"
+                :placeholder="formData.categorisation || (categActive ? 'Select categorisation' : 'Not available')"
+                :disabled="!categActive"
+                :class="{ 'has-selected-value': !!formData.categorisation && !categSearch }"
+                @focus="categOpen = true"
+                @blur="onCategBlur"
+                @input="categOpen = true"
+                clearable
+                @clear="formData.categorisation = ''; categSearch = ''"
+              >
+                <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
+              </el-input>
+              <div v-if="categOpen" class="combo-dropdown">
+                <div v-for="c in filteredCategs" :key="c" class="combo-item" @mousedown.prevent="formData.categorisation = c; categSearch = ''; categOpen = false">{{ c }}</div>
+                <div v-if="filteredCategs.length === 0 && categSearch" class="combo-custom" @mousedown.prevent="formData.categorisation = categSearch; categOpen = false">Use custom value: "{{ categSearch }}"</div>
+              </div>
+            </div>
           </el-form-item>
         </el-col>
       </el-row>
@@ -413,6 +431,7 @@
                         <el-input
                           v-model="prStartPeriodSearch"
                           :placeholder="periodRangeStart.period ? periodToMonth(periodRangeStart.period) : 'Select period'"
+                          :class="{ 'has-selected-value': !!periodRangeStart.period && !prStartPeriodSearch }"
                           @focus="prStartPeriodOpen = true"
                           @blur="onPrStartPeriodBlur"
                           @input="prStartPeriodOpen = true"
@@ -430,6 +449,7 @@
                         <el-input
                           v-model="prStartYearSearch"
                           :placeholder="periodRangeStart.year || 'Select year'"
+                          :class="{ 'has-selected-value': !!periodRangeStart.year && !prStartYearSearch }"
                           @focus="prStartYearOpen = true"
                           @blur="onPrStartYearBlur"
                           @input="prStartYearOpen = true"
@@ -450,6 +470,7 @@
                         <el-input
                           v-model="prEndPeriodSearch"
                           :placeholder="periodRangeEnd.period ? periodToMonth(periodRangeEnd.period) : 'Select period'"
+                          :class="{ 'has-selected-value': !!periodRangeEnd.period && !prEndPeriodSearch }"
                           @focus="prEndPeriodOpen = true"
                           @blur="onPrEndPeriodBlur"
                           @input="prEndPeriodOpen = true"
@@ -467,6 +488,7 @@
                         <el-input
                           v-model="prEndYearSearch"
                           :placeholder="periodRangeEnd.year || 'Select year'"
+                          :class="{ 'has-selected-value': !!periodRangeEnd.year && !prEndYearSearch }"
                           @focus="prEndYearOpen = true"
                           @blur="onPrEndYearBlur"
                           @input="prEndYearOpen = true"
@@ -495,6 +517,7 @@
                       <el-input
                         v-model="impactPeriodSearch"
                         :placeholder="formData.impactPeriod ? periodToMonth(formData.impactPeriod) : 'Select period'"
+                        :class="{ 'has-selected-value': !!formData.impactPeriod && !impactPeriodSearch }"
                         :disabled="hasChildImpacts"
                         @focus="impactPeriodOpen = true"
                         @blur="onImpactPeriodBlur"
@@ -513,6 +536,7 @@
                       <el-input
                         v-model="impactYearSearch"
                         :placeholder="formData.impactYear || 'Select year'"
+                        :class="{ 'has-selected-value': !!formData.impactYear && !impactYearSearch }"
                         :disabled="hasChildImpacts"
                         @focus="impactYearOpen = true"
                         @blur="onImpactYearBlur"
@@ -587,6 +611,7 @@
                 <el-input
                   v-model="child._periodSearch"
                   :placeholder="child.impactPeriod ? periodToMonth(child.impactPeriod) : 'Select period'"
+                  :class="{ 'has-selected-value': !!child.impactPeriod && !child._periodSearch }"
                   @focus="child._periodOpen = true"
                   @blur="onChildPeriodBlur(child)"
                   @input="child._periodOpen = true"
@@ -606,6 +631,7 @@
                 <el-input
                   v-model="child._yearSearch"
                   :placeholder="child.impactYear || 'Select year'"
+                  :class="{ 'has-selected-value': !!child.impactYear && !child._yearSearch }"
                   @focus="child._yearOpen = true"
                   @blur="onChildYearBlur(child)"
                   @input="child._yearOpen = true"
@@ -760,6 +786,12 @@ const divOpen = ref(false);
 const divSearch = ref("");
 const countryOpen = ref(false);
 const countrySearch = ref("");
+
+// Categorisation dropdown state
+const categOpen = ref(false);
+const categSearch = ref("");
+function onCategBlur() { setTimeout(() => { categOpen.value = false; }, 120); }
+const filteredCategs = computed(() => categOptions.value.filter(c => c.toLowerCase().includes(categSearch.value.toLowerCase())));
 
 const creationPeriodOpen = ref(false);
 const creationPeriodSearch = ref("");
@@ -1378,18 +1410,22 @@ watch(() => props.entry, async (entry) => {
 }, { immediate: true });
 
 const rules: FormRules = {
-  creationDatePeriod: [{ required: true, message: "Required", trigger: "change" }], creationDateYear: [{ required: true, message: "Required", trigger: "change" }],
-  division: [{ required: true, message: "Required", trigger: "change" }], department: [{ required: true, message: "Required", trigger: "change" }],
-  country: [{ required: true, message: "Required", trigger: "change" }], 
-  channel: [{ validator: (_rule: any, value: any, callback: any) => { if (!value?.length) callback(new Error("Required")); else callback(); }, trigger: "change" }],
-  subChannel: [{ validator: (_rule: any, value: any, callback: any) => { if (!value?.length) callback(new Error("Required")); else callback(); }, trigger: "change" }],
-  account: [{ validator: (_rule: any, value: any, callback: any) => { if (!value?.length) callback(new Error("Required")); else callback(); }, trigger: "change" }],
-  brand: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Required")); else callback(); }, trigger: "change" }],
-  brandFamily: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Required")); else callback(); }, trigger: "change" }],
-  rAndO: [{ required: true, message: "Required", trigger: "change" }], probability: [{ required: true, message: "Required", trigger: "change" }],
-  categorisation: [{ validator: (_rule: unknown, value: string, callback: (e?: Error) => void) => { if (categActive.value && !value) callback(new Error("Required")); else callback(); }, trigger: "change", }],
-  owner: [{ required: true, message: "Required", trigger: "change" }], creator: [{ required: true, message: "Required", trigger: "blur" }],
-  shortDescription: [{ required: true, message: "Required", trigger: "blur" }],
+  creationDatePeriod: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
+  creationDateYear: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
+  division: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
+  department: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
+  country: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
+  channel: [{ validator: (_rule: any, value: any, callback: any) => { if (!value?.length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
+  subChannel: [{ validator: (_rule: any, value: any, callback: any) => { if (!value?.length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
+  account: [{ validator: (_rule: any, value: any, callback: any) => { if (!value?.length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
+  brand: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
+  brandFamily: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
+  rAndO: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
+  probability: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
+  categorisation: [{ validator: (_rule: unknown, value: string, callback: (e?: Error) => void) => { if (categActive.value && !value) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
+  owner: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
+  creator: [{ required: true, message: "Please fill out this field.", trigger: "blur" }],
+  shortDescription: [{ required: true, message: "Please fill out this field.", trigger: "blur" }],
 };
 
 function addChild() {
@@ -1490,7 +1526,11 @@ function mapToFields(primaryUnit: string, primaryVal: string, secUnit: string, s
 
 async function validate() {
   try {
-    await formRef.value!.validate();
+    await formRef.value!.validate().catch(err => {
+      const firstField = Object.keys(err)[0];
+      if (firstField) formRef.value!.scrollToField(firstField);
+      throw err;
+    });
     if (hasChildImpacts.value) {
       for (let i = 0; i < formData.value.childImpacts.length; i++) {
         const ci = formData.value.childImpacts[i];
@@ -1562,6 +1602,10 @@ defineExpose({ validate, reset });
   flex-direction: column;
   gap: 16px;
   background-color: #fff;
+  max-height: 70vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 16px;
 }
 
 .form-header {
@@ -1585,7 +1629,7 @@ defineExpose({ validate, reset });
 /* ── Custom Form Styles (Flat UI Look) ─────────────────────────────────────────────────────── */
 :deep(.el-form-item__label) {
   font-weight: 600;
-  font-size: 13px;
+  font-size: 14px;
   color: #1a1a1a;
   padding-bottom: 4px;
   line-height: 1.2;
@@ -1595,9 +1639,10 @@ defineExpose({ validate, reset });
 :deep(.el-input__wrapper),
 :deep(.el-textarea__inner),
 :deep(.el-select .el-input__wrapper) {
+  font-size: 14px;
   background-color: #f4f5f7;
   border: 1px solid transparent;
-  box-shadow: none !important;
+  box-shadow: 0 0 0 1px transparent inset !important;
   border-radius: 6px;
   transition: all 0.2s ease;
 }
@@ -1612,6 +1657,38 @@ defineExpose({ validate, reset });
   background-color: #fff;
   border: 1px solid #1a1a1a;
 }
+
+:deep(.el-form-item.is-error .el-input__wrapper),
+:deep(.el-form-item.is-error .el-textarea__inner),
+:deep(.el-form-item.is-error .combo-trigger) {
+  box-shadow: 0 0 0 1px #f56c6c inset !important;
+  background-color: #fff !important;
+}
+
+:deep(.el-form-item__error) {
+  position: relative;
+  display: inline-block;
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid #fee2e2;
+  margin-top: 6px;
+  box-shadow: 0 2px 5px rgba(220, 38, 38, 0.1);
+}
+
+:deep(.el-input__inner),
+:deep(.el-textarea__inner) {
+  color: #000 !important;
+}
+
+/* Exception for Creator (keep it muted since it's disabled) */
+:deep(.el-form-item[prop="creator"] .el-input.is-disabled .el-input__inner) {
+  color: #a8a8a8 !important;
+}
+
 :deep(.el-input.is-disabled .el-input__wrapper) {
   background-color: #f9f9f9;
   color: #a8a8a8;
@@ -1642,7 +1719,21 @@ defineExpose({ validate, reset });
 .period-select { flex: 1; }
 .year-select   { width: 120px; flex-shrink: 0; flex: 1;}
 .owner-wrap { display: flex; flex-direction: column; }
-.owner-checkbox { margin-top: -8px; margin-bottom: 4px; }
+.owner-checkbox {
+  margin-top: -8px;
+  margin-bottom: 4px;
+}
+:deep(.owner-checkbox .el-checkbox__label) {
+  color: #000 !important;
+  font-weight: 500;
+}
+:deep(.owner-checkbox .el-checkbox__input.is-checked .el-checkbox__inner) {
+  background-color: #000 !important;
+  border-color: #000 !important;
+}
+:deep(.owner-checkbox .el-checkbox__input .el-checkbox__inner) {
+  border-color: #000;
+}
 .sub-label {
   font-size: 12px;
   font-weight: 600;
@@ -1731,8 +1822,15 @@ defineExpose({ validate, reset });
   transition: background 0.2s;
 }
 .combo-trigger:hover { background: #ededf0; }
-.combo-trigger .has-value { color: #1a1a1a; }
+.combo-trigger .has-value { color: #000; font-weight: 500; }
 .combo-trigger .placeholder { color: #a8a8a8; }
+
+/* Placeholder turned into black when it represents a selected value */
+.has-selected-value :deep(input::placeholder) {
+  color: #000 !important;
+  opacity: 1;
+}
+
 .brand-family-dropdown { padding: 12px 0; }
 .bf-search { padding: 0 12px; margin-bottom: 8px; }
 .combo-check-item { display: flex; align-items: center; gap: 10px; }
