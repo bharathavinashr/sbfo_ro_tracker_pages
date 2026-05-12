@@ -3,7 +3,7 @@
     <div class="form-header">
       <h2 class="form-title">{{ props.entry?.id ? "Edit Entry" : "Create New Entry" }}</h2>
     </div>
-    
+
     <el-form
       ref="formRef"
       :model="formData"
@@ -242,43 +242,39 @@
 
       <el-row :gutter="24">
         <el-col :span="12">
-          <el-form-item label="Channel" prop="channel">
-            <div class="combo-wrap">
-              <el-input
-                v-model="channelSearch"
-                :placeholder="formData.channel || 'Select or enter channel'"
-                @focus="channelOpen = true"
-                @blur="onChannelBlur"
-                @input="channelOpen = true"
-                clearable
-                @clear="formData.channel = ''; channelSearch = ''"
-              >
-                <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
-              </el-input>
+          <el-form-item label="Channel" prop="channel" ref="channelRef">
+            <div class="combo-wrap" ref="channelRef" v-click-outside="handleChannelClickOutside">
+              <div class="combo-trigger" @click="channelOpen = !channelOpen">
+                <span :class="formData.channel.length ? 'has-value' : 'placeholder'">
+                  {{ formData.channel.length ? formData.channel.join(', ') : 'Select one or more channels' }}
+                </span>
+                <el-icon class="combo-arrow"><ArrowDown /></el-icon>
+              </div>
               <div v-if="channelOpen" class="combo-dropdown">
-                <div v-for="c in filteredChannels" :key="c" class="combo-item" :class="{ 'is-disabled': isChannelDisabled(c) }" @mousedown.prevent="selectChannel(c)">{{ c }}</div>
-                <div v-if="filteredChannels.length === 0 && channelSearch" class="combo-custom" @mousedown.prevent="formData.channel = channelSearch; channelOpen = false">Use custom value: "{{ channelSearch }}"</div>
+                <div v-for="c in filteredChannels" :key="c" class="combo-item combo-check-item" :class="{ 'is-disabled': isChannelDisabled(c) }" @mousedown.prevent="toggleChannel(c)">
+                  <el-checkbox :model-value="formData.channel.includes(c)" /><span>{{ c }}</span>
+                </div>
               </div>
             </div>
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="Brand" prop="brand">
-            <div class="combo-wrap">
-              <el-input
-                v-model="brandSearch"
-                :placeholder="formData.brand || 'Select or enter brand'"
-                @focus="brandOpen = true"
-                @blur="onBrandBlur"
-                @input="brandOpen = true"
-                clearable
-                @clear="formData.brand = ''; brandSearch = ''"
-              >
-                <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
-              </el-input>
-              <div v-if="brandOpen" class="combo-dropdown">
-                <div v-for="b in filteredBrands" :key="b" class="combo-item" @mousedown.prevent="formData.brand = b; brandSearch = ''; brandOpen = false">{{ b }}</div>
-                <div v-if="filteredBrands.length === 0 && brandSearch" class="combo-custom" @mousedown.prevent="formData.brand = brandSearch; brandOpen = false">Use custom value: "{{ brandSearch }}"</div>
+          <el-form-item label="Brand" prop="brand" ref="brandRef">
+            <div class="combo-wrap" ref="brandRef" v-click-outside="handleBrandClickOutside">
+              <div class="combo-trigger" @click="brandOpen = !brandOpen">
+                <span :class="Object.keys(formData.brand).length ? 'has-value' : 'placeholder'">
+                  {{ Object.keys(formData.brand).length ? Object.values(formData.brand).join(', ') : 'Select one or more brands' }}
+                </span>
+                <el-icon class="combo-arrow"><ArrowDown /></el-icon>
+              </div>
+              <div v-if="brandOpen" class="combo-dropdown brand-family-dropdown">
+                <el-input v-model="brandSearch" placeholder="Type to search..." class="bf-search" />
+                <div class="combo-item combo-check-item bf-select-all" @mousedown.prevent="toggleAllBrands">
+                  <el-checkbox :model-value="allBrandsSelected" /><span class="bf-select-all-label">Select All Suggestions</span>
+                </div>
+                <div v-for="b in filteredBrands" :key="b.value" class="combo-item combo-check-item" @mousedown.prevent="toggleBrand(b.value, b.label)">
+                  <el-checkbox :model-value="!!formData.brand[b.value]" /><span>{{ b.label }}</span>
+                </div>
               </div>
             </div>
           </el-form-item>
@@ -287,50 +283,48 @@
 
       <el-row :gutter="24">
         <el-col :span="12">
-          <el-form-item label="Sub Channel" prop="subChannel">
-            <div class="combo-wrap">
-              <el-input
-                v-model="subChannelSearch"
-                :placeholder="formData.subChannel || 'Select or enter subchannel'"
-                @focus="subChannelOpen = true"
-                @blur="onSubChannelBlur"
-                @input="subChannelOpen = true"
-                clearable
-                @clear="formData.subChannel = ''; subChannelSearch = ''"
-              >
-                <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
-              </el-input>
+          <el-form-item label="Sub Channel" prop="subChannel" ref="subChannelRef">
+            <div class="combo-wrap" ref="subChannelRef" v-click-outside="handleSubChannelClickOutside">
+              <div class="combo-trigger" @click="subChannelOpen = !subChannelOpen">
+                <span :class="formData.subChannel.length ? 'has-value' : 'placeholder'">
+                  {{ formData.subChannel.length ? formData.subChannel.join(', ') : 'Select one or more sub-channels' }}
+                </span>
+                <el-icon class="combo-arrow"><ArrowDown /></el-icon>
+              </div>
               <div v-if="subChannelOpen" class="combo-dropdown">
-                <div v-for="s in filteredSubChannels" :key="s" class="combo-item" @mousedown.prevent="formData.subChannel = s; subChannelSearch = ''; subChannelOpen = false">{{ s }}</div>
-                <div v-if="filteredSubChannels.length === 0 && subChannelSearch" class="combo-custom" @mousedown.prevent="formData.subChannel = subChannelSearch; subChannelOpen = false">Use custom value: "{{ subChannelSearch }}"</div>
+                <div v-for="s in filteredSubChannels" :key="s" class="combo-item combo-check-item" @mousedown.prevent="toggleSubChannel(s)">
+                  <el-checkbox :model-value="formData.subChannel.includes(s)" /><span>{{ s }}</span>
+                </div>
               </div>
             </div>
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="Brand Family" prop="brandFamily">
-            <div class="combo-wrap" ref="brandFamilyRef">
+          <el-form-item label="Brand Family" prop="brandFamily" ref="brandFamilyRef">
+            <div class="combo-wrap" ref="brandFamilyRef" v-click-outside="handleBrandFamilyClickOutside">
               <div class="combo-trigger" @click="brandFamilyOpen = !brandFamilyOpen">
-                <span :class="formData.brandFamily.length ? 'has-value' : 'placeholder'">
-                  {{ formData.brandFamily.length ? formData.brandFamily.join(', ') : 'Select one or more brand families' }}
+                <span :class="Object.keys(formData.brandFamily).length ? 'has-value' : 'placeholder'">
+                  {{ Object.keys(formData.brandFamily).length ? Object.values(formData.brandFamily).join(', ') : 'Select one or more brand families' }}
                 </span>
                 <el-icon class="combo-arrow"><ArrowDown /></el-icon>
               </div>
               <div v-if="brandFamilyOpen" class="combo-dropdown brand-family-dropdown">
                 <el-input v-model="brandFamilySearch" placeholder="Type to search or add custom..." class="bf-search" @keydown.enter.prevent="addCustomBrandFamily" />
-                <div v-if="brandFamilySearch.trim() && !brandFamilyOptions.some(f => f.toLowerCase() === brandFamilySearch.toLowerCase())" class="combo-custom" @mousedown.prevent="addCustomBrandFamily">+ Add custom: "{{ brandFamilySearch }}"</div>
-                <template v-if="formData.brandFamily.filter(f => !brandFamilyOptions.includes(f)).length">
+                <div v-if="brandFamilySearch.trim() && !brandFamilyOptions.some(f => f.label.toLowerCase() === brandFamilySearch.toLowerCase())" class="combo-custom" @mousedown.prevent="addCustomBrandFamily">+ Add custom: "{{ brandFamilySearch }}"</div>
+                <template v-if="Object.keys(formData.brandFamily).filter(k => !brandFamilyOptions.some(opt => opt.value === k)).length">
                   <div class="bf-section-label">Custom Values</div>
-                  <div v-for="f in formData.brandFamily.filter(fv => !brandFamilyOptions.includes(fv))" :key="f" class="combo-item combo-check-item" @mousedown.prevent="toggleBrandFamily(f)">
-                    <el-checkbox :model-value="true" /><span>{{ f }}</span>
-                  </div>
+                  <template v-for="(name, code) in formData.brandFamily" :key="code">
+                    <div v-if="!brandFamilyOptions.some(opt => opt.value === code)" class="combo-item combo-check-item" @mousedown.prevent="toggleBrandFamily(code, name)">
+                      <el-checkbox :model-value="true" /><span>{{ name }}</span>
+                    </div>
+                  </template>
                   <div class="bf-divider" />
                 </template>
                 <div class="combo-item combo-check-item bf-select-all" @mousedown.prevent="toggleAllBrandFamilies">
                   <el-checkbox :model-value="allBrandFamiliesSelected" /><span class="bf-select-all-label">Select All Suggestions</span>
                 </div>
-                <div v-for="f in filteredBrandFamilies" :key="f" class="combo-item combo-check-item" @mousedown.prevent="toggleBrandFamily(f)">
-                  <el-checkbox :model-value="formData.brandFamily.includes(f)" /><span>{{ f }}</span>
+                <div v-for="f in filteredBrandFamilies" :key="f.value" class="combo-item combo-check-item" @mousedown.prevent="toggleBrandFamily(f.value, f.label)">
+                  <el-checkbox :model-value="!!formData.brandFamily[f.value]" /><span>{{ f.label }}</span>
                 </div>
               </div>
             </div>
@@ -340,22 +334,18 @@
 
       <el-row :gutter="24">
         <el-col :span="12">
-          <el-form-item label="Account" prop="account">
-            <div class="combo-wrap">
-              <el-input
-                v-model="accountSearch"
-                :placeholder="formData.account || 'Select or enter account'"
-                @focus="accountOpen = true"
-                @blur="onAccountBlur"
-                @input="accountOpen = true"
-                clearable
-                @clear="formData.account = ''; accountSearch = ''"
-              >
-                <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
-              </el-input>
+          <el-form-item label="Account" prop="account" ref="accountRef">
+            <div class="combo-wrap" ref="accountRef" v-click-outside="handleAccountClickOutside">
+              <div class="combo-trigger" @click="accountOpen = !accountOpen">
+                <span :class="formData.account.length ? 'has-value' : 'placeholder'">
+                  {{ formData.account.length ? formData.account.join(', ') : 'Select one or more accounts' }}
+                </span>
+                <el-icon class="combo-arrow"><ArrowDown /></el-icon>
+              </div>
               <div v-if="accountOpen" class="combo-dropdown">
-                <div v-for="a in filteredAccounts" :key="a" class="combo-item" @mousedown.prevent="formData.account = a; accountSearch = ''; accountOpen = false">{{ a }}</div>
-                <div v-if="filteredAccounts.length === 0 && accountSearch" class="combo-custom" @mousedown.prevent="formData.account = accountSearch; accountOpen = false">Use custom value: "{{ accountSearch }}"</div>
+                <div v-for="a in filteredAccounts" :key="a" class="combo-item combo-check-item" @mousedown.prevent="toggleAccount(a)">
+                  <el-checkbox :model-value="formData.account.includes(a)" /><span>{{ a }}</span>
+                </div>
               </div>
             </div>
           </el-form-item>
@@ -382,7 +372,7 @@
 
       <div class="impact-section-header">
         <h4 class="section-title">Impact Details</h4>
-      </div>
+      </div> 
 
       <div v-if="!formData.country" class="impact-locked">
         <el-icon><InfoFilled /></el-icon>
@@ -662,9 +652,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
+import { ref, watch, computed, onMounted, nextTick } from "vue";
 import { Delete, InfoFilled, ArrowDown, Plus } from "@element-plus/icons-vue";
-import { ElMessage } from "element-plus";
+import { ElMessage, ClickOutside as vClickOutside } from "element-plus";
 import type { FormInstance, FormRules } from "element-plus";
 import type { Entry } from "@/types";
 import { PERIODS } from "@/types";
@@ -685,22 +675,19 @@ const ownerOptions = computed(() =>
 
 // Product-based lookup data (from API)
 const divisionOptions = ref<string[]>([]);
-const brandOptions = ref<string[]>([]);
-const brandFamilyOptions = ref<string[]>([]);
+const brandOptions = ref<{value: string, label: string}[]>([]);
+const brandFamilyOptions = ref<{value: string, label: string}[]>([]);
 
 onMounted(async () => {
   lookupStore.preload();
   if (entryStore.users.length === 0) entryStore.fetchUsers();
   // Load initial divisions
   try {
-    divisionOptions.value = await lookupApi.getDivisions();
+    const data = await lookupApi.getDivisions();
+    divisionOptions.value = data.options.map(o => o.value);
   } catch (error) {
     console.error("Error loading divisions:", error);
   }
-  document.addEventListener("mousedown", handleBrandFamilyClickOutside);
-});
-onBeforeUnmount(() => {
-  document.removeEventListener("mousedown", handleBrandFamilyClickOutside);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -734,27 +721,31 @@ const categOptions = computed(() => {
 // ─────────────────────────────────────────────────────────────────────────────
 const channelOptions    = computed(() => lookupStore.getCached("channel"));
 const subChannelOptions = computed(() =>
-  formData.value.channel
+  formData.value.channel.length > 0
     ? lookupStore.getCached("sub_channel", formData.value.channel)
     : lookupStore.getCached("sub_channel")
 );
 const accountOptions    = computed(() =>
-  formData.value.subChannel
+  formData.value.subChannel.length > 0
     ? lookupStore.getCached("account", formData.value.subChannel)
     : lookupStore.getCached("account")
 );
 
+const channelRef        = ref<HTMLElement | null>(null);
+const subChannelRef     = ref<HTMLElement | null>(null);
+const accountRef        = ref<HTMLElement | null>(null);
+const brandSearch       = ref("");
+const brandFamilyOpen   = ref(false);
+const brandFamilySearch = ref("");
+const accountOpen       = ref(false);
 const channelOpen       = ref(false);
 const channelSearch     = ref("");
 const subChannelOpen    = ref(false);
 const subChannelSearch  = ref("");
 const brandOpen         = ref(false);
-const brandSearch       = ref("");
-const brandFamilyOpen   = ref(false);
-const brandFamilySearch = ref("");
-const accountOpen       = ref(false);
 const accountSearch     = ref("");
 const brandFamilyRef    = ref<HTMLElement | null>(null);
+const brandRef          = ref<HTMLElement | null>(null);
 
 const deptOpen = ref(false);
 const deptSearch = ref("");
@@ -791,20 +782,21 @@ const impactPeriodSearch = ref("");
 const impactYearOpen = ref(false);
 const impactYearSearch = ref("");
 
-function handleBrandFamilyClickOutside(event: MouseEvent) {
-  if (brandFamilyRef.value && !brandFamilyRef.value.contains(event.target as Node)) {
-    brandFamilyOpen.value = false;
-  }
-}
+function handleBrandFamilyClickOutside() { brandFamilyOpen.value = false; }
+function handleBrandClickOutside()       { brandOpen.value = false; }
+function handleChannelClickOutside()     { channelOpen.value = false; }
+function handleSubChannelClickOutside()  { subChannelOpen.value = false; }
+function handleAccountClickOutside()     { accountOpen.value = false; }
 
 const currentYear   = new Date().getFullYear();
 const yearOptions   = Array.from({ length: 10 }, (_, i) => currentYear - 2 + i);
 
+
 const filteredChannels      = computed(() => channelOptions.value.filter(c => c.toLowerCase().includes(channelSearch.value.toLowerCase())));
 const filteredSubChannels   = computed(() => subChannelOptions.value.filter(s => s.toLowerCase().includes(subChannelSearch.value.toLowerCase())));
-const filteredBrands        = computed(() => brandOptions.value.filter(b => b.toLowerCase().includes(brandSearch.value.toLowerCase())));
+const filteredBrands        = computed(() => brandOptions.value.filter(b => b.label.toLowerCase().includes(brandSearch.value.toLowerCase())));
 const filteredAccounts      = computed(() => accountOptions.value.filter(a => a.toLowerCase().includes(accountSearch.value.toLowerCase())));
-const filteredBrandFamilies = computed(() => brandFamilyOptions.value.filter(f => f.toLowerCase().includes(brandFamilySearch.value.toLowerCase())));
+const filteredBrandFamilies = computed(() => brandFamilyOptions.value.filter(f => f.label.toLowerCase().includes(brandFamilySearch.value.toLowerCase())));
 
 const filteredDepts         = computed(() => departmentOptions.value.filter(d => d.toLowerCase().includes(deptSearch.value.toLowerCase())));
 const filteredDivs          = computed(() => divisionOptions.value.filter(d => d.toLowerCase().includes(divSearch.value.toLowerCase())));
@@ -824,23 +816,31 @@ const filteredImpactYears = computed(() => yearOptions.map(String).filter(y => y
 const getFilteredChildPeriods = (search?: string) => PERIODS.filter(p => periodToMonth(p).toLowerCase().includes((search || '').toLowerCase()) || p.toLowerCase().includes((search || '').toLowerCase()));
 const getFilteredChildYears = (search?: string) => yearOptions.map(String).filter(y => y.includes(search || ''));
 
-const allBrandFamiliesSelected = computed(() => brandFamilyOptions.value.length > 0 && brandFamilyOptions.value.every(f => formData.value.brandFamily.includes(f)));
+const allBrandFamiliesSelected = computed(() => brandFamilyOptions.value.length > 0 && brandFamilyOptions.value.every(f => !!formData.value.brandFamily[f.value]));
+const allBrandsSelected = computed(() => brandOptions.value.length > 0 && brandOptions.value.every(b => !!formData.value.brand[b.value]));
 
 function isChannelDisabled(ch: string) {
   if (formData.value.division === "Non-Alcohol") return ch === "Licensed" || ch === "Route";
   if (formData.value.division === "Alcohol")     return ch === "Convenience" || ch === "Grocery";
   return false;
 }
-function selectChannel(ch: string) {
-  if (!isChannelDisabled(ch)) {
-    formData.value.channel = ch; channelSearch.value = ""; channelOpen.value = false;
-  }
+function toggleChannel(ch: string) {
+  if (isChannelDisabled(ch)) return;
+  const idx = formData.value.channel.indexOf(ch);
+  if (idx > -1) formData.value.channel.splice(idx, 1);
+  else formData.value.channel.push(ch);
+}
+function toggleSubChannel(s: string) {
+  const idx = formData.value.subChannel.indexOf(s);
+  if (idx > -1) formData.value.subChannel.splice(idx, 1);
+  else formData.value.subChannel.push(s);
+}
+function toggleAccount(a: string) {
+  const idx = formData.value.account.indexOf(a);
+  if (idx > -1) formData.value.account.splice(idx, 1);
+  else formData.value.account.push(a);
 }
 
-function onChannelBlur()    { setTimeout(() => { channelOpen.value = false; }, 120); }
-function onSubChannelBlur() { setTimeout(() => { subChannelOpen.value = false; }, 120); }
-function onBrandBlur()      { setTimeout(() => { brandOpen.value = false; }, 120); }
-function onAccountBlur()    { setTimeout(() => { accountOpen.value = false; }, 120); }
 function onDeptBlur()       { setTimeout(() => { deptOpen.value = false; }, 120); }
 function onDivBlur()        { setTimeout(() => { divOpen.value = false; }, 120); }
 function onCountryBlur()    { setTimeout(() => { countryOpen.value = false; }, 120); }
@@ -858,25 +858,34 @@ function onImpactYearBlur()    { setTimeout(() => { impactYearOpen.value = false
 function onChildPeriodBlur(child: ChildImpactForm) { setTimeout(() => { child._periodOpen = false; }, 120); }
 function onChildYearBlur(child: ChildImpactForm)   { setTimeout(() => { child._yearOpen = false; }, 120); }
 
-function toggleBrandFamily(f: string) {
-  const idx = formData.value.brandFamily.indexOf(f);
-  if (idx === -1) formData.value.brandFamily.push(f);
-  else            formData.value.brandFamily.splice(idx, 1);
+function toggleBrand(code: string, name: string) {
+  if (formData.value.brand[code]) delete formData.value.brand[code];
+  else formData.value.brand[code] = name;
+}
+function toggleAllBrands() {
+  if (allBrandsSelected.value) {
+    brandOptions.value.forEach(b => delete formData.value.brand[b.value]);
+  } else {
+    brandOptions.value.forEach(b => formData.value.brand[b.value] = b.label);
+  }
+}
+
+function toggleBrandFamily(code: string, name: string) {
+  if (formData.value.brandFamily[code]) delete formData.value.brandFamily[code];
+  else formData.value.brandFamily[code] = name;
 }
 function addCustomBrandFamily() {
   const val = brandFamilySearch.value.trim();
-  if (val && !formData.value.brandFamily.includes(val)) {
-    formData.value.brandFamily.push(val);
+  if (val && !Object.values(formData.value.brandFamily).includes(val)) {
+    formData.value.brandFamily[val] = val; // Use name as code for custom
   }
   brandFamilySearch.value = "";
 }
 function toggleAllBrandFamilies() {
-  const predefined = brandFamilyOptions.value;
   if (allBrandFamiliesSelected.value) {
-    formData.value.brandFamily = formData.value.brandFamily.filter(f => !predefined.includes(f));
+    brandFamilyOptions.value.forEach(f => delete formData.value.brandFamily[f.value]);
   } else {
-    const custom = formData.value.brandFamily.filter(f => !predefined.includes(f));
-    formData.value.brandFamily = [...predefined, ...custom];
+    brandFamilyOptions.value.forEach(f => formData.value.brandFamily[f.value] = f.label);
   }
 }
 
@@ -904,11 +913,11 @@ interface FormData {
   division:              string;
   department:            string;
   country:               string;
-  channel:               string;
-  subChannel:            string;
-  account:               string;
-  brand:                 string;
-  brandFamily:           string[];
+  channel:               string[];
+  subChannel:            string[];
+  account:               string[];
+  brand:                 Record<string, string>;
+  brandFamily:           Record<string, string>;
   rAndO:                 string;
   probability:           string;
   categorisation:        string;
@@ -967,8 +976,8 @@ function defaultForm(): FormData {
     addToForecastByPeriod: currentPeriod,
     addToForecastByYear:   String(currentYear),
     division:        "", department:      "", country:         "",
-    channel:         "", subChannel:      "", account:         "",
-    brand:           "", brandFamily:     [], rAndO:           "Risk",
+    channel:         [], subChannel:      [], account:         [],
+    brand:           {}, brandFamily:     {}, rAndO:           "Risk",
     probability:     "", categorisation:  "", impactPeriod:    currentPeriod,
     impactYear:      String(currentYear), impactValue:     "", primaryImpact:   "AUD",
     secondaryValue:  "", secondaryUnit:   "Volume", impactType:      "NSV",
@@ -1057,15 +1066,22 @@ watch(() => formData.value.primaryImpact, (newUnit, oldUnit) => {
   });
 });
 watch(() => formData.value.secondaryUnit, (val) => { if (isLoadingEntry.value) return; formData.value.childImpacts.forEach(ci => { ci.secondaryUnit = val; }); });
-watch(() => formData.value.channel, (val) => { if (!isLoadingEntry.value) { formData.value.subChannel = ""; formData.value.account = ""; } if (val) lookupStore.loadChildren("sub_channel", val); });
-watch(() => formData.value.subChannel, (val) => { if (!isLoadingEntry.value) formData.value.account = ""; if (val) lookupStore.loadChildren("account", val); });
+watch(() => formData.value.channel, (val) => { 
+  if (!isLoadingEntry.value) { formData.value.subChannel = []; formData.value.account = []; } 
+  if (val.length) lookupStore.loadChildren("sub_channel", val); 
+}, { deep: true });
+watch(() => formData.value.subChannel, (val) => { 
+  if (!isLoadingEntry.value) formData.value.account = []; 
+  if (val.length) lookupStore.loadChildren("account", val); 
+}, { deep: true });
 
 watch(() => formData.value.division, async (division) => {
-  if (!isLoadingEntry.value) formData.value.brand = "";
-  if (!isLoadingEntry.value) formData.value.brandFamily = [];
+  if (!isLoadingEntry.value) formData.value.brand = {};
+  if (!isLoadingEntry.value) formData.value.brandFamily = {};
   if (division) {
     try {
-      brandOptions.value = await lookupApi.getBrands(division);
+      const data = await lookupApi.getBrands(division);
+      brandOptions.value = data.options;
     } catch (error) {
       console.error("Error loading brands:", error);
       brandOptions.value = [];
@@ -1075,11 +1091,13 @@ watch(() => formData.value.division, async (division) => {
   }
 });
 
-watch(() => formData.value.brand, async (brand) => {
-  if (!isLoadingEntry.value) formData.value.brandFamily = [];
-  if (brand) {
+watch(() => formData.value.brand, async (brandMap) => {
+  if (!isLoadingEntry.value) formData.value.brandFamily = {};
+  const brandNames = Object.values(brandMap);
+  if (brandNames.length) {
     try {
-      brandFamilyOptions.value = await lookupApi.getBrandFamilies(brand);
+      const data = await lookupApi.getBrandFamilies(brandNames);
+      brandFamilyOptions.value = data.options;
     } catch (error) {
       console.error("Error loading brand families:", error);
       brandFamilyOptions.value = [];
@@ -1087,7 +1105,7 @@ watch(() => formData.value.brand, async (brand) => {
   } else {
     brandFamilyOptions.value = [];
   }
-});
+    }, { deep: true });
 watch(() => formData.value.department, (val) => {
   if (isInitialLoadRef.value) return;
   if (!CATEG_ACTIVE_DEPTS.includes(val)) formData.value.categorisation = "";
@@ -1119,31 +1137,28 @@ watch(() => props.entry, async (entry) => {
     // Load brands for the entry's division
     if (entry.division) {
       try {
-        brandOptions.value = await lookupApi.getBrands(entry.division);
+        const data = await lookupApi.getBrands(entry.division);
+        brandOptions.value = data.options;
       } catch (error) {
         console.error("Error loading brands for division:", error);
       }
     }
-    
-    // Load brand families for the entry's brand
-    if (entry.brand) {
+
+    const brandMap = (entry.brand && typeof entry.brand === 'object') ? entry.brand as Record<string, string> : {};
+    const brandNames = Object.values(brandMap);
+
+    if (brandNames.length) {
       try {
-        brandFamilyOptions.value = await lookupApi.getBrandFamilies(entry.brand);
+        const data = await lookupApi.getBrandFamilies(brandNames);
+        brandFamilyOptions.value = data.options;
       } catch (error) {
         console.error("Error loading brand families:", error);
       }
     }
 
-    let brandFamilyArray: string[] = [];
-    if (entry.brandFamily) {
-      if (Array.isArray(entry.brandFamily)) brandFamilyArray = entry.brandFamily as unknown as string[];
-      else {
-        try {
-          const parsed = JSON.parse(entry.brandFamily as unknown as string);
-          brandFamilyArray = Array.isArray(parsed) ? parsed : [entry.brandFamily as unknown as string];
-        } catch { brandFamilyArray = [entry.brandFamily as unknown as string]; }
-      }
-    }
+    const familyMap = (entry.brandFamily && typeof entry.brandFamily === 'object') 
+      ? entry.brandFamily as Record<string, string> 
+      : (typeof entry.brandFamily === 'string' ? JSON.parse(entry.brandFamily) : {});
 
     const creator = entry.creator || currentUserEmail.value;
     const owner   = entry.owner   || currentUserEmail.value;
@@ -1155,9 +1170,11 @@ watch(() => props.entry, async (entry) => {
       addToForecastByPeriod: entry.addToForecastByPeriod || currentPeriod,
       addToForecastByYear:   entry.addToForecastByYear   || String(currentYear),
       division:       entry.division      || "", department:      entry.department    || "",
-      country:        entry.country       || "", channel:         entry.channel       || "",
-      subChannel:     entry.subChannel    || "", account:         entry.account       || "",
-      brand:          entry.brand         || "", brandFamily:     brandFamilyArray,
+      country:        entry.country       || "", 
+      channel:        Array.isArray(entry.channel) ? entry.channel : (entry.channel && typeof entry.channel === 'object' ? Object.values(entry.channel) : []),
+      subChannel:     Array.isArray(entry.subChannel) ? entry.subChannel : (entry.subChannel && typeof entry.subChannel === 'object' ? Object.values(entry.subChannel) : []),
+      account:        Array.isArray(entry.account) ? entry.account : (entry.account && typeof entry.account === 'object' ? Object.values(entry.account) : []),
+      brand:          brandMap, brandFamily:     familyMap,
       rAndO:          entry.rAndO         || "Risk", probability:     entry.probability   || "",
       categorisation: entry.categorisation|| "", impactPeriod:   entry.impactPeriod  || "",
       impactYear:     entry.impactYear    || (entry.childImpacts?.length ? "" : String(currentYear)),
@@ -1202,9 +1219,12 @@ watch(() => props.entry, async (entry) => {
 const rules: FormRules = {
   creationDatePeriod: [{ required: true, message: "Required", trigger: "change" }], creationDateYear: [{ required: true, message: "Required", trigger: "change" }],
   division: [{ required: true, message: "Required", trigger: "change" }], department: [{ required: true, message: "Required", trigger: "change" }],
-  country: [{ required: true, message: "Required", trigger: "change" }], channel: [{ required: true, message: "Required", trigger: "change" }],
-  subChannel: [{ required: true, message: "Required", trigger: "change" }], account: [{ required: true, message: "Required", trigger: "blur" }],
-  brand: [{ required: true, message: "Required", trigger: "change" }], brandFamily: [{ required: true, message: "Required", trigger: "change" }],
+  country: [{ required: true, message: "Required", trigger: "change" }], 
+  channel: [{ validator: (_rule: any, value: any, callback: any) => { if (!value?.length) callback(new Error("Required")); else callback(); }, trigger: "change" }],
+  subChannel: [{ validator: (_rule: any, value: any, callback: any) => { if (!value?.length) callback(new Error("Required")); else callback(); }, trigger: "change" }],
+  account: [{ validator: (_rule: any, value: any, callback: any) => { if (!value?.length) callback(new Error("Required")); else callback(); }, trigger: "change" }],
+  brand: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Required")); else callback(); }, trigger: "change" }],
+  brandFamily: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Required")); else callback(); }, trigger: "change" }],
   rAndO: [{ required: true, message: "Required", trigger: "change" }], probability: [{ required: true, message: "Required", trigger: "change" }],
   categorisation: [{ validator: (_rule: unknown, value: string, callback: (e?: Error) => void) => { if (categActive.value && !value) callback(new Error("Required")); else callback(); }, trigger: "change", }],
   owner: [{ required: true, message: "Required", trigger: "change" }], creator: [{ required: true, message: "Required", trigger: "blur" }],

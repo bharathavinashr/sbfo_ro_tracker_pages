@@ -362,7 +362,7 @@ interface Entry {
   subChannel: string;
   account: string;
   brand: string;
-  brandFamily: string | string[];
+  brandFamily: string | string[] | Record<string, string>;
   rAndO: string;
   probability: string;
   impactPeriod?: string;
@@ -604,12 +604,14 @@ function formatImpactPeriods(childImpacts?: Array<{ impactPeriod: string; impact
   return sorted.map(c => `${periodToMonthAbbr(c.impactPeriod)} ${c.impactYear}`).join(', ');
 }
 
-function formatBrandFamily(brandFamily: string | string[] | undefined): string {
+function formatBrandFamily(brandFamily: string | string[] | Record<string, string> | undefined): string {
   if (!brandFamily) return '';
   if (Array.isArray(brandFamily)) return brandFamily.join(', ');
+  if (typeof brandFamily === 'object') return Object.values(brandFamily).join(', ');
   try {
     const parsed = JSON.parse(brandFamily);
     if (Array.isArray(parsed)) return parsed.join(', ');
+    if (parsed && typeof parsed === 'object') return Object.values(parsed).join(', ');
   } catch {}
   return brandFamily;
 }

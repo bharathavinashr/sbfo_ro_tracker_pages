@@ -3,8 +3,10 @@ import { ref } from "vue";
 import { lookupApi } from "@/services/api";
 
 /** Cache key: "category" or "category:parentValue" */
-function cacheKey(category: string, parentValue?: string): string {
-  return parentValue ? `${category}:${parentValue}` : category;
+function cacheKey(category: string, parentValue?: string | string[]): string {
+  if (!parentValue) return category;
+  const p = Array.isArray(parentValue) ? parentValue.join(",") : parentValue;
+  return p ? `${category}:${p}` : category;
 }
 
 export const useLookupStore = defineStore("lookup", () => {
@@ -12,15 +14,17 @@ export const useLookupStore = defineStore("lookup", () => {
   const cache = ref<Record<string, string[]>>({});
 
   /** Synchronous read from cache (returns [] if not yet loaded) */
-  function getCached(category: string, parentValue?: string): string[] {
+  function getCached(category: string, parentValue?: string | string[]): string[] {
     return cache.value[cacheKey(category, parentValue)] ?? [];
   }
 
   /** Async load — fetches from API if not cached, then stores reactively */
-  async function getOptions(category: string, parentValue?: string): Promise<string[]> {
+  async function getOptions(category: string, parentValue?: string | string[]): Promise<string[]> {
     const key = cacheKey(category, parentValue);
     if (!cache.value[key]) {
-      const values = await lookupApi.get(category, parentValue);
+      // Flatten the array to a comma-separated string to avoid Axios '[]' serialization
+      const p = Array.isArray(parentValue) ? parentValue.join(",") : parentValue;
+      const values = await lookupApi.get(category, p);
       cache.value[key] = values;
     }
     return cache.value[key];
@@ -42,7 +46,7 @@ export const useLookupStore = defineStore("lookup", () => {
   /** Pre-fetch child options for a given parent (call on parent selection) */
   async function loadChildren(
     childCategory: string,
-    parentValue: string
+    parentValue: string | string[]
   ): Promise<void> {
     await getOptions(childCategory, parentValue);
   }

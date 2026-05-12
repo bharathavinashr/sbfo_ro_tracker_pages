@@ -58,24 +58,25 @@ export const lookupApi = {
       })
       .then((r) => r.data.options.map((o) => o.value)),
   
-  getDivisions: (): Promise<string[]> =>
+  getDivisions: (): Promise<{ options: { value: string; label: string }[] }> =>
     api
-      .get<{ options: { value: string; label: string }[] }>("/api/lookups/divisions")
-      .then((r) => r.data.options.map((o) => o.value)),
+      .get("/api/lookups/divisions")
+      .then((r) => r.data),
   
-  getBrands: (division: string): Promise<string[]> =>
+  getBrands: (division: string): Promise<{ options: { value: string; label: string }[] }> =>
     api
-      .get<{ options: { value: string; label: string }[] }>("/api/lookups/brands", {
+      .get("/api/lookups/brands", {
         params: { division },
       })
-      .then((r) => r.data.options.map((o) => o.value)),
+      .then((r) => r.data),
   
-  getBrandFamilies: (brandName: string): Promise<string[]> =>
-    api
-      .get<{ options: { value: string; label: string }[] }>("/api/lookups/brand-families", {
-        params: { brand_name: brandName },
-      })
-      .then((r) => r.data.options.map((o) => o.value)),
+  getBrandFamilies: (brandNames: string[]): Promise<{ options: { value: string; label: string }[] }> => {
+    const params = new URLSearchParams();
+    brandNames.forEach((n) => params.append("brand_names", n));
+    return api
+      .get("/api/lookups/brand-families", { params })
+      .then((r) => r.data);
+  },
 };
 
 export const snapshotApi = {

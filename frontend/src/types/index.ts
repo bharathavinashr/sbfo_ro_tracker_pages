@@ -26,8 +26,8 @@ export interface Entry {
   channel: string;
   subChannel: string;
   account: string;
-  brand: string;
-  brandFamily?: string | string[];
+  brand: Record<string, string>;
+  brandFamily?: Record<string, string>;
   rAndO: string;
   probability: string;
   categorisation: string;
@@ -108,4 +108,3 @@ export const COUNTRY_CURRENCY_MAP: Record<string, string> = {
   Australia: "AUD",
   "New Zealand": "NZD",
 };
-

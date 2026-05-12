@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, cast, String, Text
 from . import models, schemas
 
 
@@ -22,8 +22,18 @@ def get_latest_entries(db: Session, filters: dict = None, include_deleted: bool 
         query = query.filter(models.Entry.status != "Deleted")
     if filters:
         for field, value in filters.items():
-            if value:
-                query = query.filter(getattr(models.Entry, field) == value)
+            if not value:
+                continue
+            
+            column = getattr(models.Entry, field)
+            # Handle JSON multi-select columns
+            if field in ["channel", "sub_channel", "account", "brand", "brand_family"]:
+                # For JSON storage, we check if any of the filter values match keys in the JSON object
+                filter_list = [value] if isinstance(value, str) else value
+                query = query.filter(func.jsonb_exists_any(cast(column, models.database.JSONB), filter_list))
+            else:
+                query = query.filter(column == value)
+
     # Department Approver restriction: filter by allowed departments
     if department_in:
         query = query.filter(models.Entry.department.in_(department_in))
@@ -50,16 +60,6 @@ def get_child_impacts(db: Session, entry_id: int):
 def create_entry(db: Session, data: schemas.EntryCreate):
     child_impacts_data = data.child_impacts or []
     entry_data = data.model_dump(exclude={"child_impacts"})
-    
-    # Get product codes if division, brand_name, and brand_family are provided
-    if data.division and data.brand and data.brand_family:
-        # Handle brand_family as either string or list
-        brand_family_list = data.brand_family if isinstance(data.brand_family, list) else [data.brand_family]
-        if brand_family_list and brand_family_list[0]:  # Check if not empty
-            codes = get_product_codes(db, data.division, data.brand, brand_family_list)
-            entry_data["brand_code"] = codes["brand_code"]
-            entry_data["brand_family_code"] = codes["brand_family_code"]
-    
     entry = models.Entry(**entry_data, version=1)
     db.add(entry)
     db.flush()
@@ -87,16 +87,6 @@ def update_entry(db: Session, entry_id: int, data: schemas.EntryUpdate):
 
     child_impacts_data = data.child_impacts or []
     entry_data = data.model_dump(exclude={"child_impacts"})
-    
-    # Get product codes if division, brand_name, and brand_family are provided
-    if data.division and data.brand and data.brand_family:
-        # Handle brand_family as either string or list
-        brand_family_list = data.brand_family if isinstance(data.brand_family, list) else [data.brand_family]
-        if brand_family_list and brand_family_list[0]:  # Check if not empty
-            codes = get_product_codes(db, data.division, data.brand, brand_family_list)
-            entry_data["brand_code"] = codes["brand_code"]
-            entry_data["brand_family_code"] = codes["brand_family_code"]
-
     new_entry = models.Entry(
         original_entry_id=current.original_entry_id,
         version=max_version + 1,
@@ -142,9 +132,7 @@ def _new_version_with_status(db: Session, entry_id: int, new_status: str, modifi
         sub_channel=current.sub_channel,
         account=current.account,
         brand=current.brand,
-        brand_code=current.brand_code,
         brand_family=current.brand_family,
-        brand_family_code=current.brand_family_code,
         r_and_o=current.r_and_o,
         probability=current.probability,
         categorisation=current.categorisation,
@@ -190,13 +178,22 @@ def approve_entry(db: Session, entry_id: int, modified_user: str = None):
     return _new_version_with_status(db, entry_id, "Approved", modified_user)
 
 
-def get_lookup_options(db: Session, category: str, parent_value: str = None):
+def get_lookup_options(db: Session, category: str, parent_value=None):
     q = db.query(models.LookupOption).filter(
         models.LookupOption.category == category,
         models.LookupOption.is_active == True,
     )
     if parent_value:
-        q = q.filter(models.LookupOption.parent_value == parent_value)
+        # Handle both list and comma-separated string from query params
+        if isinstance(parent_value, str):
+            parent_list = [v.strip() for v in parent_value.split(",") if v.strip()]
+        else:
+            parent_list = parent_value
+        
+        if parent_list:
+            q = q.filter(models.LookupOption.parent_value.in_(parent_list))
+        else:
+            q = q.filter(models.LookupOption.parent_value == None)
     else:
         q = q.filter(models.LookupOption.parent_value == None)
     return q.order_by(models.LookupOption.sort_order, models.LookupOption.value).all()
@@ -214,24 +211,26 @@ def get_divisions(db: Session):
 
 def get_brands_by_division(db: Session, division: str):
     """Get distinct brand names from ro_products table filtered by division."""
-    return (
-        db.query(models.ROProduct.brand_name)
+    rows = (
+        db.query(models.ROProduct.brand_code, models.ROProduct.brand_name)
         .filter(models.ROProduct.division == division)
         .distinct()
         .order_by(models.ROProduct.brand_name)
         .all()
     )
+    return [{"code": r[0], "name": r[1]} for r in rows]
 
 
-def get_brand_families_by_brand(db: Session, brand_name: str):
-    """Get distinct brand families from ro_products table filtered by brand name."""
-    return (
-        db.query(models.ROProduct.brand_family)
-        .filter(models.ROProduct.brand_name == brand_name)
+def get_brand_families_by_brands(db: Session, brand_names: list):
+    """Get distinct brand families from ro_products table filtered by list of brand names."""
+    rows = (
+        db.query(models.ROProduct.brand_family_code, models.ROProduct.brand_family)
+        .filter(models.ROProduct.brand_name.in_(brand_names))
         .distinct()
         .order_by(models.ROProduct.brand_family)
         .all()
     )
+    return [{"code": r[0], "name": r[1]} for r in rows]
 
 
 def get_product_codes(db: Session, division: str, brand_name: str, brand_family):

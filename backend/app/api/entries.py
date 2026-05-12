@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, List
 from ..database import get_db
 from .. import crud, schemas, models
 
@@ -110,9 +110,9 @@ def list_entries(
     division: Optional[str] = Query(None),
     department: Optional[str] = Query(None),
     country: Optional[str] = Query(None),
-    channel: Optional[str] = Query(None),
-    sub_channel: Optional[str] = Query(None),
-    account: Optional[str] = Query(None),
+    channel: Optional[List[str]] = Query(None),
+    sub_channel: Optional[List[str]] = Query(None),
+    account: Optional[List[str]] = Query(None),
     brand: Optional[str] = Query(None),
     brand_family: Optional[str] = Query(None),
     categorisation: Optional[str] = Query(None),

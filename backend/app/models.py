@@ -23,14 +23,12 @@ class Entry(Base):
     department = Column(String(100), nullable=True)
     country = Column(String(100), nullable=False)
 
-    channel = Column(String(100), nullable=False)
-    sub_channel = Column(String(100), nullable=False)
-    account = Column(String(100), nullable=False)
+    channel = Column(JSON, nullable=False)
+    sub_channel = Column(JSON, nullable=False)
+    account = Column(JSON, nullable=False)
 
-    brand = Column(String(100), nullable=False)
-    brand_code = Column(String(20), nullable=True)
-    brand_family = Column(Text, nullable=True)
-    brand_family_code = Column(String(20), nullable=True)
+    brand = Column(JSON, nullable=False)  # Map: {brand_code: brand_name}
+    brand_family = Column(JSON, nullable=True)  # Map: {brand_family_code: brand_family_name}
 
     r_and_o = Column(String(50), nullable=False)
     probability = Column(String(50), nullable=False)
@@ -126,5 +124,3 @@ class Snapshot(Base):
     department = Column(String(100), nullable=False)
     entry_data = Column(JSON, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
-
-

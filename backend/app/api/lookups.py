@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, List
 from ..database import get_db
 from .. import crud
 
@@ -29,16 +29,16 @@ def get_brands(
     division: str = Query(..., description="Division name"),
     db: Session = Depends(get_db),
 ):
-    """Get brands for a specific division from ro_products table."""
-    rows = crud.get_brands_by_division(db, division)
-    return {"options": [{"value": r[0], "label": r[0]} for r in rows]}
+    """Get brands (code and name) for a specific division."""
+    brands = crud.get_brands_by_division(db, division)
+    return {"options": [{"value": b["code"], "label": b["name"]} for b in brands]}
 
 
 @router.get("/brand-families")
 def get_brand_families(
-    brand_name: str = Query(..., description="Brand name"),
+    brand_names: List[str] = Query(..., description="List of brand names"),
     db: Session = Depends(get_db),
 ):
-    """Get brand families for a specific brand from ro_products table."""
-    rows = crud.get_brand_families_by_brand(db, brand_name)
-    return {"options": [{"value": r[0], "label": r[0]} for r in rows]}
+    """Get brand families (code and name) for a list of brands."""
+    families = crud.get_brand_families_by_brands(db, brand_names)
+    return {"options": [{"value": f["code"], "label": f["name"]} for f in families]}

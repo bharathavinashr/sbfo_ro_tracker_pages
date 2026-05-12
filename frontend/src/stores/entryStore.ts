@@ -18,9 +18,9 @@ export const useEntryStore = defineStore("entry", () => {
     division: "",
     department: "",
     country: "",
-    channel: "",
-    sub_channel: "",
-    account: "",
+    channel: [] as string[],
+    sub_channel: [] as string[],
+    account: [] as string[],
     brand: "",
     brand_family: "",
     categorisation: "",
@@ -39,12 +39,14 @@ export const useEntryStore = defineStore("entry", () => {
       .filter((e) => !isUser || e.owner === email || e.creator === email)
       .map((e) => ({
         ...e,
-        customer: [e.channel, e.subChannel, e.account].filter(Boolean).join(" / "),
+        customer: [
+          Array.isArray(e.channel) ? e.channel.join(", ") : (e.channel && typeof e.channel === 'object' ? Object.values(e.channel).join(", ") : e.channel),
+          Array.isArray(e.subChannel) ? e.subChannel.join(", ") : (e.subChannel && typeof e.subChannel === 'object' ? Object.values(e.subChannel).join(", ") : e.subChannel),
+          Array.isArray(e.account) ? e.account.join(", ") : (e.account && typeof e.account === 'object' ? Object.values(e.account).join(", ") : e.account),
+        ].filter(Boolean).join(" / "),
         product: [
-          e.brand,
-          Array.isArray(e.brandFamily)
-            ? e.brandFamily.join(", ")
-            : e.brandFamily,
+          e.brand && typeof e.brand === 'object' ? Object.values(e.brand).join(", ") : e.brand,
+          e.brandFamily && typeof e.brandFamily === 'object' ? Object.values(e.brandFamily).join(", ") : e.brandFamily,
         ]
           .filter(Boolean)
           .join(" - "),
@@ -104,9 +106,23 @@ export const useEntryStore = defineStore("entry", () => {
   }
 
   function resetFilters() {
-    Object.keys(filters.value).forEach((k) => {
-      (filters.value as Record<string, string>)[k] = "";
-    });
+    filters.value = {
+      division: "",
+      department: "",
+      country: "",
+      channel: [],
+      sub_channel: [],
+      account: [],
+      brand: "",
+      brand_family: "",
+      categorisation: "",
+      r_and_o: "",
+      probability: "",
+      status: "",
+      owner: "",
+      creation_date_period: "",
+      creation_date_year: "",
+    };
   }
 
   return {

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Dict
 from datetime import datetime
 
 
@@ -26,13 +26,11 @@ class EntryBase(BaseModel):
     division: str
     department: Optional[str] = None
     country: str
-    channel: str
-    sub_channel: str
-    account: str
-    brand: str
-    brand_code: Optional[str] = None
-    brand_family: Optional[list[str]] = None
-    brand_family_code: Optional[str] = None
+    channel: List[str]
+    sub_channel: List[str]
+    account: List[str]
+    brand: Dict[str, str]
+    brand_family: Optional[Dict[str, str]] = None
     r_and_o: str
     probability: str
     categorisation: str
@@ -88,5 +86,3 @@ class LookupOptionOut(BaseModel):
     value: str
     label: str
     model_config = {"from_attributes": True}
-
-

@@ -77,19 +77,19 @@
         <el-row :gutter="16" class="filter-row">
           <el-col :span="8">
             <label class="filter-label">Channel</label>
-            <el-select v-model="store.filters.channel" clearable placeholder="All">
+            <el-select v-model="store.filters.channel" multiple collapse-tags clearable placeholder="All">
               <el-option v-for="c in channelOptions" :key="c" :value="c" :label="c" />
             </el-select>
           </el-col>
           <el-col :span="8">
             <label class="filter-label">Sub-Channel</label>
-            <el-select v-model="store.filters.sub_channel" clearable placeholder="All" :disabled="!store.filters.channel">
+            <el-select v-model="store.filters.sub_channel" multiple collapse-tags clearable placeholder="All" :disabled="!store.filters.channel?.length">
               <el-option v-for="c in subChannelOptions" :key="c" :value="c" :label="c" />
             </el-select>
           </el-col>
           <el-col :span="8">
             <label class="filter-label">Account</label>
-            <el-select v-model="store.filters.account" clearable placeholder="All" :disabled="!store.filters.sub_channel" @change="store.fetchEntries()">
+            <el-select v-model="store.filters.account" multiple collapse-tags clearable placeholder="All" :disabled="!store.filters.sub_channel?.length" @change="store.fetchEntries()">
               <el-option v-for="a in accountOptions" :key="a" :value="a" :label="a" />
             </el-select>
           </el-col>
@@ -303,9 +303,9 @@
                   <td v-if="colVisible.categorisation">{{ row.categorisation }}</td>
                   <td v-if="colVisible.description">{{ row.shortDescription || row.description || '-' }}</td>
                   <td v-if="colVisible.customer">
-                    <div v-if="row.account">{{ row.account }}</div>
-                    <div v-if="row.subChannel" class="cell-sub">{{ row.subChannel }}</div>
-                    <div v-if="row.channel"    class="cell-sub italic">{{ row.channel }}</div>
+                    <div v-if="row.account">{{ formatBrandFamily(row.account) }}</div>
+                    <div v-if="row.subChannel" class="cell-sub">{{ formatBrandFamily(row.subChannel) }}</div>
+                    <div v-if="row.channel"    class="cell-sub italic">{{ formatBrandFamily(row.channel) }}</div>
                     <span v-if="!row.account && !row.subChannel && !row.channel">-</span>
                   </td>
                   <td v-if="colVisible.product">
@@ -630,12 +630,12 @@ const departmentOptions = computed(() => lookupStore.getCached("department"));
 const brandOptions      = computed(() => lookupStore.getCached("brand"));
 
 const subChannelOptions = computed(() =>
-  store.filters.channel
+  store.filters.channel?.length
     ? lookupStore.getCached("sub_channel", store.filters.channel)
     : lookupStore.getCached("sub_channel")
 );
 const accountOptions = computed(() =>
-  store.filters.sub_channel
+  store.filters.sub_channel?.length
     ? lookupStore.getCached("account", store.filters.sub_channel)
     : lookupStore.getCached("account")
 );
@@ -646,14 +646,14 @@ const brandFamilyOptions = computed(() =>
 );
 
 watch(() => store.filters.channel, (val) => {
-  store.filters.sub_channel = "";
-  store.filters.account = "";
-  if (val) lookupStore.loadChildren("sub_channel", val);
+  store.filters.sub_channel = [];
+  store.filters.account = [];
+  if (val?.length) lookupStore.loadChildren("sub_channel", val);
   store.fetchEntries();
 });
 watch(() => store.filters.sub_channel, (val) => {
-  store.filters.account = "";
-  if (val) lookupStore.loadChildren("account", val);
+  store.filters.account = [];
+  if (val?.length) lookupStore.loadChildren("account", val);
   store.fetchEntries();
 });
 watch(() => store.filters.brand, (val) => {
@@ -981,10 +981,16 @@ function formatCountry(c?: string): string {
   return c === "Australia" ? "AU" : c === "New Zealand" ? "NZ" : c;
 }
 
-function formatBrandFamily(v?: string | string[]): string {
+function formatBrandFamily(v?: string | string[] | Record<string, string>): string {
   if (!v) return "";
   if (Array.isArray(v)) return v.join(", ");
-  try { const p = JSON.parse(v); return Array.isArray(p) ? p.join(", ") : v; } catch { return v; }
+  if (typeof v === "object") return Object.values(v).join(", ");
+  try {
+    const p = JSON.parse(v);
+    if (Array.isArray(p)) return p.join(", ");
+    if (p && typeof p === "object") return Object.values(p).join(", ");
+    return v;
+  } catch { return v; }
 }
 
 // ─── CSV Export ───────────────────────────────────────────────────────────────
