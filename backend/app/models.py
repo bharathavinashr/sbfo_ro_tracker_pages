@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, ForeignKey
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
 from .database import Base
 
@@ -23,12 +24,12 @@ class Entry(Base):
     department = Column(String(100), nullable=True)
     country = Column(String(100), nullable=False)
 
-    channel = Column(JSON, nullable=False)
-    sub_channel = Column(JSON, nullable=False)
-    account = Column(JSON, nullable=False)
+    channel = Column(JSONB, nullable=False)  # Map: {channel_code: channel_name}
+    sub_channel = Column(JSONB, nullable=False)  # Map: {subchannel_code: subchannel_name}
+    account = Column(JSONB, nullable=False)  # Map: {account_code: account_name}
 
-    brand = Column(JSON, nullable=False)  # Map: {brand_code: brand_name}
-    brand_family = Column(JSON, nullable=True)  # Map: {brand_family_code: brand_family_name}
+    brand = Column(JSONB, nullable=False)  # Map: {brand_code: brand_name}
+    brand_family = Column(JSONB, nullable=True)  # Map: {brand_family_code: brand_family_name}
 
     r_and_o = Column(String(50), nullable=False)
     probability = Column(String(50), nullable=False)
@@ -47,7 +48,7 @@ class Entry(Base):
     modified_user = Column(String(100), nullable=True)
 
     status = Column(String(50), nullable=True, default="Open")
-    short_description = Column(String(100), nullable=True)
+    short_description = Column(Text, nullable=True)
     description = Column(Text, nullable=True)
     impact_type = Column(String(10), nullable=True, default="NSV")
     volume_cases = Column(String(50), nullable=True)
@@ -83,7 +84,7 @@ class AppUser(Base):
     email = Column(String(200), nullable=False, unique=True)
     display_name = Column(String(100), nullable=True)
     role = Column(Integer, nullable=False)  # 0=System Admin, 1=User, 2=Department Approver, 3=Finance Approver
-    departments = Column(JSON, nullable=True)  # None = all; ["Supply","Marketing"] = restricted
+    departments = Column(JSONB, nullable=True)  # None = all; ["Supply","Marketing"] = restricted
     is_active = Column(Boolean, default=True)
 
 
@@ -112,6 +113,20 @@ class ROProduct(Base):
     division = Column(String(100), nullable=False, index=True)
 
 
+class ROCustomer(Base):
+    __tablename__ = "ro_customers"
+    __table_args__ = {"schema": SCHEMA}
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    division = Column(String(100), nullable=False, index=True)
+    channel_code = Column(String(50), nullable=False, index=True)
+    channel_name = Column(String(200), nullable=False)
+    subchannel_code = Column(String(50), nullable=False, index=True)
+    subchannel_name = Column(String(200), nullable=False)
+    account_code = Column(String(50), nullable=False, index=True)
+    account_name = Column(String(200), nullable=False)
+
+
 class Snapshot(Base):
     __tablename__ = "snapshots"
     __table_args__ = {"schema": SCHEMA}
@@ -122,5 +137,5 @@ class Snapshot(Base):
     period = Column(String(10), nullable=False)
     year = Column(String(4), nullable=False)
     department = Column(String(100), nullable=False)
-    entry_data = Column(JSON, nullable=False)
+    entry_data = Column(JSONB, nullable=False)
     created_at = Column(DateTime, server_default=func.now())

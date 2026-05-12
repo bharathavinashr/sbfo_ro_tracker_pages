@@ -26,9 +26,9 @@ class EntryBase(BaseModel):
     division: str
     department: Optional[str] = None
     country: str
-    channel: List[str]
-    sub_channel: List[str]
-    account: List[str]
+    channel: Dict[str, str]  # Map: {channel_code: channel_name}
+    sub_channel: Dict[str, str]  # Map: {subchannel_code: subchannel_name}
+    account: Dict[str, str]  # Map: {account_code: account_name}
     brand: Dict[str, str]
     brand_family: Optional[Dict[str, str]] = None
     r_and_o: str

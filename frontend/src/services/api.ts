@@ -77,6 +77,34 @@ export const lookupApi = {
       .get("/api/lookups/brand-families", { params })
       .then((r) => r.data);
   },
+
+  getChannels: (division: string): Promise<{ options: { value: string; label: string }[] }> =>
+    api
+      .get("/api/lookups/channels", {
+        params: { division },
+      })
+      .then((r) => r.data),
+
+  getSubchannels: (division: string, channelCode: string): Promise<{ options: { value: string; label: string }[] }> =>
+    api
+      .get("/api/lookups/subchannels", {
+        params: { division, channel_code: channelCode },
+      })
+      .then((r) => r.data),
+
+  getAccounts: (division: string, subchannelCode: string): Promise<{ options: { value: string; label: string }[] }> =>
+    api
+      .get("/api/lookups/accounts", {
+        params: { division, subchannel_code: subchannelCode },
+      })
+      .then((r) => r.data),
+
+  getAccountDetails: (division: string, accountCode: string): Promise<{ channel: { code: string; name: string } | null; subchannel: { code: string; name: string } | null }> =>
+    api
+      .get("/api/lookups/account-details", {
+        params: { division, account_code: accountCode },
+      })
+      .then((r) => r.data),
 };
 
 export const snapshotApi = {

@@ -117,39 +117,18 @@ def _new_version_with_status(db: Session, entry_id: int, new_status: str, modifi
 
     max_version = _get_max_version(db, current.original_entry_id)
 
+    # Get all column names for the Entry model to copy values dynamically
+    columns = models.Entry.__table__.columns.keys()
+    # Exclude fields that should be new or modified
+    exclude = {'id', 'version', 'last_modified', 'created_at', 'status', 'modified_user'}
+    
+    entry_dict = {col: getattr(current, col) for col in columns if col not in exclude}
+    
     new_entry = models.Entry(
-        original_entry_id=current.original_entry_id,
         version=max_version + 1,
-        creation_date=current.creation_date,
-        creation_date_period=current.creation_date_period,
-        creation_date_year=current.creation_date_year,
-        add_to_forecast_by_period=current.add_to_forecast_by_period,
-        add_to_forecast_by_year=current.add_to_forecast_by_year,
-        division=current.division,
-        department=current.department,
-        country=current.country,
-        channel=current.channel,
-        sub_channel=current.sub_channel,
-        account=current.account,
-        brand=current.brand,
-        brand_family=current.brand_family,
-        r_and_o=current.r_and_o,
-        probability=current.probability,
-        categorisation=current.categorisation,
-        impact_period=current.impact_period,
-        impact_year=current.impact_year,
-        nsv_aud=current.nsv_aud,
-        nsv_nzd=current.nsv_nzd,
-        volume_litres=current.volume_litres,
-        primary_impact=current.primary_impact,
-        owner=current.owner,
-        creator=current.creator,
-        description=current.description,
-        short_description=current.short_description,
-        impact_type=current.impact_type,
-        volume_cases=current.volume_cases,
         status=new_status,
         modified_user=modified_user,
+        **entry_dict
     )
     db.add(new_entry)
     db.flush()
@@ -284,3 +263,70 @@ def get_all_users(db: Session):
         .order_by(models.AppUser.email)
         .all()
     )
+
+
+def get_channels_by_division(db: Session, division: str):
+    """Get distinct channels (code and name) from ro_customers table filtered by division."""
+    rows = (
+        db.query(models.ROCustomer.channel_code, models.ROCustomer.channel_name)
+        .filter(models.ROCustomer.division == division)
+        .distinct()
+        .order_by(models.ROCustomer.channel_name)
+        .all()
+    )
+    return [{"code": r[0], "name": r[1]} for r in rows]
+
+
+def get_subchannels_by_division_and_channel(db: Session, division: str, channel_code: str):
+    """Get distinct subchannels (code and name) filtered by division and channel."""
+    rows = (
+        db.query(models.ROCustomer.subchannel_code, models.ROCustomer.subchannel_name)
+        .filter(
+            models.ROCustomer.division == division,
+            models.ROCustomer.channel_code == channel_code
+        )
+        .distinct()
+        .order_by(models.ROCustomer.subchannel_name)
+        .all()
+    )
+    return [{"code": r[0], "name": r[1]} for r in rows]
+
+
+def get_accounts_by_division_and_subchannel(db: Session, division: str, subchannel_code: str):
+    """Get distinct accounts (code and name) filtered by division and subchannel."""
+    rows = (
+        db.query(models.ROCustomer.account_code, models.ROCustomer.account_name)
+        .filter(
+            models.ROCustomer.division == division,
+            models.ROCustomer.subchannel_code == subchannel_code
+        )
+        .distinct()
+        .order_by(models.ROCustomer.account_name)
+        .all()
+    )
+    return [{"code": r[0], "name": r[1]} for r in rows]
+
+
+def get_channel_and_subchannel_by_account(db: Session, division: str, account_code: str):
+    """Get channel and subchannel for a specific account."""
+    row = (
+        db.query(
+            models.ROCustomer.channel_code,
+            models.ROCustomer.channel_name,
+            models.ROCustomer.subchannel_code,
+            models.ROCustomer.subchannel_name
+        )
+        .filter(
+            models.ROCustomer.division == division,
+            models.ROCustomer.account_code == account_code
+        )
+        .first()
+    )
+    if row:
+        return {
+            "channel_code": row[0],
+            "channel_name": row[1],
+            "subchannel_code": row[2],
+            "subchannel_name": row[3]
+        }
+    return None

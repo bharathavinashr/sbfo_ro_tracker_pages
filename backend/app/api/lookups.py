@@ -42,3 +42,51 @@ def get_brand_families(
     """Get brand families (code and name) for a list of brands."""
     families = crud.get_brand_families_by_brands(db, brand_names)
     return {"options": [{"value": f["code"], "label": f["name"]} for f in families]}
+
+
+@router.get("/channels")
+def get_channels(
+    division: str = Query(..., description="Division name"),
+    db: Session = Depends(get_db),
+):
+    """Get channels (code and name) for a specific division from ro_customers table."""
+    channels = crud.get_channels_by_division(db, division)
+    return {"options": [{"value": c["code"], "label": c["name"]} for c in channels]}
+
+
+@router.get("/subchannels")
+def get_subchannels(
+    division: str = Query(..., description="Division name"),
+    channel_code: str = Query(..., description="Channel code"),
+    db: Session = Depends(get_db),
+):
+    """Get subchannels (code and name) for a specific division and channel."""
+    subchannels = crud.get_subchannels_by_division_and_channel(db, division, channel_code)
+    return {"options": [{"value": s["code"], "label": s["name"]} for s in subchannels]}
+
+
+@router.get("/accounts")
+def get_accounts(
+    division: str = Query(..., description="Division name"),
+    subchannel_code: str = Query(..., description="Subchannel code"),
+    db: Session = Depends(get_db),
+):
+    """Get accounts (code and name) for a specific division and subchannel."""
+    accounts = crud.get_accounts_by_division_and_subchannel(db, division, subchannel_code)
+    return {"options": [{"value": a["code"], "label": a["name"]} for a in accounts]}
+
+
+@router.get("/account-details")
+def get_account_details(
+    division: str = Query(..., description="Division name"),
+    account_code: str = Query(..., description="Account code"),
+    db: Session = Depends(get_db),
+):
+    """Get channel and subchannel details for a specific account (for auto-population)."""
+    details = crud.get_channel_and_subchannel_by_account(db, division, account_code)
+    if details:
+        return {
+            "channel": {"code": details["channel_code"], "name": details["channel_name"]},
+            "subchannel": {"code": details["subchannel_code"], "name": details["subchannel_name"]}
+        }
+    return {"channel": None, "subchannel": None}

@@ -250,7 +250,12 @@
                 </span>
                 <el-icon class="combo-arrow"><ArrowDown /></el-icon>
               </div>
-              <div v-if="channelOpen" class="combo-dropdown">
+              <div v-if="channelOpen" class="combo-dropdown brand-family-dropdown">
+                <el-input v-model="channelSearch" placeholder="Type to search..." class="bf-search" />
+                <div class="combo-item combo-check-item bf-select-all" @mousedown.prevent="toggleAllChannels">
+                  <el-checkbox :model-value="allChannelsSelected" />
+                  <span class="bf-select-all-label">Select All Suggestions</span>
+                </div>
                 <div v-for="c in filteredChannels" :key="c" class="combo-item combo-check-item" :class="{ 'is-disabled': isChannelDisabled(c) }" @mousedown.prevent="toggleChannel(c)">
                   <el-checkbox :model-value="formData.channel.includes(c)" /><span>{{ c }}</span>
                 </div>
@@ -291,7 +296,12 @@
                 </span>
                 <el-icon class="combo-arrow"><ArrowDown /></el-icon>
               </div>
-              <div v-if="subChannelOpen" class="combo-dropdown">
+              <div v-if="subChannelOpen" class="combo-dropdown brand-family-dropdown">
+                <el-input v-model="subChannelSearch" placeholder="Type to search..." class="bf-search" />
+                <div class="combo-item combo-check-item bf-select-all" @mousedown.prevent="toggleAllSubChannels">
+                  <el-checkbox :model-value="allSubChannelsSelected" />
+                  <span class="bf-select-all-label">Select All Suggestions</span>
+                </div>
                 <div v-for="s in filteredSubChannels" :key="s" class="combo-item combo-check-item" @mousedown.prevent="toggleSubChannel(s)">
                   <el-checkbox :model-value="formData.subChannel.includes(s)" /><span>{{ s }}</span>
                 </div>
@@ -342,7 +352,12 @@
                 </span>
                 <el-icon class="combo-arrow"><ArrowDown /></el-icon>
               </div>
-              <div v-if="accountOpen" class="combo-dropdown">
+              <div v-if="accountOpen" class="combo-dropdown brand-family-dropdown">
+                <el-input v-model="accountSearch" placeholder="Type to search..." class="bf-search" />
+                <div class="combo-item combo-check-item bf-select-all" @mousedown.prevent="toggleAllAccounts">
+                  <el-checkbox :model-value="allAccountsSelected" />
+                  <span class="bf-select-all-label">Select All Suggestions</span>
+                </div>
                 <div v-for="a in filteredAccounts" :key="a" class="combo-item combo-check-item" @mousedown.prevent="toggleAccount(a)">
                   <el-checkbox :model-value="formData.account.includes(a)" /><span>{{ a }}</span>
                 </div>
@@ -717,19 +732,11 @@ const categOptions = computed(() => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Combobox data (from lookupStore and static filters)
+// Combobox data (from lookupStore and API)
 // ─────────────────────────────────────────────────────────────────────────────
-const channelOptions    = computed(() => lookupStore.getCached("channel"));
-const subChannelOptions = computed(() =>
-  formData.value.channel.length > 0
-    ? lookupStore.getCached("sub_channel", formData.value.channel)
-    : lookupStore.getCached("sub_channel")
-);
-const accountOptions    = computed(() =>
-  formData.value.subChannel.length > 0
-    ? lookupStore.getCached("account", formData.value.subChannel)
-    : lookupStore.getCached("account")
-);
+const channelOptions    = ref<{value: string, label: string}[]>([]);
+const subChannelOptions = ref<{value: string, label: string}[]>([]);
+const accountOptions    = ref<{value: string, label: string}[]>([]);
 
 const channelRef        = ref<HTMLElement | null>(null);
 const subChannelRef     = ref<HTMLElement | null>(null);
@@ -792,10 +799,10 @@ const currentYear   = new Date().getFullYear();
 const yearOptions   = Array.from({ length: 10 }, (_, i) => currentYear - 2 + i);
 
 
-const filteredChannels      = computed(() => channelOptions.value.filter(c => c.toLowerCase().includes(channelSearch.value.toLowerCase())));
-const filteredSubChannels   = computed(() => subChannelOptions.value.filter(s => s.toLowerCase().includes(subChannelSearch.value.toLowerCase())));
+const filteredChannels      = computed(() => channelOptions.value.filter(c => c.label.toLowerCase().includes(channelSearch.value.toLowerCase())).map(c => c.label));
+const filteredSubChannels   = computed(() => subChannelOptions.value.filter(s => s.label.toLowerCase().includes(subChannelSearch.value.toLowerCase())).map(s => s.label));
 const filteredBrands        = computed(() => brandOptions.value.filter(b => b.label.toLowerCase().includes(brandSearch.value.toLowerCase())));
-const filteredAccounts      = computed(() => accountOptions.value.filter(a => a.toLowerCase().includes(accountSearch.value.toLowerCase())));
+const filteredAccounts      = computed(() => accountOptions.value.filter(a => a.label.toLowerCase().includes(accountSearch.value.toLowerCase())).map(a => a.label));
 const filteredBrandFamilies = computed(() => brandFamilyOptions.value.filter(f => f.label.toLowerCase().includes(brandFamilySearch.value.toLowerCase())));
 
 const filteredDepts         = computed(() => departmentOptions.value.filter(d => d.toLowerCase().includes(deptSearch.value.toLowerCase())));
@@ -817,7 +824,15 @@ const getFilteredChildPeriods = (search?: string) => PERIODS.filter(p => periodT
 const getFilteredChildYears = (search?: string) => yearOptions.map(String).filter(y => y.includes(search || ''));
 
 const allBrandFamiliesSelected = computed(() => brandFamilyOptions.value.length > 0 && brandFamilyOptions.value.every(f => !!formData.value.brandFamily[f.value]));
-const allBrandsSelected = computed(() => brandOptions.value.length > 0 && brandOptions.value.every(b => !!formData.value.brand[b.value]));
+const allBrandsSelected = computed(() => filteredBrands.value.length > 0 && filteredBrands.value.every(b => !!formData.value.brand[b.value]));
+const allChannelsSelected = computed(() => {
+  const suggestions = filteredChannels.value.filter(c => !isChannelDisabled(c));
+  return suggestions.length > 0 && suggestions.every(c => formData.value.channel.includes(c));
+});
+const allSubChannelsSelected = computed(() => 
+  filteredSubChannels.value.length > 0 && filteredSubChannels.value.every(s => formData.value.subChannel.includes(s))
+);
+const allAccountsSelected = computed(() => filteredAccounts.value.length > 0 && filteredAccounts.value.every(a => formData.value.account.includes(a)));
 
 function isChannelDisabled(ch: string) {
   if (formData.value.division === "Non-Alcohol") return ch === "Licensed" || ch === "Route";
@@ -864,9 +879,55 @@ function toggleBrand(code: string, name: string) {
 }
 function toggleAllBrands() {
   if (allBrandsSelected.value) {
-    brandOptions.value.forEach(b => delete formData.value.brand[b.value]);
+    filteredBrands.value.forEach(b => delete formData.value.brand[b.value]);
   } else {
-    brandOptions.value.forEach(b => formData.value.brand[b.value] = b.label);
+    filteredBrands.value.forEach(b => formData.value.brand[b.value] = b.label);
+  }
+}
+
+function toggleAllChannels() {
+  const suggestions = filteredChannels.value.filter(c => !isChannelDisabled(c));
+  if (allChannelsSelected.value) {
+    suggestions.forEach(c => {
+      const idx = formData.value.channel.indexOf(c);
+      if (idx > -1) formData.value.channel.splice(idx, 1);
+    });
+  } else {
+    suggestions.forEach(c => {
+      if (!formData.value.channel.includes(c)) {
+        formData.value.channel.push(c);
+      }
+    });
+  }
+}
+
+function toggleAllSubChannels() {
+  if (allSubChannelsSelected.value) {
+    filteredSubChannels.value.forEach(s => {
+      const idx = formData.value.subChannel.indexOf(s);
+      if (idx > -1) formData.value.subChannel.splice(idx, 1);
+    });
+  } else {
+    filteredSubChannels.value.forEach(s => {
+      if (!formData.value.subChannel.includes(s)) {
+        formData.value.subChannel.push(s);
+      }
+    });
+  }
+}
+
+function toggleAllAccounts() {
+  if (allAccountsSelected.value) {
+    filteredAccounts.value.forEach(a => {
+      const idx = formData.value.account.indexOf(a);
+      if (idx > -1) formData.value.account.splice(idx, 1);
+    });
+  } else {
+    filteredAccounts.value.forEach(a => {
+      if (!formData.value.account.includes(a)) {
+        formData.value.account.push(a);
+      }
+    });
   }
 }
 
@@ -1066,18 +1127,17 @@ watch(() => formData.value.primaryImpact, (newUnit, oldUnit) => {
   });
 });
 watch(() => formData.value.secondaryUnit, (val) => { if (isLoadingEntry.value) return; formData.value.childImpacts.forEach(ci => { ci.secondaryUnit = val; }); });
-watch(() => formData.value.channel, (val) => { 
-  if (!isLoadingEntry.value) { formData.value.subChannel = []; formData.value.account = []; } 
-  if (val.length) lookupStore.loadChildren("sub_channel", val); 
-}, { deep: true });
-watch(() => formData.value.subChannel, (val) => { 
-  if (!isLoadingEntry.value) formData.value.account = []; 
-  if (val.length) lookupStore.loadChildren("account", val); 
-}, { deep: true });
 
 watch(() => formData.value.division, async (division) => {
-  if (!isLoadingEntry.value) formData.value.brand = {};
-  if (!isLoadingEntry.value) formData.value.brandFamily = {};
+  if (!isLoadingEntry.value) {
+    formData.value.brand = {};
+    formData.value.brandFamily = {};
+    formData.value.channel = [];
+    formData.value.subChannel = [];
+    formData.value.account = [];
+  }
+  
+  // Load brands
   if (division) {
     try {
       const data = await lookupApi.getBrands(division);
@@ -1086,10 +1146,79 @@ watch(() => formData.value.division, async (division) => {
       console.error("Error loading brands:", error);
       brandOptions.value = [];
     }
+    
+    // Load channels from ro_customers
+    try {
+      const data = await lookupApi.getChannels(division);
+      channelOptions.value = data.options;
+    } catch (error) {
+      console.error("Error loading channels:", error);
+      channelOptions.value = [];
+    }
   } else {
     brandOptions.value = [];
+    channelOptions.value = [];
   }
 });
+
+watch(() => formData.value.channel, async (channels) => {
+  if (!isLoadingEntry.value) {
+    formData.value.subChannel = [];
+    formData.value.account = [];
+  }
+  
+  // Load subchannels from ro_customers for ALL selected channels
+  if (channels.length > 0 && formData.value.division) {
+    try {
+      const subchannelsMap = new Map<string, {value: string, label: string}>();
+      
+      // Fetch subchannels for each selected channel and combine results
+      for (const channelName of channels) {
+        const channelOption = channelOptions.value.find(c => c.label === channelName);
+        if (channelOption) {
+          const data = await lookupApi.getSubchannels(formData.value.division, channelOption.value);
+          data.options.forEach(opt => subchannelsMap.set(opt.value, opt));
+        }
+      }
+      
+      subChannelOptions.value = Array.from(subchannelsMap.values());
+    } catch (error) {
+      console.error("Error loading subchannels:", error);
+      subChannelOptions.value = [];
+    }
+  } else {
+    subChannelOptions.value = [];
+  }
+}, { deep: true });
+
+watch(() => formData.value.subChannel, async (subChannels) => {
+  if (!isLoadingEntry.value) {
+    formData.value.account = [];
+  }
+  
+  // Load accounts from ro_customers for ALL selected subchannels
+  if (subChannels.length > 0 && formData.value.division) {
+    try {
+      const accountsMap = new Map<string, {value: string, label: string}>();
+      
+      // Fetch accounts for each selected subchannel and combine results
+      for (const subchannelName of subChannels) {
+        const subchannelOption = subChannelOptions.value.find(s => s.label === subchannelName);
+        if (subchannelOption) {
+          const data = await lookupApi.getAccounts(formData.value.division, subchannelOption.value);
+          data.options.forEach(opt => accountsMap.set(opt.value, opt));
+        }
+      }
+      
+      accountOptions.value = Array.from(accountsMap.values());
+    } catch (error) {
+      console.error("Error loading accounts:", error);
+      accountOptions.value = [];
+    }
+  } else {
+    accountOptions.value = [];
+  }
+}, { deep: true });
 
 watch(() => formData.value.brand, async (brandMap) => {
   if (!isLoadingEntry.value) formData.value.brandFamily = {};
@@ -1139,8 +1268,11 @@ watch(() => props.entry, async (entry) => {
       try {
         const data = await lookupApi.getBrands(entry.division);
         brandOptions.value = data.options;
+        // Load channels from ro_customers
+        const channelData = await lookupApi.getChannels(entry.division);
+        channelOptions.value = channelData.options;
       } catch (error) {
-        console.error("Error loading brands for division:", error);
+        console.error("Error loading brands or channels:", error);
       }
     }
 
@@ -1171,9 +1303,9 @@ watch(() => props.entry, async (entry) => {
       addToForecastByYear:   entry.addToForecastByYear   || String(currentYear),
       division:       entry.division      || "", department:      entry.department    || "",
       country:        entry.country       || "", 
-      channel:        Array.isArray(entry.channel) ? entry.channel : (entry.channel && typeof entry.channel === 'object' ? Object.values(entry.channel) : []),
-      subChannel:     Array.isArray(entry.subChannel) ? entry.subChannel : (entry.subChannel && typeof entry.subChannel === 'object' ? Object.values(entry.subChannel) : []),
-      account:        Array.isArray(entry.account) ? entry.account : (entry.account && typeof entry.account === 'object' ? Object.values(entry.account) : []),
+      channel:        typeof entry.channel === 'object' ? Object.values(entry.channel || {}) : [],
+      subChannel:     typeof entry.subChannel === 'object' ? Object.values(entry.subChannel || {}) : [],
+      account:        typeof entry.account === 'object' ? Object.values(entry.account || {}) : [],
       brand:          brandMap, brandFamily:     familyMap,
       rAndO:          entry.rAndO         || "Risk", probability:     entry.probability   || "",
       categorisation: entry.categorisation|| "", impactPeriod:   entry.impactPeriod  || "",
@@ -1204,6 +1336,35 @@ watch(() => props.entry, async (entry) => {
         };
       }),
     };
+    
+    // Load subchannels if channels are present
+    if (entry.division && entry.channel && Object.keys(entry.channel || {}).length > 0) {
+      try {
+        const channelList = Object.values(entry.channel || {});
+        const firstChannelCode = channelOptions.value.find(c => c.label === channelList[0])?.value;
+        if (firstChannelCode) {
+          const data = await lookupApi.getSubchannels(entry.division, firstChannelCode);
+          subChannelOptions.value = data.options;
+        }
+      } catch (error) {
+        console.error("Error loading subchannels:", error);
+      }
+    }
+    
+    // Load accounts if subchannels are present
+    if (entry.division && entry.subChannel && Object.keys(entry.subChannel || {}).length > 0) {
+      try {
+        const subchannelList = Object.values(entry.subChannel || {});
+        const firstSubchannelCode = subChannelOptions.value.find(s => s.label === subchannelList[0])?.value;
+        if (firstSubchannelCode) {
+          const data = await lookupApi.getAccounts(entry.division, firstSubchannelCode);
+          accountOptions.value = data.options;
+        }
+      } catch (error) {
+        console.error("Error loading accounts:", error);
+      }
+    }
+    
     await nextTick();
     isInitialLoadRef.value = false;
   } else {
@@ -1350,9 +1511,33 @@ async function validate() {
       if (!usePeriodRange.value && !isPeriodAfter(formData.value.impactPeriod, formData.value.impactYear, formData.value.addToForecastByPeriod, formData.value.addToForecastByYear)) { ElMessage.error("Primary Impact Period must be after Add to Forecast By period"); return null; }
       formData.value.impactValue = cleanNumStr(formData.value.impactValue); formData.value.secondaryValue = cleanNumStr(formData.value.secondaryValue);
     }
+    
+    // Convert channel, subChannel, and account from name arrays to code-name maps
+    const channelMap: Record<string, string> = {};
+    for (const name of formData.value.channel) {
+      const option = channelOptions.value.find(c => c.label === name);
+      if (option) channelMap[option.value] = name;
+    }
+    
+    const subChannelMap: Record<string, string> = {};
+    for (const name of formData.value.subChannel) {
+      const option = subChannelOptions.value.find(s => s.label === name);
+      if (option) subChannelMap[option.value] = name;
+    }
+    
+    const accountMap: Record<string, string> = {};
+    for (const name of formData.value.account) {
+      const option = accountOptions.value.find(a => a.label === name);
+      if (option) accountMap[option.value] = name;
+    }
+    
     const { nsvAud, nsvNzd, volumeLitres } = mapToFields(formData.value.primaryImpact, formData.value.impactValue, formData.value.secondaryUnit, formData.value.secondaryValue);
     return {
-      ...formData.value, nsvAud, nsvNzd, volumeLitres,
+      ...formData.value,
+      channel: channelMap,
+      subChannel: subChannelMap,
+      account: accountMap,
+      nsvAud, nsvNzd, volumeLitres,
       childImpacts: formData.value.childImpacts.map(ci => {
         const m = mapToFields(ci.impactUnit, ci.impactValue, ci.secondaryUnit, ci.secondaryValue); return { impactYear: ci.impactYear, impactPeriod: ci.impactPeriod, ...m };
       }),
