@@ -14,11 +14,11 @@
       </div>
       <div class="quick-filter-row">
         <button
-          v-for="dept in departmentOptions"
-          :key="dept"
-          :class="['quick-btn', { active: store.filters.department === dept }]"
-          @click="toggleDepartment(dept)"
-        >{{ dept }}</button>
+          v-for="step in ibpStepOptions"
+          :key="step"
+          :class="['quick-btn', { active: store.filters.ibp_step === step }]"
+          @click="toggleIbpStep(step)"
+        >{{ step }}</button>
       </div>
     </div>
 
@@ -66,9 +66,9 @@
             <el-input v-model="store.filters.owner" placeholder="Filter owner..." clearable @change="store.fetchEntries()" />
           </el-col>
           <el-col :span="6">
-            <label class="filter-label">Department</label>
-            <el-select v-model="store.filters.department" clearable placeholder="All" @change="store.fetchEntries()">
-              <el-option v-for="d in departmentOptions" :key="d" :value="d" :label="d" />
+            <label class="filter-label">IBP Step</label>
+            <el-select v-model="store.filters.ibp_step" clearable placeholder="All" @change="store.fetchEntries()">
+              <el-option v-for="d in ibpStepOptions" :key="d" :value="d" :label="d" />
             </el-select>
           </el-col>
         </el-row>
@@ -164,7 +164,7 @@
           <div class="column-selector-container">
             <p class="column-selector-title">Toggle Columns</p>
             <div class="column-selector-list">
-              <el-checkbox v-model="colVisible.department">Department</el-checkbox>
+              <el-checkbox v-model="colVisible.ibpStep">IBP Step</el-checkbox>
               <el-checkbox v-model="colVisible.division">Division</el-checkbox>
               <el-checkbox v-model="colVisible.country">Country</el-checkbox>
               <el-checkbox v-model="colVisible.customer">Customer(s)</el-checkbox>
@@ -265,7 +265,7 @@
           <table class="data-table">
             <thead><tr>
               <th class="col-expand"></th>
-              <th v-if="colVisible.department"     class="col-md">Department</th>
+              <th v-if="colVisible.ibpStep"        class="col-md">IBP Step</th>
               <th v-if="colVisible.division"       class="col-sm">Division</th>
               <th v-if="colVisible.country"        class="col-sm">Country</th>
               <th v-if="colVisible.categorisation" class="col-lg">Categorisation</th>
@@ -297,7 +297,7 @@
                       <svg :class="['expand-icon', { rotated: expandedRows.has(row.id) }]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
                     </button>
                   </td>
-                  <td v-if="colVisible.department">{{ row.department || '-' }}</td>
+                  <td v-if="colVisible.ibpStep">{{ row.ibpStep || '-' }}</td>
                   <td v-if="colVisible.division">{{ row.division }}</td>
                   <td v-if="colVisible.country">{{ formatCountry(row.country) }}</td>
                   <td v-if="colVisible.categorisation">{{ row.categorisation }}</td>
@@ -367,7 +367,7 @@
                 <template v-if="expandedRows.has(row.id) && row.childImpacts?.length">
                   <tr v-for="(ci, cIdx) in row.childImpacts" :key="`${row.id}-c${cIdx}`" class="child-row">
                     <td class="col-expand"></td>
-                    <td v-if="colVisible.department"     class="cell-muted">{{ row.department || '-' }}</td>
+                    <td v-if="colVisible.ibpStep"        class="cell-muted">{{ row.ibpStep || '-' }}</td>
                     <td v-if="colVisible.division"       class="cell-muted">{{ row.division }}</td>
                     <td v-if="colVisible.country"        class="cell-muted">{{ formatCountry(row.country) }}</td>
                     <td v-if="colVisible.categorisation" class="cell-muted">{{ row.categorisation }}</td>
@@ -416,7 +416,7 @@
       <table class="data-table">
         <thead><tr>
           <th class="col-expand"></th>
-          <th v-if="colVisible.department"     class="col-md">Department</th>
+          <th v-if="colVisible.ibpStep"        class="col-md">IBP Step</th>
           <th v-if="colVisible.division"       class="col-sm">Division</th>
           <th v-if="colVisible.country"        class="col-sm">Country</th>
           <th v-if="colVisible.categorisation" class="col-lg">Categorisation</th>
@@ -451,7 +451,7 @@
                   <svg :class="['expand-icon', { rotated: expandedRows.has(row.id) }]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
                 </button>
               </td>
-              <td v-if="colVisible.department">{{ row.department || '-' }}</td>
+              <td v-if="colVisible.ibpStep">{{ row.ibpStep || '-' }}</td>
               <td v-if="colVisible.division">{{ row.division }}</td>
               <td v-if="colVisible.country">{{ formatCountry(row.country) }}</td>
               <td v-if="colVisible.categorisation">{{ row.categorisation }}</td>
@@ -522,7 +522,7 @@
             <template v-if="expandedRows.has(row.id) && row.childImpacts?.length">
               <tr v-for="(ci, cIdx) in row.childImpacts" :key="`${row.id}-c${cIdx}`" class="child-row">
                 <td class="col-expand"></td>
-                <td v-if="colVisible.department"     class="cell-muted">{{ row.department || '-' }}</td>
+                <td v-if="colVisible.ibpStep"        class="cell-muted">{{ row.ibpStep || '-' }}</td>
                 <td v-if="colVisible.division"       class="cell-muted">{{ row.division }}</td>
                 <td v-if="colVisible.country"        class="cell-muted">{{ formatCountry(row.country) }}</td>
                 <td v-if="colVisible.categorisation" class="cell-muted">{{ row.categorisation }}</td>
@@ -612,8 +612,8 @@ const quickFilterDefs = [
 function toggleQuick(key: keyof typeof quickFilters.value) {
   quickFilters.value[key] = !quickFilters.value[key];
 }
-function toggleDepartment(dept: string) {
-  store.filters.department = store.filters.department === dept ? "" : dept;
+function toggleIbpStep(step: string) {
+  store.filters.ibp_step = store.filters.ibp_step === step ? "" : step;
   store.fetchEntries();
 }
 
@@ -626,7 +626,7 @@ const countryOptions    = computed(() => lookupStore.getCached("country"));
 const channelOptions    = computed(() => lookupStore.getCached("channel"));
 const categOptions      = computed(() => lookupStore.getCached("categorisation"));
 const statusOptions     = computed(() => lookupStore.getCached("status"));
-const departmentOptions = computed(() => lookupStore.getCached("department"));
+const ibpStepOptions    = computed(() => lookupStore.getCached("ibp_step"));
 const brandOptions      = computed(() => lookupStore.getCached("brand"));
 
 const subChannelOptions = computed(() =>
@@ -680,7 +680,7 @@ const filteredEntries = computed(() => {
 const splitByOptions = [
   { key: "country",     label: "Country" },
   { key: "division",    label: "Division" },
-  { key: "department",  label: "Department" },
+  { key: "ibpStep" as keyof Entry, label: "IBP Step" },
   { key: "rAndO",       label: "Risk vs. Opportunity" },
   { key: "probability", label: "Priority" },
 ];
@@ -725,7 +725,7 @@ const groupedEntries = computed(() => {
 
 // ─── Column visibility ────────────────────────────────────────────────────────
 const colVisible = ref({
-  department:     true,
+  ibpStep:        true,
   division:       false,
   country:        false,
   customer:       false,
@@ -945,7 +945,7 @@ function canDeleteRow(row: Entry): boolean {
 function canEditStatusRow(row: Entry): boolean {
   const role = store.userRole, status = row.status;
   if (role === "System Admin") return true;
-  if (role === "Department Approver") return status === "Open" || status === "Approved";
+  if (role === "IBP Step Approver")   return status === "Open" || status === "Approved";
   if (role === "Finance Approver")    return status === "Approved" || status === "Dismissed" || status === "Included in Forecast";
   return false;
 }
@@ -953,7 +953,7 @@ function canEditStatusRow(row: Entry): boolean {
 function allowedStatusRow(row: Entry): string[] {
   const role = store.userRole, status = row.status ?? "Open";
   if (role === "System Admin") return STATUS_OPTIONS;
-  if (role === "Department Approver" && (status === "Open" || status === "Approved")) return ["Open","Approved"];
+  if (role === "IBP Step Approver" && (status === "Open" || status === "Approved")) return ["Open","Approved"];
   if (role === "Finance Approver") return ["Approved","Dismissed","Included in Forecast"];
   return [status];
 }
@@ -1006,7 +1006,7 @@ function exportToCSV(rows: Entry[], filename = `entries_${new Date().toISOString
 
   const headers: string[] = [];
   const cv = colVisible.value;
-  if (cv.department)      headers.push("Department");
+  if (cv.ibpStep)         headers.push("IBP Step");
   if (cv.division)        headers.push("Division");
   if (cv.country)         headers.push("Country");
   if (cv.categorisation)  headers.push("Categorisation");
@@ -1032,7 +1032,7 @@ function exportToCSV(rows: Entry[], filename = `entries_${new Date().toISOString
 
   const data = rows.map(e => {
     const r: string[] = [];
-    if (cv.department)      r.push(escapeCSV(e.department || ""));
+    if (cv.ibpStep)         r.push(escapeCSV(e.ibpStep || ""));
     if (cv.division)        r.push(escapeCSV(e.division || ""));
     if (cv.country)         r.push(escapeCSV(e.country || ""));
     if (cv.categorisation)  r.push(escapeCSV(e.categorisation || ""));

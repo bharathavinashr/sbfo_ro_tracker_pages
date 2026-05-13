@@ -21,7 +21,7 @@ export interface Entry {
   addToForecastByPeriod?: string;
   addToForecastByYear?: string;
   division: string;
-  department?: string;
+  ibpStep?: string;
   country: string;
   channel: string;
   subChannel: string;
@@ -55,15 +55,15 @@ export interface Entry {
 
 export type UserRole =
   | "User"
-  | "Department Approver"
+  | "IBP Step Approver"
   | "Finance Approver"
   | "System Admin";
 
-/** 0=System Admin, 1=User, 2=Department Approver, 3=Finance Approver */
+/** 0=System Admin, 1=User, 2=IBP Step Approver, 3=Finance Approver */
 export const ROLE_MAP: Record<number, UserRole> = {
   0: "System Admin",
   1: "User",
-  2: "Department Approver",
+  2: "IBP Step Approver",
   3: "Finance Approver",
 };
 
@@ -72,7 +72,7 @@ export interface AppUser {
   email: string;
   display_name?: string;
   role: number;
-  departments?: string[] | null;  // null = all; array = restricted (role 2 only)
+  ibp_steps?: string[] | null;  // null = all; array = restricted (role 2 only)
 }
 
 export const DIVISIONS = ["Alcohol", "Non-Alcohol"];
@@ -101,7 +101,7 @@ export const BRANDS = [
   "Bowmore", "Auchentoshan", "Kilbeggan", "Other",
 ];
 export const USER_ROLES: UserRole[] = [
-  "User", "Department Approver", "Finance Approver", "System Admin",
+  "User", "IBP Step Approver", "Finance Approver", "System Admin",
 ];
 
 export const COUNTRY_CURRENCY_MAP: Record<string, string> = {

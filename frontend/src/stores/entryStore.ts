@@ -28,6 +28,7 @@ export const useEntryStore = defineStore("entry", () => {
     probability: "",
     status: "",
     owner: "",
+    ibp_step: "",
     creation_date_period: "",
     creation_date_year: "",
   });
@@ -74,9 +75,9 @@ export const useEntryStore = defineStore("entry", () => {
         })
       );
       if (userRole.value) activeFilters.role = userRole.value;
-      // Pass department restriction for Department Approver (null = all, array = restricted)
-      if (userRole.value === "Department Approver") {
-        const depts = currentUser.value?.departments;
+      // Pass department restriction for IBP Step Approver (null = all, array = restricted)
+      if (userRole.value === "IBP Step Approver") {
+        const depts = currentUser.value?.ibp_steps;
         if (depts && depts.length > 0) {
           activeFilters.user_departments = depts.join(",");
         }
@@ -123,6 +124,7 @@ export const useEntryStore = defineStore("entry", () => {
       probability: "",
       status: "",
       owner: "",
+      ibp_step: "",
       creation_date_period: "",
       creation_date_year: "",
     };

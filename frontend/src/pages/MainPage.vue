@@ -221,7 +221,7 @@ async function handleSave() {
       add_to_forecast_by_period: data.addToForecastByPeriod,
       add_to_forecast_by_year: data.addToForecastByYear,
       division: data.division,
-      department: data.department,
+      ibp_step: data.ibpStep,
       country: data.country,
       channel: data.channel,
       sub_channel: data.subChannel,

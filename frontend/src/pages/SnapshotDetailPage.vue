@@ -19,7 +19,7 @@
       <div class="snapshot-header">
         <div class="header-title">
           <h1 class="page-title">Snapshot: {{ snapshot.name }}</h1>
-          <el-tag v-if="snapshot.department" size="large">{{ snapshot.department }}</el-tag>
+          <el-tag v-if="snapshot.ibp_step" size="large">{{ snapshot.ibp_step }}</el-tag>
         </div>
         <p class="snapshot-meta">
           Created: {{ formatDate(snapshot.created_at) }} • {{ snapshotEntries.length }} {{ snapshotEntries.length === 1 ? 'entry' : 'entries' }}
@@ -56,7 +56,7 @@ interface SnapshotDetail {
   name: string;
   period: string;
   year: string;
-  department: string;
+  ibp_step: string;
   created_at: string;
   entries: Entry[];
 }

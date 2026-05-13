@@ -24,7 +24,7 @@ class EntryBase(BaseModel):
     add_to_forecast_by_period: Optional[str] = None
     add_to_forecast_by_year: Optional[str] = None
     division: str
-    department: Optional[str] = None
+    ibp_step: Optional[str] = None
     country: str
     channel: Dict[str, str]  # Map: {channel_code: channel_name}
     sub_channel: Dict[str, str]  # Map: {subchannel_code: subchannel_name}
@@ -78,7 +78,7 @@ class UserOut(BaseModel):
     email: str
     display_name: Optional[str] = None
     role: int  # 0=System Admin, 1=User, 2=Department Approver, 3=Finance Approver
-    departments: Optional[List[str]] = None  # None = all; list = restricted departments (role 2 only)
+    ibp_steps: Optional[List[str]] = None  # None = all; list = restricted IBP steps (role 2 only)
     model_config = {"from_attributes": True}
 
 

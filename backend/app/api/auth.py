@@ -33,5 +33,5 @@ def get_me(request: Request, db: Session = Depends(get_db)):
         "email": user.email,
         "display_name": user.display_name,
         "role": user.role,
-        "departments": user.departments,
+        "ibp_steps": user.ibp_steps,
     }

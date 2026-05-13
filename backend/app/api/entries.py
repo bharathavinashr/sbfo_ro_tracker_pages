@@ -60,7 +60,7 @@ def _entry_to_dict(entry, child_impacts) -> dict:
         "addToForecastByPeriod": entry.add_to_forecast_by_period,
         "addToForecastByYear": entry.add_to_forecast_by_year,
         "division": entry.division,
-        "department": entry.department,
+        "ibpStep": entry.ibp_step,
         "country": entry.country,
         "channel": entry.channel,
         "subChannel": entry.sub_channel,
@@ -108,7 +108,7 @@ def _entry_to_dict(entry, child_impacts) -> dict:
 def list_entries(
     db: Session = Depends(get_db),
     division: Optional[str] = Query(None),
-    department: Optional[str] = Query(None),
+    ibp_step: Optional[str] = Query(None),
     country: Optional[str] = Query(None),
     channel: Optional[List[str]] = Query(None),
     sub_channel: Optional[List[str]] = Query(None),
@@ -123,11 +123,11 @@ def list_entries(
     creation_date_period: Optional[str] = Query(None),
     creation_date_year: Optional[str] = Query(None),
     role: Optional[str] = Query(None),
-    user_departments: Optional[str] = Query(None),  # comma-separated; None = all
+    user_ibp_steps: Optional[str] = Query(None),  # comma-separated; None = all
 ):
     filters = {
         "division": division,
-        "department": department,
+        "ibp_step": ibp_step,
         "country": country,
         "channel": channel,
         "sub_channel": sub_channel,
@@ -143,11 +143,11 @@ def list_entries(
         "creation_date_year": creation_date_year,
     }
     include_deleted = (role == "System Admin")
-    # Department Approver: restrict to their allowed departments (None = all)
-    department_in = None
-    if role == "Department Approver" and user_departments:
-        department_in = [d.strip() for d in user_departments.split(",") if d.strip()]
-    entries = crud.get_latest_entries(db, filters, include_deleted=include_deleted, department_in=department_in)
+    # IBP Step Approver: restrict to their allowed IBP Steps (None = all)
+    ibp_step_in = None
+    if role == "IBP Step Approver" and user_ibp_steps:
+        ibp_step_in = [d.strip() for d in user_ibp_steps.split(",") if d.strip()]
+    entries = crud.get_latest_entries(db, filters, include_deleted=include_deleted, ibp_step_in=ibp_step_in)
     result = []
     for entry in entries:
         child_impacts = crud.get_child_impacts(db, entry.id)

@@ -86,10 +86,10 @@
             </template>
           </el-table-column>
 
-          <el-table-column v-if="visibleColumns.department" label="IBP Step" width="140">
+          <el-table-column v-if="visibleColumns.ibpStep" label="IBP Step" width="140">
             <template #default="{ row }">
-              <div>{{ row.department || '-' }}</div>
-              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.department && row.previousValues.department !== row.department" class="prev-value">{{ row.previousValues.department }}</div>
+              <div>{{ row.ibpStep || '-' }}</div>
+              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.ibpStep && row.previousValues.ibpStep !== row.ibpStep" class="prev-value">{{ row.previousValues.ibpStep }}</div>
             </template>
           </el-table-column>
 
@@ -276,15 +276,15 @@
       </el-empty>
 
       <div v-else class="snapshots-grid">
-        <div v-for="dept in departments" :key="dept" class="department-section">
-          <template v-if="groupedSnapshots[dept]?.length > 0">
+        <div v-for="step in ibpSteps" :key="step" class="department-section">
+          <template v-if="groupedSnapshots[step]?.length > 0">
             <div class="section-header">
-              <h2>{{ dept }}</h2>
-              <el-tag>{{ groupedSnapshots[dept].length }} {{ groupedSnapshots[dept].length === 1 ? 'snapshot' : 'snapshots' }}</el-tag>
+              <h2>{{ step }}</h2>
+              <el-tag>{{ groupedSnapshots[step].length }} {{ groupedSnapshots[step].length === 1 ? 'snapshot' : 'snapshots' }}</el-tag>
             </div>
             <div class="cards-grid">
               <el-card
-                v-for="snapshot in groupedSnapshots[dept]"
+                v-for="snapshot in groupedSnapshots[step]"
                 :key="snapshot.snapshot_id"
                 class="snapshot-card"
                 :class="{ 'is-selected': selectedSnapshots.includes(snapshot.snapshot_id) }"
@@ -334,7 +334,7 @@ interface SnapshotGroup {
   name: string;
   period: string;
   year: string;
-  department: string;
+  ibp_step: string;
   entries_count: number;
   created_at: string;
 }
@@ -356,7 +356,7 @@ interface Entry {
   id: string;
   originalEntryId?: string;
   division: string;
-  department?: string;
+  ibpStep?: string;
   country: string;
   channel: string;
   subChannel: string;
@@ -404,13 +404,13 @@ const selectedSnapshots = ref<string[]>([]);
 const comparedEntries = ref<ComparedEntry[]>([]);
 const showComparison = ref(false);
 
-const departments = ["Portfolio Review", "Supply Review", "Demand Review", "A&P (Pre-Exec)", "Overheads (Pre-Exec)"];
+const ibpSteps = ["Portfolio Review", "Supply Review", "Demand Review", "A&P (Pre-Exec)", "Overheads (Pre-Exec)"];
 
 // Column visibility
 const visibleColumns = ref<Record<string, boolean>>({
   changeStatus: true,
   modifiedFields: true,
-  department: true,
+  ibpStep: true,
   division: true,
   country: true,
   categorisation: true,
@@ -434,7 +434,7 @@ const visibleColumns = ref<Record<string, boolean>>({
 const columnDefs = [
   { key: 'changeStatus', label: 'Change Status' },
   { key: 'modifiedFields', label: 'Modified Fields' },
-  { key: 'department', label: 'IBP Step' },
+  { key: 'ibpStep', label: 'IBP Step' },
   { key: 'division', label: 'Division' },
   { key: 'country', label: 'Country' },
   { key: 'categorisation', label: 'Categorisation' },
@@ -457,8 +457,8 @@ const columnDefs = [
 
 const groupedSnapshots = computed(() => {
   const grouped: Record<string, SnapshotGroup[]> = {};
-  departments.forEach(dept => {
-    grouped[dept] = snapshots.value.filter(s => s.department === dept);
+  ibpSteps.forEach(step => {
+    grouped[step] = snapshots.value.filter(s => s.ibp_step === step);
   });
   return grouped;
 });
@@ -628,7 +628,7 @@ function compareEntries(baseEntry: Entry, compEntry: Entry): { modifiedFields: s
   const previousValues: Record<string, any> = {};
 
   const fieldDisplayNames: Record<string, string> = {
-    division: "Division", department: "Department", country: "Country",
+    division: "Division", ibpStep: "IBP Step", country: "Country",
     channel: "Channel", subChannel: "Sub Channel", account: "Account",
     brand: "Brand", brandFamily: "Brand Family", rAndO: "Risk vs. Opp.",
     probability: "Probability", categorisation: "Categorisation",

@@ -3,7 +3,7 @@ from sqlalchemy import func, cast, String, Text
 from . import models, schemas
 
 
-def get_latest_entries(db: Session, filters: dict = None, include_deleted: bool = False, department_in: list = None):
+def get_latest_entries(db: Session, filters: dict = None, include_deleted: bool = False, ibp_step_in: list = None):
     """Return latest version of each entry (max version per original_entry_id)."""
     subq = (
         db.query(
@@ -34,9 +34,9 @@ def get_latest_entries(db: Session, filters: dict = None, include_deleted: bool 
             else:
                 query = query.filter(column == value)
 
-    # Department Approver restriction: filter by allowed departments
-    if department_in:
-        query = query.filter(models.Entry.department.in_(department_in))
+    # IBP Step Approver restriction: filter by allowed IBP Steps
+    if ibp_step_in:
+        query = query.filter(models.Entry.ibp_step.in_(ibp_step_in))
     return query.order_by(models.Entry.last_modified.desc()).all()
 
 

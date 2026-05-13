@@ -133,23 +133,23 @@
 
       <el-row :gutter="24">
         <el-col :span="12">
-          <el-form-item label="Department" prop="department">
+          <el-form-item label="IBP Step" prop="ibpStep">
             <div class="combo-wrap">
               <el-input
-                v-model="deptSearch"
-                :placeholder="formData.department || 'Select department'"
-                :class="{ 'has-selected-value': !!formData.department && !deptSearch }"
+                v-model="ibpStepSearch"
+                :placeholder="formData.ibpStep || 'Select IBP Step'"
+                :class="{ 'has-selected-value': !!formData.ibpStep && !ibpStepSearch }"
                 @focus="deptOpen = true"
                 @blur="onDeptBlur"
                 @input="deptOpen = true"
                 clearable
-                @clear="formData.department = ''; deptSearch = ''"
+                @clear="formData.ibpStep = ''; ibpStepSearch = ''"
               >
                 <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
               </el-input>
               <div v-if="deptOpen" class="combo-dropdown">
-                <div v-for="d in filteredDepts" :key="d" class="combo-item" @mousedown.prevent="formData.department = d; deptSearch = ''; deptOpen = false">{{ d }}</div>
-                <div v-if="filteredDepts.length === 0 && deptSearch" class="combo-custom" @mousedown.prevent="formData.department = deptSearch; deptOpen = false">Use custom value: "{{ deptSearch }}"</div>
+                <div v-for="d in filteredIbpSteps" :key="d" class="combo-item" @mousedown.prevent="formData.ibpStep = d; ibpStepSearch = ''; deptOpen = false">{{ d }}</div>
+                <div v-if="filteredIbpSteps.length === 0 && ibpStepSearch" class="combo-custom" @mousedown.prevent="formData.ibpStep = ibpStepSearch; deptOpen = false">Use custom value: "{{ ibpStepSearch }}"</div>
               </div>
             </div>
           </el-form-item>
@@ -737,10 +737,9 @@ onMounted(async () => {
 const countryOptions     = computed(() => lookupStore.getCached("country"));
 const probabilityOptions = computed(() => lookupStore.getCached("probability"));
 const ibpStepOptions     = computed(() => lookupStore.getCached("ibp_step"));
-const departmentOptions  = computed(() => lookupStore.getCached("department"));
 
-const CATEG_ACTIVE_DEPTS = ["Portfolio Review", "Demand Review", "Supply Review", "Overheads (Pre-Exec)"];
-const categActive = computed(() => CATEG_ACTIVE_DEPTS.includes(formData.value.department));
+const CATEG_ACTIVE_IBP_STEPS = ["Portfolio Review", "Demand Review", "Supply Review", "Overheads (Pre-Exec)"];
+const categActive = computed(() => CATEG_ACTIVE_IBP_STEPS.includes(formData.value.ibpStep));
 
 const supplyCategorisations    = ["Conversion (Wiri)", "Conversion (Swanbank)", "Co-Pack", "Agency", "Materials", "Stock", "Int/TT Freight", "Other"];
 const overheadsCategorisations = ["People Costs", "Other People Costs", "Total People Costs", "Strategic Projects", "Vehicles", "Travel & Entertainment", "Communication", "Leases & Rentals", "Utilities", "Repairs & Maintenance", "Depreciation", "Printing & Stationery", "Administration", "Professional Fees", "IT Supplies", "Market Research", "3rd Party Merchandisers", "Insurance", "Group recharges / Sundry Income"];
@@ -748,11 +747,11 @@ const alcoholCategorisations   = ["Customer SOH", "Ranging", "Phasing", "Excise"
 const baseCategorisations      = ["Baseline/Run Rates", "Brand Activations", "Deletions", "Long Term Forecast", "NPD", "New Business", "OOS", "Promotional Pricing", "Strategic/MTP/Trading Terms"];
 
 const categOptions = computed(() => {
-  if (formData.value.department === "Supply Review") return supplyCategorisations;
-  if (formData.value.department === "Overheads (Pre-Exec)") return overheadsCategorisations;
+  if (formData.value.ibpStep === "Supply Review") return supplyCategorisations;
+  if (formData.value.ibpStep === "Overheads (Pre-Exec)") return overheadsCategorisations;
   if (
     formData.value.division === "Alcohol" &&
-    (formData.value.department === "Portfolio Review" || formData.value.department === "Demand Review")
+    (formData.value.ibpStep === "Portfolio Review" || formData.value.ibpStep === "Demand Review")
   ) return [...baseCategorisations, ...alcoholCategorisations];
   return baseCategorisations;
 });
@@ -781,7 +780,7 @@ const brandFamilyRef    = ref<HTMLElement | null>(null);
 const brandRef          = ref<HTMLElement | null>(null);
 
 const deptOpen = ref(false);
-const deptSearch = ref("");
+const ibpStepSearch = ref("");
 const divOpen = ref(false);
 const divSearch = ref("");
 const countryOpen = ref(false);
@@ -837,7 +836,7 @@ const filteredBrands        = computed(() => brandOptions.value.filter(b => b.la
 const filteredAccounts      = computed(() => accountOptions.value.filter(a => a.label.toLowerCase().includes(accountSearch.value.toLowerCase())).map(a => a.label));
 const filteredBrandFamilies = computed(() => brandFamilyOptions.value.filter(f => f.label.toLowerCase().includes(brandFamilySearch.value.toLowerCase())));
 
-const filteredDepts         = computed(() => departmentOptions.value.filter(d => d.toLowerCase().includes(deptSearch.value.toLowerCase())));
+const filteredIbpSteps      = computed(() => ibpStepOptions.value.filter(d => d.toLowerCase().includes(ibpStepSearch.value.toLowerCase())));
 const filteredDivs          = computed(() => divisionOptions.value.filter(d => d.toLowerCase().includes(divSearch.value.toLowerCase())));
 const filteredCountries     = computed(() => countryOptions.value.filter(c => c.toLowerCase().includes(countrySearch.value.toLowerCase())));
 const filteredCreationPeriods = computed(() => PERIODS.filter(p => periodToMonth(p).toLowerCase().includes(creationPeriodSearch.value.toLowerCase()) || p.toLowerCase().includes(creationPeriodSearch.value.toLowerCase())));
@@ -1004,7 +1003,7 @@ interface FormData {
   addToForecastByPeriod: string;
   addToForecastByYear:   string;
   division:              string;
-  department:            string;
+  ibpStep:               string;
   country:               string;
   channel:               string[];
   subChannel:            string[];
@@ -1068,7 +1067,7 @@ function defaultForm(): FormData {
     creationDateYear:      String(currentYear),
     addToForecastByPeriod: currentPeriod,
     addToForecastByYear:   String(currentYear),
-    division:        "", department:      "", country:         "",
+    division:        "", ibpStep:         "", country:         "",
     channel:         [], subChannel:      [], account:         [],
     brand:           {}, brandFamily:     {}, rAndO:           "Risk",
     probability:     "", categorisation:  "", impactPeriod:    currentPeriod,
@@ -1267,9 +1266,9 @@ watch(() => formData.value.brand, async (brandMap) => {
     brandFamilyOptions.value = [];
   }
     }, { deep: true });
-watch(() => formData.value.department, (val) => {
+watch(() => formData.value.ibpStep, (val) => {
   if (isInitialLoadRef.value) return;
-  if (!CATEG_ACTIVE_DEPTS.includes(val)) formData.value.categorisation = "";
+  if (!CATEG_ACTIVE_IBP_STEPS.includes(val)) formData.value.categorisation = "";
   if (val === "Demand Review") formData.value.impactType = "NSV";
   else if (formData.value.impactType === "NSV") formData.value.impactType = "OI";
 });
@@ -1333,7 +1332,7 @@ watch(() => props.entry, async (entry) => {
       creationDateYear:      entry.creationDateYear      || String(currentYear),
       addToForecastByPeriod: entry.addToForecastByPeriod || currentPeriod,
       addToForecastByYear:   entry.addToForecastByYear   || String(currentYear),
-      division:       entry.division      || "", department:      entry.department    || "",
+      division:       entry.division      || "", ibpStep:         entry.ibpStep       || "",
       country:        entry.country       || "", 
       channel:        typeof entry.channel === 'object' ? Object.values(entry.channel || {}) : [],
       subChannel:     typeof entry.subChannel === 'object' ? Object.values(entry.subChannel || {}) : [],
@@ -1413,7 +1412,7 @@ const rules: FormRules = {
   creationDatePeriod: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
   creationDateYear: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
   division: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
-  department: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
+  ibpStep: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
   country: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
   channel: [{ validator: (_rule: any, value: any, callback: any) => { if (!value?.length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
   subChannel: [{ validator: (_rule: any, value: any, callback: any) => { if (!value?.length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],

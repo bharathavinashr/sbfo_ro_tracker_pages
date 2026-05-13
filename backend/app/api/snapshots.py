@@ -17,17 +17,17 @@ router = APIRouter()
 class SnapshotCreate(BaseModel):
     period: str
     year: str
-    department: str
+    ibp_step: str
 
 
 @router.post("")
 def create_snapshot(data: SnapshotCreate, db: Session = Depends(get_db)):
     # Generate unique snapshot ID and name
-    snapshot_id = f"SNAP-{data.year}-{data.period}-{data.department.replace(' ', '_')}-{uuid.uuid4().hex[:8]}".upper()
-    snapshot_name = f"{data.department} - {data.period} {data.year}"
+    snapshot_id = f"SNAP-{data.year}-{data.period}-{data.ibp_step.replace(' ', '_')}-{uuid.uuid4().hex[:8]}".upper()
+    snapshot_name = f"{data.ibp_step} - {data.period} {data.year}"
     
     # Get all entries matching the filter criteria
-    filters = {"department": data.department}
+    filters = {"ibp_step": data.ibp_step}
     entries = get_latest_entries(db, filters=filters)
     
     if not entries:
@@ -44,7 +44,7 @@ def create_snapshot(data: SnapshotCreate, db: Session = Depends(get_db)):
             "creation_date_period": entry.creation_date_period,
             "creation_date_year": entry.creation_date_year,
             "division": entry.division,
-            "department": entry.department,
+            "ibp_step": entry.ibp_step,
             "country": entry.country,
             "channel": entry.channel,
             "sub_channel": entry.sub_channel,
@@ -72,7 +72,7 @@ def create_snapshot(data: SnapshotCreate, db: Session = Depends(get_db)):
             entry_id=entry.id,
             period=data.period,
             year=data.year,
-            department=data.department,
+            ibp_step=data.ibp_step,
             entry_data=entry_data,
         )
         snapshots.append(snapshot)
@@ -100,24 +100,24 @@ def get_all_snapshots(db: Session = Depends(get_db)):
             Snapshot.snapshot_id,
             Snapshot.period,
             Snapshot.year,
-            Snapshot.department,
+            Snapshot.ibp_step,
             func.count(Snapshot.id).label("entries_count"),
             func.min(Snapshot.created_at).label("created_at"),
         )
-        .group_by(Snapshot.snapshot_id, Snapshot.period, Snapshot.year, Snapshot.department)
+        .group_by(Snapshot.snapshot_id, Snapshot.period, Snapshot.year, Snapshot.ibp_step)
         .order_by(func.min(Snapshot.created_at).desc())
         .all()
     )
     
     result = []
     for snap in snapshots:
-        name = f"{snap.department} - {snap.period} {snap.year}"
+        name = f"{snap.ibp_step} - {snap.period} {snap.year}"
         result.append({
             "snapshot_id": snap.snapshot_id,
             "name": name,
             "period": snap.period,
             "year": snap.year,
-            "department": snap.department,
+            "ibp_step": snap.ibp_step,
             "entries_count": snap.entries_count,
             "created_at": snap.created_at.isoformat() if snap.created_at else None,
         })
@@ -139,7 +139,7 @@ def get_snapshot_by_id(snapshot_id: str, db: Session = Depends(get_db)):
     
     # Get snapshot metadata from first record
     first_record = snapshot_records[0]
-    snapshot_name = f"{first_record.department} - {first_record.period} {first_record.year}"
+    snapshot_name = f"{first_record.ibp_step} - {first_record.period} {first_record.year}"
     
     # Get entry IDs from snapshot records
     entry_ids = [snap.entry_id for snap in snapshot_records]
@@ -174,7 +174,7 @@ def get_snapshot_by_id(snapshot_id: str, db: Session = Depends(get_db)):
             "addToForecastByPeriod": entry.add_to_forecast_by_period,
             "addToForecastByYear": entry.add_to_forecast_by_year,
             "division": entry.division,
-            "department": entry.department,
+            "ibpStep": entry.ibp_step,
             "country": entry.country,
             "channel": entry.channel,
             "subChannel": entry.sub_channel,
@@ -208,7 +208,7 @@ def get_snapshot_by_id(snapshot_id: str, db: Session = Depends(get_db)):
             "name": snapshot_name,
             "period": first_record.period,
             "year": first_record.year,
-            "department": first_record.department,
+            "ibp_step": first_record.ibp_step,
             "created_at": first_record.created_at.isoformat() if first_record.created_at else None,
             "entries": entries_data,
         }

@@ -21,7 +21,7 @@ class Entry(Base):
     add_to_forecast_by_year = Column(String(4), nullable=True)
 
     division = Column(String(100), nullable=False)
-    department = Column(String(100), nullable=True)
+    ibp_step = Column(String(100), nullable=True)
     country = Column(String(100), nullable=False)
 
     channel = Column(JSONB, nullable=False)  # Map: {channel_code: channel_name}
@@ -83,8 +83,8 @@ class AppUser(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     email = Column(String(200), nullable=False, unique=True)
     display_name = Column(String(100), nullable=True)
-    role = Column(Integer, nullable=False)  # 0=System Admin, 1=User, 2=Department Approver, 3=Finance Approver
-    departments = Column(JSONB, nullable=True)  # None = all; ["Supply","Marketing"] = restricted
+    role = Column(Integer, nullable=False)  # 0=System Admin, 1=User, 2=IBP Step Approver, 3=Finance Approver
+    ibp_steps = Column(JSONB, nullable=True)  # None = all; ["Supply","Marketing"] = restricted
     is_active = Column(Boolean, default=True)
 
 
@@ -136,6 +136,6 @@ class Snapshot(Base):
     entry_id = Column(Integer, nullable=False)
     period = Column(String(10), nullable=False)
     year = Column(String(4), nullable=False)
-    department = Column(String(100), nullable=False)
+    ibp_step = Column(String(100), nullable=False)
     entry_data = Column(JSONB, nullable=False)
     created_at = Column(DateTime, server_default=func.now())

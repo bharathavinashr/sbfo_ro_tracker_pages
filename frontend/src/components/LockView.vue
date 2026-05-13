@@ -30,16 +30,16 @@
       </el-form-item>
 
       <el-form-item label="IBP Step" required>
-        <el-select v-model="form.department" placeholder="Select IBP Step" class="full-width">
+        <el-select v-model="form.ibpStep" placeholder="Select IBP Step" class="full-width">
           <el-option
-            v-for="dept in departments"
-            :key="dept"
-            :value="dept"
-            :label="dept"
+            v-for="step in ibpSteps"
+            :key="step"
+            :value="step"
+            :label="step"
           />
         </el-select>
-        <p v-if="form.department" class="form-hint">
-          {{ filteredCount }} {{ filteredCount === 1 ? 'entry' : 'entries' }} will be locked for {{ form.department }}
+        <p v-if="form.ibpStep" class="form-hint">
+          {{ filteredCount }} {{ filteredCount === 1 ? 'entry' : 'entries' }} will be locked for {{ form.ibpStep }}
         </p>
       </el-form-item>
     </el-form>
@@ -49,7 +49,7 @@
       <el-button 
         type="primary" 
         :loading="loading" 
-        :disabled="!form.period || !form.year || !form.department"
+        :disabled="!form.period || !form.year || !form.ibpStep"
         @click="handleCreateSnapshot"
       >
         {{ loading ? 'Creating...' : 'Create Snapshot' }}
@@ -79,19 +79,19 @@ const loading = ref(false);
 const currentYear = new Date().getFullYear();
 const periods = ["F01", "F02", "F03", "F04", "F05", "F06", "F07", "F08", "F09", "F10", "F11", "F12"];
 const years = Array.from({ length: 10 }, (_, i) => (currentYear - 5 + i).toString());
-const departments = ["Portfolio Review", "Supply Review", "Demand Review", "A&P (Pre-Exec)", "Overheads (Pre-Exec)"];
+const ibpSteps = ["Portfolio Review", "Supply Review", "Demand Review", "A&P (Pre-Exec)", "Overheads (Pre-Exec)"];
 
 const form = ref({
   period: "",
   year: currentYear.toString(),
-  department: "",
+  ibpStep: "",
 });
 
 const totalEntries = computed(() => store.displayEntries.length);
 
 const filteredCount = computed(() => {
-  if (!form.value.department) return 0;
-  return store.displayEntries.filter(e => e.department === form.value.department).length;
+  if (!form.value.ibpStep) return 0;
+  return store.displayEntries.filter(e => e.ibpStep === form.value.ibpStep).length;
 });
 
 watch(() => props.modelValue, (val) => {
@@ -104,19 +104,23 @@ watch(visible, (val) => {
 
 function handleClose() {
   visible.value = false;
-  form.value = { period: "", year: currentYear.toString(), department: "" };
+  form.value = { period: "", year: currentYear.toString(), ibpStep: "" };
 }
 
 async function handleCreateSnapshot() {
-  if (!form.value.period || !form.value.year || !form.value.department) {
+  if (!form.value.period || !form.value.year || !form.value.ibpStep) {
     ElMessage.warning("Please select period, year, and IBP Step");
     return;
   }
   
   loading.value = true;
   try {
-    const snapshotName = `${form.value.department} - ${form.value.period} ${form.value.year}`;
-    const result = await snapshotApi.create(form.value);
+    const snapshotName = `${form.value.ibpStep} - ${form.value.period} ${form.value.year}`;
+    const result = await snapshotApi.create({
+      period: form.value.period,
+      year: form.value.year,
+      ibp_step: form.value.ibpStep
+    });
     ElMessage.success(`Locked view created: ${snapshotName} (${result.entries_count} entries)`);
     handleClose();
   } catch (error: any) {
