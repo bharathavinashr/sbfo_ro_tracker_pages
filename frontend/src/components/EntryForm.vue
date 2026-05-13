@@ -207,10 +207,10 @@
             prop="categorisation"
             :required="categActive"
           >
-            <div class="combo-wrap">
+            <div class="combo-wrap" :title="!categActive ? categDisabledMessage : ''">
               <el-input
                 v-model="categSearch"
-                :placeholder="formData.categorisation || (categActive ? 'Select categorisation' : 'Not available')"
+                :placeholder="formData.categorisation || (categActive ? 'Select categorisation' : 'Select categorisation')"
                 :disabled="!categActive"
                 :class="{ 'has-selected-value': !!formData.categorisation && !categSearch }"
                 @focus="categOpen = true"
@@ -221,7 +221,7 @@
               >
                 <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
               </el-input>
-              <div v-if="categOpen" class="combo-dropdown">
+              <div v-if="categOpen && categActive" class="combo-dropdown">
                 <div v-for="c in filteredCategs" :key="c" class="combo-item" @mousedown.prevent="formData.categorisation = c; categSearch = ''; categOpen = false">{{ c }}</div>
                 <div v-if="filteredCategs.length === 0 && categSearch" class="combo-custom" @mousedown.prevent="formData.categorisation = categSearch; categOpen = false">Use custom value: "{{ categSearch }}"</div>
               </div>
@@ -261,14 +261,14 @@
       <el-row :gutter="24">
         <el-col :span="12">
           <el-form-item label="Channel" prop="channel" ref="channelRef">
-            <div class="combo-wrap" ref="channelRef" v-click-outside="handleChannelClickOutside">
-              <div class="combo-trigger" @click="channelOpen = !channelOpen">
+            <div class="combo-wrap" ref="channelRef" v-click-outside="handleChannelClickOutside" :class="{ 'is-disabled': !countryDivisionActive }" :title="!countryDivisionActive ? channelDisabledMessage : ''">
+              <div class="combo-trigger" @click="countryDivisionActive && (channelOpen = !channelOpen)" :style="{ opacity: countryDivisionActive ? 1 : 0.6, cursor: countryDivisionActive ? 'pointer' : 'not-allowed' }">
                 <span :class="formData.channel.length ? 'has-value' : 'placeholder'">
                   {{ formData.channel.length ? formData.channel.join(', ') : 'Select one or more channels' }}
                 </span>
                 <el-icon class="combo-arrow"><ArrowDown /></el-icon>
               </div>
-              <div v-if="channelOpen" class="combo-dropdown brand-family-dropdown">
+              <div v-if="channelOpen && countryDivisionActive" class="combo-dropdown brand-family-dropdown">
                 <el-input v-model="channelSearch" placeholder="Type to search..." class="bf-search" />
                 <div class="combo-item combo-check-item bf-select-all" @mousedown.prevent="toggleAllChannels">
                   <el-checkbox :model-value="allChannelsSelected" />
@@ -283,14 +283,14 @@
         </el-col>
         <el-col :span="12">
           <el-form-item label="Brand" prop="brand" ref="brandRef">
-            <div class="combo-wrap" ref="brandRef" v-click-outside="handleBrandClickOutside">
-              <div class="combo-trigger" @click="brandOpen = !brandOpen">
+            <div class="combo-wrap" ref="brandRef" v-click-outside="handleBrandClickOutside" :class="{ 'is-disabled': !countryDivisionActive }" :title="!countryDivisionActive ? channelSubChannelAccountBrandMessage : ''">
+              <div class="combo-trigger" @click="countryDivisionActive && (brandOpen = !brandOpen)" :style="{ opacity: countryDivisionActive ? 1 : 0.6, cursor: countryDivisionActive ? 'pointer' : 'not-allowed' }">
                 <span :class="Object.keys(formData.brand).length ? 'has-value' : 'placeholder'">
                   {{ Object.keys(formData.brand).length ? Object.values(formData.brand).join(', ') : 'Select one or more brands' }}
                 </span>
                 <el-icon class="combo-arrow"><ArrowDown /></el-icon>
               </div>
-              <div v-if="brandOpen" class="combo-dropdown brand-family-dropdown">
+              <div v-if="brandOpen && countryDivisionActive" class="combo-dropdown brand-family-dropdown">
                 <el-input v-model="brandSearch" placeholder="Type to search..." class="bf-search" />
                 <div class="combo-item combo-check-item bf-select-all" @mousedown.prevent="toggleAllBrands">
                   <el-checkbox :model-value="allBrandsSelected" /><span class="bf-select-all-label">Select All Suggestions</span>
@@ -307,14 +307,14 @@
       <el-row :gutter="24">
         <el-col :span="12">
           <el-form-item label="Sub Channel" prop="subChannel" ref="subChannelRef">
-            <div class="combo-wrap" ref="subChannelRef" v-click-outside="handleSubChannelClickOutside">
-              <div class="combo-trigger" @click="subChannelOpen = !subChannelOpen">
+            <div class="combo-wrap" ref="subChannelRef" v-click-outside="handleSubChannelClickOutside" :class="{ 'is-disabled': !countryDivisionActive }" :title="!countryDivisionActive ? channelSubChannelAccountBrandMessage : ''">
+              <div class="combo-trigger" @click="countryDivisionActive && (subChannelOpen = !subChannelOpen)" :style="{ opacity: countryDivisionActive ? 1 : 0.6, cursor: countryDivisionActive ? 'pointer' : 'not-allowed' }">
                 <span :class="formData.subChannel.length ? 'has-value' : 'placeholder'">
                   {{ formData.subChannel.length ? formData.subChannel.join(', ') : 'Select one or more sub-channels' }}
                 </span>
                 <el-icon class="combo-arrow"><ArrowDown /></el-icon>
               </div>
-              <div v-if="subChannelOpen" class="combo-dropdown brand-family-dropdown">
+              <div v-if="subChannelOpen && countryDivisionActive" class="combo-dropdown brand-family-dropdown">
                 <el-input v-model="subChannelSearch" placeholder="Type to search..." class="bf-search" />
                 <div class="combo-item combo-check-item bf-select-all" @mousedown.prevent="toggleAllSubChannels">
                   <el-checkbox :model-value="allSubChannelsSelected" />
@@ -329,14 +329,14 @@
         </el-col>
         <el-col :span="12">
           <el-form-item label="Brand Family" prop="brandFamily" ref="brandFamilyRef">
-            <div class="combo-wrap" ref="brandFamilyRef" v-click-outside="handleBrandFamilyClickOutside">
-              <div class="combo-trigger" @click="brandFamilyOpen = !brandFamilyOpen">
+            <div class="combo-wrap" ref="brandFamilyRef" v-click-outside="handleBrandFamilyClickOutside" :class="{ 'is-disabled': !countryDivisionActive }" :title="!countryDivisionActive ? channelSubChannelAccountBrandMessage : ''">
+              <div class="combo-trigger" @click="countryDivisionActive && (brandFamilyOpen = !brandFamilyOpen)" :style="{ opacity: countryDivisionActive ? 1 : 0.6, cursor: countryDivisionActive ? 'pointer' : 'not-allowed' }">
                 <span :class="Object.keys(formData.brandFamily).length ? 'has-value' : 'placeholder'">
                   {{ Object.keys(formData.brandFamily).length ? Object.values(formData.brandFamily).join(', ') : 'Select one or more brand families' }}
                 </span>
                 <el-icon class="combo-arrow"><ArrowDown /></el-icon>
               </div>
-              <div v-if="brandFamilyOpen" class="combo-dropdown brand-family-dropdown">
+              <div v-if="brandFamilyOpen && countryDivisionActive" class="combo-dropdown brand-family-dropdown">
                 <el-input v-model="brandFamilySearch" placeholder="Type to search or add custom..." class="bf-search" @keydown.enter.prevent="addCustomBrandFamily" />
                 <div v-if="brandFamilySearch.trim() && !brandFamilyOptions.some(f => f.label.toLowerCase() === brandFamilySearch.toLowerCase())" class="combo-custom" @mousedown.prevent="addCustomBrandFamily">+ Add custom: "{{ brandFamilySearch }}"</div>
                 <template v-if="Object.keys(formData.brandFamily).filter(k => !brandFamilyOptions.some(opt => opt.value === k)).length">
@@ -363,14 +363,14 @@
       <el-row :gutter="24">
         <el-col :span="12">
           <el-form-item label="Account" prop="account" ref="accountRef">
-            <div class="combo-wrap" ref="accountRef" v-click-outside="handleAccountClickOutside">
-              <div class="combo-trigger" @click="accountOpen = !accountOpen">
+            <div class="combo-wrap" ref="accountRef" v-click-outside="handleAccountClickOutside" :class="{ 'is-disabled': !countryDivisionActive }" :title="!countryDivisionActive ? channelSubChannelAccountBrandMessage : ''">
+              <div class="combo-trigger" @click="countryDivisionActive && (accountOpen = !accountOpen)" :style="{ opacity: countryDivisionActive ? 1 : 0.6, cursor: countryDivisionActive ? 'pointer' : 'not-allowed' }">
                 <span :class="formData.account.length ? 'has-value' : 'placeholder'">
                   {{ formData.account.length ? formData.account.join(', ') : 'Select one or more accounts' }}
                 </span>
                 <el-icon class="combo-arrow"><ArrowDown /></el-icon>
               </div>
-              <div v-if="accountOpen" class="combo-dropdown brand-family-dropdown">
+              <div v-if="accountOpen && countryDivisionActive" class="combo-dropdown brand-family-dropdown">
                 <el-input v-model="accountSearch" placeholder="Type to search..." class="bf-search" />
                 <div class="combo-item combo-check-item bf-select-all" @mousedown.prevent="toggleAllAccounts">
                   <el-checkbox :model-value="allAccountsSelected" />
@@ -740,6 +740,17 @@ const ibpStepOptions     = computed(() => lookupStore.getCached("ibp_step"));
 
 const CATEG_ACTIVE_IBP_STEPS = ["Portfolio Review", "Demand Review", "Supply Review", "Overheads (Pre-Exec)"];
 const categActive = computed(() => CATEG_ACTIVE_IBP_STEPS.includes(formData.value.ibpStep));
+
+// Field disable states based on dependencies
+const countryDivisionActive = computed(() => !!formData.value.country && !!formData.value.division);
+const channelDisabledMessage = computed(() => {
+  if (formData.value.country && !formData.value.division) {
+    return "Please select Division";
+  }
+  return "Please select Country and Division";
+});
+const channelSubChannelAccountBrandMessage = "Please select Country and Division";
+const categDisabledMessage = "Please select IBP Step";
 
 const supplyCategorisations    = ["Conversion (Wiri)", "Conversion (Swanbank)", "Co-Pack", "Agency", "Materials", "Stock", "Int/TT Freight", "Other"];
 const overheadsCategorisations = ["People Costs", "Other People Costs", "Total People Costs", "Strategic Projects", "Vehicles", "Travel & Entertainment", "Communication", "Leases & Rentals", "Utilities", "Repairs & Maintenance", "Depreciation", "Printing & Stationery", "Administration", "Professional Fees", "IT Supplies", "Market Research", "3rd Party Merchandisers", "Insurance", "Group recharges / Sundry Income"];
