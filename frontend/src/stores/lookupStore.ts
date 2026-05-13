@@ -36,8 +36,7 @@ export const useLookupStore = defineStore("lookup", () => {
    */
   async function preload(): Promise<void> {
     const topLevel = [
-      "division", "country", "channel", "sub_channel", "account",
-      "brand_family", "brand", "categorisation", "probability",
+      "division", "categorisation", "probability",
       "status", "ibp_step"
     ];
     await Promise.all(topLevel.map((c) => getOptions(c)));

@@ -22,7 +22,7 @@ export interface Entry {
   addToForecastByYear?: string;
   division: string;
   ibpStep?: string;
-  country: string;
+  country: Record<string, string>;  // {company_code: country_name}
   channel: string;
   subChannel: string;
   account: string;

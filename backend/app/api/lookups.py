@@ -24,33 +24,48 @@ def get_divisions(db: Session = Depends(get_db)):
     return {"options": [{"value": r[0], "label": r[0]} for r in rows]}
 
 
+@router.get("/countries")
+def get_countries(
+    division: str = Query(..., description="Division name"),
+    db: Session = Depends(get_db)
+):
+    """Get all countries from ro_customers table for a specific division.
+    Returns countries with company_code as key and country_name as value."""
+    countries = crud.get_countries_by_division(db, division)
+    return {"options": [{"value": c["code"], "label": c["country"]} for c in countries]}
+
+
 @router.get("/brands")
 def get_brands(
     division: str = Query(..., description="Division name"),
+    country: Optional[str] = Query(None, description="Country name"),
     db: Session = Depends(get_db),
 ):
     """Get brands (code and name) for a specific division."""
-    brands = crud.get_brands_by_division(db, division)
+    brands = crud.get_brands_by_division(db, division, country)
     return {"options": [{"value": b["code"], "label": b["name"]} for b in brands]}
 
 
 @router.get("/brand-families")
 def get_brand_families(
     brand_names: List[str] = Query(..., description="List of brand names"),
+    country: Optional[str] = Query(None, description="Country name"),
+    division: Optional[str] = Query(None, description="Division name"),
     db: Session = Depends(get_db),
 ):
     """Get brand families (code and name) for a list of brands."""
-    families = crud.get_brand_families_by_brands(db, brand_names)
+    families = crud.get_brand_families_by_brands(db, brand_names, country, division)
     return {"options": [{"value": f["code"], "label": f["name"]} for f in families]}
 
 
 @router.get("/channels")
 def get_channels(
     division: str = Query(..., description="Division name"),
+    country: Optional[str] = Query(None, description="Country name"),
     db: Session = Depends(get_db),
 ):
     """Get channels (code and name) for a specific division from ro_customers table."""
-    channels = crud.get_channels_by_division(db, division)
+    channels = crud.get_channels_by_division(db, division, country)
     return {"options": [{"value": c["code"], "label": c["name"]} for c in channels]}
 
 
@@ -58,10 +73,11 @@ def get_channels(
 def get_subchannels(
     division: str = Query(..., description="Division name"),
     channel_code: str = Query(..., description="Channel code"),
+    country: Optional[str] = Query(None, description="Country name"),
     db: Session = Depends(get_db),
 ):
     """Get subchannels (code and name) for a specific division and channel."""
-    subchannels = crud.get_subchannels_by_division_and_channel(db, division, channel_code)
+    subchannels = crud.get_subchannels_by_division_and_channel(db, division, channel_code, country)
     return {"options": [{"value": s["code"], "label": s["name"]} for s in subchannels]}
 
 
@@ -69,10 +85,11 @@ def get_subchannels(
 def get_accounts(
     division: str = Query(..., description="Division name"),
     subchannel_code: str = Query(..., description="Subchannel code"),
+    country: Optional[str] = Query(None, description="Country name"),
     db: Session = Depends(get_db),
 ):
     """Get accounts (code and name) for a specific division and subchannel."""
-    accounts = crud.get_accounts_by_division_and_subchannel(db, division, subchannel_code)
+    accounts = crud.get_accounts_by_division_and_subchannel(db, division, subchannel_code, country)
     return {"options": [{"value": a["code"], "label": a["name"]} for a in accounts]}
 
 
@@ -80,10 +97,11 @@ def get_accounts(
 def get_account_details(
     division: str = Query(..., description="Division name"),
     account_code: str = Query(..., description="Account code"),
+    country: Optional[str] = Query(None, description="Country name"),
     db: Session = Depends(get_db),
 ):
     """Get channel and subchannel details for a specific account (for auto-population)."""
-    details = crud.get_channel_and_subchannel_by_account(db, division, account_code)
+    details = crud.get_channel_and_subchannel_by_account(db, division, account_code, country)
     if details:
         return {
             "channel": {"code": details["channel_code"], "name": details["channel_name"]},

@@ -63,46 +63,55 @@ export const lookupApi = {
       .get("/api/lookups/divisions")
       .then((r) => r.data),
   
-  getBrands: (division: string): Promise<{ options: { value: string; label: string }[] }> =>
+  getBrands: (division: string, country?: string): Promise<{ options: { value: string; label: string }[] }> =>
     api
       .get("/api/lookups/brands", {
+        params: { division, country },
+      })
+      .then((r) => r.data),
+
+  getCountries: (division: string): Promise<{ options: { value: string; label: string }[] }> =>
+    api
+      .get("/api/lookups/countries", {
         params: { division },
       })
       .then((r) => r.data),
   
-  getBrandFamilies: (brandNames: string[]): Promise<{ options: { value: string; label: string }[] }> => {
+  getBrandFamilies: (brandNames: string[], country?: string, division?: string): Promise<{ options: { value: string; label: string }[] }> => {
     const params = new URLSearchParams();
     brandNames.forEach((n) => params.append("brand_names", n));
+    if (country) params.append("country", country);
+    if (division) params.append("division", division);
     return api
       .get("/api/lookups/brand-families", { params })
       .then((r) => r.data);
   },
 
-  getChannels: (division: string): Promise<{ options: { value: string; label: string }[] }> =>
+  getChannels: (division: string, country?: string): Promise<{ options: { value: string; label: string }[] }> =>
     api
       .get("/api/lookups/channels", {
-        params: { division },
+        params: { division, country },
       })
       .then((r) => r.data),
 
-  getSubchannels: (division: string, channelCode: string): Promise<{ options: { value: string; label: string }[] }> =>
+  getSubchannels: (division: string, channelCode: string, country?: string): Promise<{ options: { value: string; label: string }[] }> =>
     api
       .get("/api/lookups/subchannels", {
-        params: { division, channel_code: channelCode },
+        params: { division, channel_code: channelCode, country },
       })
       .then((r) => r.data),
 
-  getAccounts: (division: string, subchannelCode: string): Promise<{ options: { value: string; label: string }[] }> =>
+  getAccounts: (division: string, subchannelCode: string, country?: string): Promise<{ options: { value: string; label: string }[] }> =>
     api
       .get("/api/lookups/accounts", {
-        params: { division, subchannel_code: subchannelCode },
+        params: { division, subchannel_code: subchannelCode, country },
       })
       .then((r) => r.data),
 
-  getAccountDetails: (division: string, accountCode: string): Promise<{ channel: { code: string; name: string } | null; subchannel: { code: string; name: string } | null }> =>
+  getAccountDetails: (division: string, accountCode: string, country?: string): Promise<{ channel: { code: string; name: string } | null; subchannel: { code: string; name: string } | null }> =>
     api
       .get("/api/lookups/account-details", {
-        params: { division, account_code: accountCode },
+        params: { division, account_code: accountCode, country },
       })
       .then((r) => r.data),
 };

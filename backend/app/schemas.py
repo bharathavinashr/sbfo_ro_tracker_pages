@@ -25,7 +25,7 @@ class EntryBase(BaseModel):
     add_to_forecast_by_year: Optional[str] = None
     division: str
     ibp_step: Optional[str] = None
-    country: str
+    country: Dict[str, str]  # Map: {company_code: country_name}
     channel: Dict[str, str]  # Map: {channel_code: channel_name}
     sub_channel: Dict[str, str]  # Map: {subchannel_code: subchannel_name}
     account: Dict[str, str]  # Map: {account_code: account_name}

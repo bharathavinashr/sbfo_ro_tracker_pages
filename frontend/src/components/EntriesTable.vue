@@ -43,7 +43,7 @@
           <el-col :span="6">
             <label class="filter-label">Country</label>
             <el-select v-model="store.filters.country" clearable placeholder="All" @change="store.fetchEntries()">
-              <el-option v-for="c in countryOptions" :key="c" :value="c" :label="c" />
+              <el-option v-for="c in countryOptions" :key="c.value" :value="c.value" :label="c.label" />
             </el-select>
           </el-col>
           <el-col :span="6">
@@ -571,7 +571,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import { ElMessage, ClickOutside as vClickOutside } from "element-plus";
 import { useEntryStore } from "@/stores/entryStore";
 import { useLookupStore } from "@/stores/lookupStore";
-import { entryApi } from "@/services/api";
+import { entryApi, lookupApi } from "@/services/api";
 import type { Entry } from "@/types";
 import { STATUS_OPTIONS } from "@/types";
 import { formatDate, formatMoney, formatVol } from "@/utils/formatters";
@@ -622,12 +622,29 @@ const allFiltersOpen = ref(false);
 
 // ─── Lookup options ───────────────────────────────────────────────────────────
 const divisionOptions   = computed(() => lookupStore.getCached("division"));
-const countryOptions    = computed(() => lookupStore.getCached("country"));
+const countryOptions    = ref<{value: string, label: string}[]>([]);
 const channelOptions    = computed(() => lookupStore.getCached("channel"));
 const categOptions      = computed(() => lookupStore.getCached("categorisation"));
 const statusOptions     = computed(() => lookupStore.getCached("status"));
 const ibpStepOptions    = computed(() => lookupStore.getCached("ibp_step"));
 const brandOptions      = computed(() => lookupStore.getCached("brand"));
+
+// Dynamic Country Loading for Filters
+watch(() => store.filters.division, async (division) => {
+  if (division) {
+    try {
+      const data = await lookupApi.getCountries(division);
+      countryOptions.value = data.options;  // Store as {value, label} pairs
+    } catch (error) {
+      console.error("Error loading countries for filter:", error);
+      countryOptions.value = [];
+    }
+  } else {
+    countryOptions.value = [];
+    store.filters.country = "";
+  }
+  store.fetchEntries();
+}, { immediate: true });
 
 const subChannelOptions = computed(() =>
   store.filters.channel?.length
@@ -705,8 +722,38 @@ const groupedEntries = computed(() => {
   const dims = splitBy.value;
   if (!dims.length) return [];
   const map = new Map<string, { entries: Entry[]; vals: string[] }>();
+  
+  // Helper to format country values
+  const formatDimensionValue = (d: string, val: unknown): string => {
+    if (!val) return "—";
+    if (d === "country") {
+      let countryObj = val;
+      
+      // If it's a string that looks like JSON, parse it
+      if (typeof val === "string" && val.startsWith("{")) {
+        try {
+          countryObj = JSON.parse(val);
+        } catch {
+          return val;
+        }
+      }
+      
+      // If it's an object, extract the country name
+      if (typeof countryObj === "object") {
+        const countryName = Object.values(countryObj as Record<string, string>)[0];
+        return countryName || "—";
+      }
+      
+      return String(val);
+    }
+    return String(val);
+  };
+  
   for (const row of filteredEntries.value) {
-    const vals = dims.map(d => (row as unknown as Record<string, unknown>)[d] as string || "—");
+    const vals = dims.map(d => {
+      const val = (row as unknown as Record<string, unknown>)[d];
+      return formatDimensionValue(d, val);
+    });
     const key  = vals.join("\0");
     if (!map.has(key)) map.set(key, { entries: [], vals });
     map.get(key)!.entries.push(row);
@@ -976,9 +1023,28 @@ async function handleStatusChange(row: Entry, newStatus: string) {
 }
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
-function formatCountry(c?: string): string {
+function formatCountry(c?: string | Record<string, string>): string {
   if (!c) return "—";
-  return c === "Australia" ? "AU" : c === "New Zealand" ? "NZ" : c;
+  
+  let countryObj = c;
+  
+  // If it's a string that looks like JSON, parse it
+  if (typeof c === "string" && c.startsWith("{")) {
+    try {
+      countryObj = JSON.parse(c);
+    } catch {
+      return c;
+    }
+  }
+  
+  // Handle country as a dictionary {company_code: country_name}
+  if (typeof countryObj === "object") {
+    const countryName = Object.values(countryObj as Record<string, string>)[0];
+    return countryName || "—";
+  }
+  
+  // Handle as string (legacy)
+  return String(c) || "—";
 }
 
 function formatBrandFamily(v?: string | string[] | Record<string, string>): string {
@@ -1034,7 +1100,7 @@ function exportToCSV(rows: Entry[], filename = `entries_${new Date().toISOString
     const r: string[] = [];
     if (cv.ibpStep)         r.push(escapeCSV(e.ibpStep || ""));
     if (cv.division)        r.push(escapeCSV(e.division || ""));
-    if (cv.country)         r.push(escapeCSV(e.country || ""));
+    if (cv.country)         r.push(escapeCSV(formatCountry(e.country) || ""));
     if (cv.categorisation)  r.push(escapeCSV(e.categorisation || ""));
     if (cv.description)     r.push(escapeCSV((e as any).shortDescription || e.description || ""));
     if (cv.customer)        r.push(escapeCSV([e.account, e.subChannel, e.channel].filter(Boolean).join(" / ")));

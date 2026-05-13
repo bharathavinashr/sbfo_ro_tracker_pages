@@ -22,7 +22,7 @@ class Entry(Base):
 
     division = Column(String(100), nullable=False)
     ibp_step = Column(String(100), nullable=True)
-    country = Column(String(100), nullable=False)
+    country = Column(JSONB, nullable=False)  # Map: {company_code: country_name}
 
     channel = Column(JSONB, nullable=False)  # Map: {channel_code: channel_name}
     sub_channel = Column(JSONB, nullable=False)  # Map: {subchannel_code: subchannel_name}
@@ -107,10 +107,12 @@ class ROProduct(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     brand_family_code = Column(String(20), nullable=False, index=True)
-    brand_family = Column(String(200), nullable=False)
+    brand_family_name = Column(String(200), nullable=False)
     brand_code = Column(String(20), nullable=False, index=True)
     brand_name = Column(String(200), nullable=False)
     division = Column(String(100), nullable=False, index=True)
+    company_code = Column(String(50), nullable=True)
+    country = Column(String(100), nullable=True, index=True)
 
 
 class ROCustomer(Base):
@@ -119,6 +121,8 @@ class ROCustomer(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     division = Column(String(100), nullable=False, index=True)
+    company_code = Column(String(50), nullable=True)
+    country = Column(String(100), nullable=True, index=True)
     channel_code = Column(String(50), nullable=False, index=True)
     channel_name = Column(String(200), nullable=False)
     subchannel_code = Column(String(50), nullable=False, index=True)
