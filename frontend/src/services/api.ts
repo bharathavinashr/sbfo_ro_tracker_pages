@@ -108,7 +108,7 @@ export const lookupApi = {
 };
 
 export const snapshotApi = {
-  create: (data: { period: string; year: string; department: string }) =>
+  create: (data: { period: string; year: string; ibp_step: string }) =>
     api.post("/api/snapshots", data).then((r) => r.data),
   getAll: () =>
     api.get<{ snapshots: any[] }>("/api/snapshots").then((r) => r.data),
