@@ -702,7 +702,7 @@ const splitByOptions = [
   { key: "probability", label: "Priority" },
 ];
 
-const splitBy    = ref<string[]>(props.defaultSplitBy.length ? props.defaultSplitBy : ["country", "division"]);
+const splitBy    = ref<string[]>(props.defaultSplitBy.length ? props.defaultSplitBy : []); //"country", "division"
 const groupByOpen = ref(false);
 
 const closeGroupBy = () => {
