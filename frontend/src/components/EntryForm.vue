@@ -70,19 +70,25 @@
               <el-checkbox v-model="ownerSameAsCreator" @change="onOwnerCheckboxChange" class="owner-checkbox">
                 Same as Creator
               </el-checkbox>
-              <el-select
-                v-if="!ownerSameAsCreator"
-                v-model="formData.owner"
-                style="width: 100%; margin-top: 4px;"
-                filterable
-              >
-                <el-option
-                  v-for="u in ownerOptions"
-                  :key="u.email"
-                  :value="u.email"
-                  :label="u.display_name ? `${u.display_name} (${u.email})` : u.email"
-                />
-              </el-select>
+              <div v-if="!ownerSameAsCreator" class="combo-wrap" style="margin-top: 4px;">
+                <el-input
+                  v-model="ownerSearch"
+                  :placeholder="formData.owner || 'Select owner'"
+                  :class="{ 'has-selected-value': !!formData.owner && !ownerSearch }"
+                  @focus="ownerOpen = true"
+                  @blur="onOwnerBlur"
+                  @input="ownerOpen = true"
+                  clearable
+                  @clear="formData.owner = ''; ownerSearch = ''"
+                >
+                  <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
+                </el-input>
+                <div v-if="ownerOpen" class="combo-dropdown">
+                  <div v-for="u in filteredOwners" :key="u.email" class="combo-item" @mousedown.prevent="formData.owner = u.email; ownerSearch = ''; ownerOpen = false">
+                    {{ u.display_name ? `${u.display_name} (${u.email})` : u.email }}
+                  </div>
+                </div>
+              </div>
             </div>
           </el-form-item>
         </el-col>
@@ -791,6 +797,16 @@ const brandFamilyRef    = ref<HTMLElement | null>(null);
 const brandRef          = ref<HTMLElement | null>(null);
 
 const deptOpen = ref(false);
+const ownerOpen = ref(false);
+const ownerSearch = ref("");
+function onOwnerBlur() { setTimeout(() => { ownerOpen.value = false; }, 120); }
+const filteredOwners = computed(() => {
+  const s = ownerSearch.value.toLowerCase();
+  return ownerOptions.value.filter(u => {
+    const label = u.display_name ? `${u.display_name} (${u.email})` : u.email;
+    return label.toLowerCase().includes(s);
+  });
+});
 // ─── Data Parsing Helpers ──────────────────────────────────────────────────
 const ensureObject = (v: any): Record<string, string> => {
   if (!v) return {};
@@ -1680,7 +1696,7 @@ defineExpose({ validate, reset });
 }
 .period-select { flex: 1; }
 .year-select   { width: 120px; flex-shrink: 0; flex: 1;}
-.owner-wrap { display: flex; flex-direction: column; }
+.owner-wrap { display: flex; flex-direction: column; width: 100%;}
 .owner-checkbox {
   margin-top: -8px;
   margin-bottom: 4px;
