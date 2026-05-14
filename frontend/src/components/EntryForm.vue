@@ -261,10 +261,10 @@
       <el-row :gutter="24">
         <el-col :span="12">
           <el-form-item label="Channel" prop="channel" ref="channelRef">
-            <div class="combo-wrap" ref="channelRef" v-click-outside="handleChannelClickOutside" :class="{ 'is-disabled': !countryDivisionActive }" :title="!countryDivisionActive ? channelDisabledMessage : ''">
+            <div class="combo-wrap" ref="channelRef" v-click-outside="handleChannelClickOutside" :class="{ 'is-disabled': !countryDivisionActive }" :title="!countryDivisionActive ? channelDisabledMessage : ''" :style="{ opacity: countryDivisionActive ? 1 : 0.6, cursor: countryDivisionActive ? 'pointer' : 'not-allowed' }">
               <div class="combo-trigger" @click="countryDivisionActive && (channelOpen = !channelOpen)" :style="{ opacity: countryDivisionActive ? 1 : 0.6, cursor: countryDivisionActive ? 'pointer' : 'not-allowed' }">
-                <span :class="formData.channel.length ? 'has-value' : 'placeholder'">
-                  {{ formData.channel.length ? formData.channel.join(', ') : 'Select one or more channels' }}
+                <span :class="Object.keys(formData.channel).length ? 'has-value' : 'placeholder'">
+                  {{ Object.keys(formData.channel).length ? Object.values(formData.channel).join(', ') : 'Select one or more channels' }}
                 </span>
                 <el-icon class="combo-arrow"><ArrowDown /></el-icon>
               </div>
@@ -274,8 +274,8 @@
                   <el-checkbox :model-value="allChannelsSelected" />
                   <span class="bf-select-all-label">Select All Suggestions</span>
                 </div>
-                <div v-for="c in filteredChannels" :key="c" class="combo-item combo-check-item" :class="{ 'is-disabled': isChannelDisabled(c) }" @mousedown.prevent="toggleChannel(c)">
-                  <el-checkbox :model-value="formData.channel.includes(c)" /><span>{{ c }}</span>
+                <div v-for="c in filteredChannels" :key="c.value" class="combo-item combo-check-item" :class="{ 'is-disabled': isChannelDisabled(c.label) }" @mousedown.prevent="toggleChannel(c.value, c.label)">
+                  <el-checkbox :model-value="!!formData.channel[c.value]" /><span>{{ c.label }}</span>
                 </div>
               </div>
             </div>
@@ -307,10 +307,10 @@
       <el-row :gutter="24">
         <el-col :span="12">
           <el-form-item label="Sub Channel" prop="subChannel" ref="subChannelRef">
-            <div class="combo-wrap" ref="subChannelRef" v-click-outside="handleSubChannelClickOutside" :class="{ 'is-disabled': !countryDivisionActive }" :title="!countryDivisionActive ? channelSubChannelAccountBrandMessage : ''">
+            <div class="combo-wrap" ref="subChannelRef" v-click-outside="handleSubChannelClickOutside" :class="{ 'is-disabled': !countryDivisionActive }" :title="!countryDivisionActive ? channelSubChannelAccountBrandMessage : ''" :style="{ opacity: countryDivisionActive ? 1 : 0.6, cursor: countryDivisionActive ? 'pointer' : 'not-allowed' }">
               <div class="combo-trigger" @click="countryDivisionActive && (subChannelOpen = !subChannelOpen)" :style="{ opacity: countryDivisionActive ? 1 : 0.6, cursor: countryDivisionActive ? 'pointer' : 'not-allowed' }">
-                <span :class="formData.subChannel.length ? 'has-value' : 'placeholder'">
-                  {{ formData.subChannel.length ? formData.subChannel.join(', ') : 'Select one or more sub-channels' }}
+                <span :class="Object.keys(formData.subChannel).length ? 'has-value' : 'placeholder'">
+                  {{ Object.keys(formData.subChannel).length ? Object.values(formData.subChannel).join(', ') : 'Select one or more sub-channels' }}
                 </span>
                 <el-icon class="combo-arrow"><ArrowDown /></el-icon>
               </div>
@@ -320,8 +320,8 @@
                   <el-checkbox :model-value="allSubChannelsSelected" />
                   <span class="bf-select-all-label">Select All Suggestions</span>
                 </div>
-                <div v-for="s in filteredSubChannels" :key="s" class="combo-item combo-check-item" @mousedown.prevent="toggleSubChannel(s)">
-                  <el-checkbox :model-value="formData.subChannel.includes(s)" /><span>{{ s }}</span>
+                <div v-for="s in filteredSubChannels" :key="s.value" class="combo-item combo-check-item" @mousedown.prevent="toggleSubChannel(s.value, s.label)">
+                  <el-checkbox :model-value="!!formData.subChannel[s.value]" /><span>{{ s.label }}</span>
                 </div>
               </div>
             </div>
@@ -363,10 +363,10 @@
       <el-row :gutter="24">
         <el-col :span="12">
           <el-form-item label="Account" prop="account" ref="accountRef">
-            <div class="combo-wrap" ref="accountRef" v-click-outside="handleAccountClickOutside" :class="{ 'is-disabled': !countryDivisionActive }" :title="!countryDivisionActive ? channelSubChannelAccountBrandMessage : ''">
+            <div class="combo-wrap" ref="accountRef" v-click-outside="handleAccountClickOutside" :class="{ 'is-disabled': !countryDivisionActive }" :title="!countryDivisionActive ? channelSubChannelAccountBrandMessage : ''" :style="{ opacity: countryDivisionActive ? 1 : 0.6, cursor: countryDivisionActive ? 'pointer' : 'not-allowed' }">
               <div class="combo-trigger" @click="countryDivisionActive && (accountOpen = !accountOpen)" :style="{ opacity: countryDivisionActive ? 1 : 0.6, cursor: countryDivisionActive ? 'pointer' : 'not-allowed' }">
-                <span :class="formData.account.length ? 'has-value' : 'placeholder'">
-                  {{ formData.account.length ? formData.account.join(', ') : 'Select one or more accounts' }}
+                <span :class="Object.keys(formData.account).length ? 'has-value' : 'placeholder'">
+                  {{ Object.keys(formData.account).length ? Object.values(formData.account).join(', ') : 'Select one or more accounts' }}
                 </span>
                 <el-icon class="combo-arrow"><ArrowDown /></el-icon>
               </div>
@@ -376,8 +376,8 @@
                   <el-checkbox :model-value="allAccountsSelected" />
                   <span class="bf-select-all-label">Select All Suggestions</span>
                 </div>
-                <div v-for="a in filteredAccounts" :key="a" class="combo-item combo-check-item" @mousedown.prevent="toggleAccount(a)">
-                  <el-checkbox :model-value="formData.account.includes(a)" /><span>{{ a }}</span>
+                <div v-for="a in filteredAccounts" :key="a.value" class="combo-item combo-check-item" @mousedown.prevent="toggleAccount(a.value, a.label)">
+                  <el-checkbox :model-value="!!formData.account[a.value]" /><span>{{ a.label }}</span>
                 </div>
               </div>
             </div>
@@ -791,62 +791,75 @@ const brandFamilyRef    = ref<HTMLElement | null>(null);
 const brandRef          = ref<HTMLElement | null>(null);
 
 const deptOpen = ref(false);
+// ─── Data Parsing Helpers ──────────────────────────────────────────────────
+const ensureObject = (v: any): Record<string, string> => {
+  if (!v) return {};
+  if (typeof v === 'object' && !Array.isArray(v)) return v;
+  try {
+    const p = JSON.parse(v);
+    return (p && typeof p === 'object' && !Array.isArray(p)) ? p : {};
+  } catch { return {}; }
+};
+
+const ensureValues = (v: any): string[] => {
+  if (!v) return [];
+  if (Array.isArray(v)) return v;
+  if (typeof v === 'object') return Object.values(v);
+  try {
+    const p = JSON.parse(v);
+    if (Array.isArray(p)) return p;
+    if (p && typeof p === 'object') return Object.values(p);
+  } catch {}
+  return [String(v)];
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
 const ibpStepSearch = ref("");
 const divOpen = ref(false);
 const divSearch = ref("");
-const countryOpen = ref(false);
-const countrySearch = ref("");
 
 // Categorisation dropdown state
 const categOpen = ref(false);
 const categSearch = ref("");
 function onCategBlur() { setTimeout(() => { categOpen.value = false; }, 120); }
 const filteredCategs = computed(() => categOptions.value.filter(c => c.toLowerCase().includes(categSearch.value.toLowerCase())));
-
+const countryOpen = ref(false);
+const countrySearch = ref("");
 const creationPeriodOpen = ref(false);
 const creationPeriodSearch = ref("");
 const creationYearOpen = ref(false);
 const creationYearSearch = ref("");
-
 const atfbPeriodOpen = ref(false);
 const atfbPeriodSearch = ref("");
 const atfbYearOpen = ref(false);
 const atfbYearSearch = ref("");
-
 // Range Start States
 const prStartPeriodOpen = ref(false);
 const prStartPeriodSearch = ref("");
 const prStartYearOpen = ref(false);
 const prStartYearSearch = ref("");
-
 // Range End States
 const prEndPeriodOpen = ref(false);
 const prEndPeriodSearch = ref("");
 const prEndYearOpen = ref(false);
 const prEndYearSearch = ref("");
-
 // Impact Single States
 const impactPeriodOpen = ref(false);
 const impactPeriodSearch = ref("");
 const impactYearOpen = ref(false);
 const impactYearSearch = ref("");
-
 function handleBrandFamilyClickOutside() { brandFamilyOpen.value = false; }
 function handleBrandClickOutside()       { brandOpen.value = false; }
 function handleChannelClickOutside()     { channelOpen.value = false; }
 function handleSubChannelClickOutside()  { subChannelOpen.value = false; }
 function handleAccountClickOutside()     { accountOpen.value = false; }
-
 const currentYear   = new Date().getFullYear();
 const yearOptions   = Array.from({ length: 10 }, (_, i) => currentYear - 2 + i);
-
-
-const filteredChannels      = computed(() => channelOptions.value.filter(c => c.label.toLowerCase().includes(channelSearch.value.toLowerCase())).map(c => c.label));
-const filteredSubChannels   = computed(() => subChannelOptions.value.filter(s => s.label.toLowerCase().includes(subChannelSearch.value.toLowerCase())).map(s => s.label));
+const filteredChannels      = computed(() => channelOptions.value.filter(c => c.label.toLowerCase().includes(channelSearch.value.toLowerCase())));
+const filteredSubChannels   = computed(() => subChannelOptions.value.filter(s => s.label.toLowerCase().includes(subChannelSearch.value.toLowerCase())));
 const filteredBrands        = computed(() => brandOptions.value.filter(b => b.label.toLowerCase().includes(brandSearch.value.toLowerCase())));
-const filteredAccounts      = computed(() => accountOptions.value.filter(a => a.label.toLowerCase().includes(accountSearch.value.toLowerCase())).map(a => a.label));
+const filteredAccounts      = computed(() => accountOptions.value.filter(a => a.label.toLowerCase().includes(accountSearch.value.toLowerCase())));
 const filteredBrandFamilies = computed(() => brandFamilyOptions.value.filter(f => f.label.toLowerCase().includes(brandFamilySearch.value.toLowerCase())));
-
 const filteredIbpSteps      = computed(() => ibpStepOptions.value.filter(d => d.toLowerCase().includes(ibpStepSearch.value.toLowerCase())));
 const filteredDivs          = computed(() => divisionOptions.value.filter(d => d.toLowerCase().includes(divSearch.value.toLowerCase())));
 const filteredCountries     = computed(() => countryOptions.value.filter(c => c.label.toLowerCase().includes(countrySearch.value.toLowerCase())));
@@ -865,37 +878,34 @@ const filteredImpactYears = computed(() => yearOptions.map(String).filter(y => y
 const getFilteredChildPeriods = (search?: string) => PERIODS.filter(p => periodToMonth(p).toLowerCase().includes((search || '').toLowerCase()) || p.toLowerCase().includes((search || '').toLowerCase()));
 const getFilteredChildYears = (search?: string) => yearOptions.map(String).filter(y => y.includes(search || ''));
 
-const allBrandFamiliesSelected = computed(() => brandFamilyOptions.value.length > 0 && brandFamilyOptions.value.every(f => !!formData.value.brandFamily[f.value]));
-const allBrandsSelected = computed(() => filteredBrands.value.length > 0 && filteredBrands.value.every(b => !!formData.value.brand[b.value]));
+const allBrandFamiliesSelected = computed(() => brandFamilyOptions.value.length > 0 && brandFamilyOptions.value.every(f => !!formData.value.brandFamily[f.value])); // No change
+const allBrandsSelected = computed(() => filteredBrands.value.length > 0 && filteredBrands.value.every(b => !!formData.value.brand[b.value])); // No change
 const allChannelsSelected = computed(() => {
-  const suggestions = filteredChannels.value.filter(c => !isChannelDisabled(c));
-  return suggestions.length > 0 && suggestions.every(c => formData.value.channel.includes(c));
+  const suggestions = filteredChannels.value.filter(c => !isChannelDisabled(c.label));
+  return suggestions.length > 0 && suggestions.every(c => !!formData.value.channel[c.value]);
 });
 const allSubChannelsSelected = computed(() => 
-  filteredSubChannels.value.length > 0 && filteredSubChannels.value.every(s => formData.value.subChannel.includes(s))
+  filteredSubChannels.value.length > 0 && filteredSubChannels.value.every(s => !!formData.value.subChannel[s.value])
 );
-const allAccountsSelected = computed(() => filteredAccounts.value.length > 0 && filteredAccounts.value.every(a => formData.value.account.includes(a)));
+const allAccountsSelected = computed(() => filteredAccounts.value.length > 0 && filteredAccounts.value.every(a => !!formData.value.account[a.value]));
 
 function isChannelDisabled(ch: string) {
   if (formData.value.division === "Non-Alcohol") return ch === "Licensed" || ch === "Route";
   if (formData.value.division === "Alcohol")     return ch === "Convenience" || ch === "Grocery";
   return false;
 }
-function toggleChannel(ch: string) {
-  if (isChannelDisabled(ch)) return;
-  const idx = formData.value.channel.indexOf(ch);
-  if (idx > -1) formData.value.channel.splice(idx, 1);
-  else formData.value.channel.push(ch);
+function toggleChannel(code: string, name: string) {
+  if (isChannelDisabled(name)) return;
+  if (formData.value.channel[code]) delete formData.value.channel[code];
+  else formData.value.channel[code] = name;
 }
-function toggleSubChannel(s: string) {
-  const idx = formData.value.subChannel.indexOf(s);
-  if (idx > -1) formData.value.subChannel.splice(idx, 1);
-  else formData.value.subChannel.push(s);
+function toggleSubChannel(code: string, name: string) {
+  if (formData.value.subChannel[code]) delete formData.value.subChannel[code];
+  else formData.value.subChannel[code] = name;
 }
-function toggleAccount(a: string) {
-  const idx = formData.value.account.indexOf(a);
-  if (idx > -1) formData.value.account.splice(idx, 1);
-  else formData.value.account.push(a);
+function toggleAccount(code: string, name: string) {
+  if (formData.value.account[code]) delete formData.value.account[code];
+  else formData.value.account[code] = name;
 }
 
 function onDeptBlur()       { setTimeout(() => { deptOpen.value = false; }, 120); }
@@ -928,48 +938,27 @@ function toggleAllBrands() {
 }
 
 function toggleAllChannels() {
-  const suggestions = filteredChannels.value.filter(c => !isChannelDisabled(c));
+  const suggestions = filteredChannels.value.filter(c => !isChannelDisabled(c.label));
   if (allChannelsSelected.value) {
-    suggestions.forEach(c => {
-      const idx = formData.value.channel.indexOf(c);
-      if (idx > -1) formData.value.channel.splice(idx, 1);
-    });
+    suggestions.forEach(c => delete formData.value.channel[c.value]);
   } else {
-    suggestions.forEach(c => {
-      if (!formData.value.channel.includes(c)) {
-        formData.value.channel.push(c);
-      }
-    });
+    suggestions.forEach(c => formData.value.channel[c.value] = c.label);
   }
 }
 
 function toggleAllSubChannels() {
   if (allSubChannelsSelected.value) {
-    filteredSubChannels.value.forEach(s => {
-      const idx = formData.value.subChannel.indexOf(s);
-      if (idx > -1) formData.value.subChannel.splice(idx, 1);
-    });
+    filteredSubChannels.value.forEach(s => delete formData.value.subChannel[s.value]);
   } else {
-    filteredSubChannels.value.forEach(s => {
-      if (!formData.value.subChannel.includes(s)) {
-        formData.value.subChannel.push(s);
-      }
-    });
+    filteredSubChannels.value.forEach(s => formData.value.subChannel[s.value] = s.label);
   }
 }
 
 function toggleAllAccounts() {
   if (allAccountsSelected.value) {
-    filteredAccounts.value.forEach(a => {
-      const idx = formData.value.account.indexOf(a);
-      if (idx > -1) formData.value.account.splice(idx, 1);
-    });
+    filteredAccounts.value.forEach(a => delete formData.value.account[a.value]);
   } else {
-    filteredAccounts.value.forEach(a => {
-      if (!formData.value.account.includes(a)) {
-        formData.value.account.push(a);
-      }
-    });
+    filteredAccounts.value.forEach(a => formData.value.account[a.value] = a.label);
   }
 }
 
@@ -1016,9 +1005,9 @@ interface FormData {
   division:              string;
   ibpStep:               string;
   country:               Record<string, string>;  // {company_code: country_name}
-  channel:               string[];
-  subChannel:            string[];
-  account:               string[];
+  channel:               Record<string, string>; // Changed from string[]
+  subChannel:            Record<string, string>; // Changed from string[]
+  account:               Record<string, string>; // Changed from string[]
   brand:                 Record<string, string>;
   brandFamily:           Record<string, string>;
   rAndO:                 string;
@@ -1079,7 +1068,7 @@ function defaultForm(): FormData {
     addToForecastByPeriod: currentPeriod,
     addToForecastByYear:   String(currentYear),
     division:        "", ibpStep:         "", country:         {},
-    channel:         [], subChannel:      [], account:         [],
+    channel:         {}, subChannel:      {}, account:         {}, // Changed from []
     brand:           {}, brandFamily:     {}, rAndO:           "Risk",
     probability:     "", categorisation:  "", impactPeriod:    currentPeriod,
     impactYear:      String(currentYear), impactValue:     "", primaryImpact:   "AUD",
@@ -1179,9 +1168,9 @@ watch(() => formData.value.division, async (division) => {
     formData.value.brandFamily = {};
     formData.value.country = {};
     countryOptions.value = [];
-    formData.value.channel = [];
-    formData.value.subChannel = [];
-    formData.value.account = [];
+    formData.value.channel = {}; // Changed from []
+    formData.value.subChannel = {}; // Changed from []
+    formData.value.account = {}; // Changed from []
   }
   
   if (division) {
@@ -1202,9 +1191,9 @@ watch(() => formData.value.country, async (country) => {
   if (!isLoadingEntry.value) {
     formData.value.brand = {};
     formData.value.brandFamily = {};
-    formData.value.channel = [];
-    formData.value.subChannel = [];
-    formData.value.account = [];
+    formData.value.channel = {}; // Changed from []
+    formData.value.subChannel = {}; // Changed from []
+    formData.value.account = {}; // Changed from []
   }
 
   if (Object.keys(country).length > 0 && formData.value.division) {
@@ -1229,14 +1218,14 @@ watch(() => formData.value.country, async (country) => {
   }
 });
 
-watch(() => formData.value.channel, async (channels) => {
+watch(() => formData.value.channel, async (channelsMap) => { // channelsMap is now Record<string, string>
   if (!isLoadingEntry.value) {
-    formData.value.subChannel = [];
-    formData.value.account = [];
+    formData.value.subChannel = {}; // Clear to {}
+    formData.value.account = {};    // Clear to {}
   }
   
-  // Load subchannels from ro_customers for ALL selected channels
-  if (channels.length > 0 && formData.value.division) {
+  const channelCodes = Object.keys(channelsMap); // Get codes from the map
+  if (channelCodes.length > 0 && formData.value.division) {
     try {
       const subchannelsMap = new Map<string, {value: string, label: string}>();
       
@@ -1244,10 +1233,9 @@ watch(() => formData.value.channel, async (channels) => {
       const countryName = Object.values(formData.value.country)[0];
       
       // Fetch subchannels for each selected channel and combine results
-      for (const channelName of channels) {
-        const channelOption = channelOptions.value.find(c => c.label === channelName);
-        if (channelOption) {
-          const data = await lookupApi.getSubchannels(formData.value.division, channelOption.value, countryName);
+      for (const channelCode of channelCodes) { // Iterate over codes
+        if (channelCode) {
+          const data = await lookupApi.getSubchannels(formData.value.division, channelCode, countryName);
           data.options.forEach(opt => subchannelsMap.set(opt.value, opt));
         }
       }
@@ -1262,13 +1250,13 @@ watch(() => formData.value.channel, async (channels) => {
   }
 }, { deep: true });
 
-watch(() => formData.value.subChannel, async (subChannels) => {
+watch(() => formData.value.subChannel, async (subChannelsMap) => { // subChannelsMap is now Record<string, string>
   if (!isLoadingEntry.value) {
-    formData.value.account = [];
+    formData.value.account = {}; // Clear to {}
   }
   
-  // Load accounts from ro_customers for ALL selected subchannels
-  if (subChannels.length > 0 && formData.value.division) {
+  const subchannelCodes = Object.keys(subChannelsMap); // Get codes from the map
+  if (subchannelCodes.length > 0 && formData.value.division) {
     try {
       const accountsMap = new Map<string, {value: string, label: string}>();
       
@@ -1276,10 +1264,9 @@ watch(() => formData.value.subChannel, async (subChannels) => {
       const countryName = Object.values(formData.value.country)[0];
       
       // Fetch accounts for each selected subchannel and combine results
-      for (const subchannelName of subChannels) {
-        const subchannelOption = subChannelOptions.value.find(s => s.label === subchannelName);
-        if (subchannelOption) {
-          const data = await lookupApi.getAccounts(formData.value.division, subchannelOption.value, countryName);
+      for (const subchannelCode of subchannelCodes) { // Iterate over codes
+        if (subchannelCode) {
+          const data = await lookupApi.getAccounts(formData.value.division, subchannelCode, countryName);
           data.options.forEach(opt => accountsMap.set(opt.value, opt));
         }
       }
@@ -1339,24 +1326,6 @@ watch(() => props.entry, async (entry) => {
       const n = parseFloat(val); return isNaN(n) ? val : String(n / 9);
     };
     
-    const brandMap = (entry.brand && typeof entry.brand === 'object') ? entry.brand as Record<string, string> : {};
-    const brandNames = Object.values(brandMap);
-
-    if (brandNames.length) {
-      try {
-        // Extract country name from the country dictionary
-        const countryName = typeof entry.country === 'object' ? Object.values(entry.country)[0] : entry.country;
-        const data = await lookupApi.getBrandFamilies(brandNames, countryName);
-        brandFamilyOptions.value = data.options;
-      } catch (error) {
-        console.error("Error loading brand families:", error);
-      }
-    }
-
-    const familyMap = (entry.brandFamily && typeof entry.brandFamily === 'object') 
-      ? entry.brandFamily as Record<string, string> 
-      : (typeof entry.brandFamily === 'string' ? JSON.parse(entry.brandFamily) : {});
-
     const creator = entry.creator || currentUserEmail.value;
     const owner   = entry.owner   || currentUserEmail.value;
     ownerSameAsCreator.value = owner === creator;
@@ -1367,11 +1336,12 @@ watch(() => props.entry, async (entry) => {
       addToForecastByPeriod: entry.addToForecastByPeriod || currentPeriod,
       addToForecastByYear:   entry.addToForecastByYear   || String(currentYear),
       division:       entry.division      || "", ibpStep:         entry.ibpStep       || "",
-      country:        (typeof entry.country === 'object' ? entry.country : {}) || {},
-      channel:        typeof entry.channel === 'object' ? Object.values(entry.channel || {}) : [],
-      subChannel:     typeof entry.subChannel === 'object' ? Object.values(entry.subChannel || {}) : [],
-      account:        typeof entry.account === 'object' ? Object.values(entry.account || {}) : [],
-      brand:          brandMap, brandFamily:     familyMap,
+      country:        ensureObject(entry.country),
+      channel:        ensureObject(entry.channel), // Changed to ensureObject
+      subChannel:     ensureObject(entry.subChannel), // Changed to ensureObject
+      account:        ensureObject(entry.account), // Changed to ensureObject
+      brand:          ensureObject(entry.brand),
+      brandFamily:    ensureObject(entry.brandFamily),
       rAndO:          entry.rAndO         || "Risk", probability:     entry.probability   || "",
       categorisation: entry.categorisation|| "", impactPeriod:   entry.impactPeriod  || "",
       impactYear:     entry.impactYear    || (entry.childImpacts?.length ? "" : String(currentYear)),
@@ -1403,15 +1373,19 @@ watch(() => props.entry, async (entry) => {
     };
     
     await nextTick();
-    isInitialLoadRef.value = false;
+    // Ensure watches triggered by the formData update have finished before releasing the lock
+    setTimeout(() => {
+      isInitialLoadRef.value = false;
+      isLoadingEntry.value = false;
+    }, 300);
   } else {
     formData.value = defaultForm();
     ownerSameAsCreator.value = true;
     usePeriodRange.value     = false; // CHANGED HERE TO DEFAULT FALSE
     periodRangeStart.value   = { period: "", year: "" };
     periodRangeEnd.value     = { period: "", year: "" };
+    isLoadingEntry.value = false;
   }
-  isLoadingEntry.value = false;
 }, { immediate: true });
 
 const rules: FormRules = {
@@ -1420,9 +1394,9 @@ const rules: FormRules = {
   division: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
   ibpStep: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
   country: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
-  channel: [{ validator: (_rule: any, value: any, callback: any) => { if (!value?.length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
-  subChannel: [{ validator: (_rule: any, value: any, callback: any) => { if (!value?.length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
-  account: [{ validator: (_rule: any, value: any, callback: any) => { if (!value?.length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
+  channel: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }], // Updated
+  subChannel: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }], // Updated
+  account: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }], // Updated
   brand: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
   brandFamily: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
   rAndO: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
@@ -1557,31 +1531,14 @@ async function validate() {
       formData.value.impactValue = cleanNumStr(formData.value.impactValue); formData.value.secondaryValue = cleanNumStr(formData.value.secondaryValue);
     }
     
-    // Convert channel, subChannel, and account from name arrays to code-name maps
-    const channelMap: Record<string, string> = {};
-    for (const name of formData.value.channel) {
-      const option = channelOptions.value.find(c => c.label === name);
-      if (option) channelMap[option.value] = name;
-    }
-    
-    const subChannelMap: Record<string, string> = {};
-    for (const name of formData.value.subChannel) {
-      const option = subChannelOptions.value.find(s => s.label === name);
-      if (option) subChannelMap[option.value] = name;
-    }
-    
-    const accountMap: Record<string, string> = {};
-    for (const name of formData.value.account) {
-      const option = accountOptions.value.find(a => a.label === name);
-      if (option) accountMap[option.value] = name;
-    }
+    // channel, subChannel, and account are now already code-name maps in formData
     
     const { nsvAud, nsvNzd, volumeLitres } = mapToFields(formData.value.primaryImpact, formData.value.impactValue, formData.value.secondaryUnit, formData.value.secondaryValue);
     return {
       ...formData.value,
-      channel: channelMap,
-      subChannel: subChannelMap,
-      account: accountMap,
+      channel: formData.value.channel, // Directly use the map
+      subChannel: formData.value.subChannel, // Directly use the map
+      account: formData.value.account, // Directly use the map
       nsvAud, nsvNzd, volumeLitres,
       childImpacts: formData.value.childImpacts.map(ci => {
         const m = mapToFields(ci.impactUnit, ci.impactValue, ci.secondaryUnit, ci.secondaryValue); return { impactYear: ci.impactYear, impactPeriod: ci.impactPeriod, ...m };
