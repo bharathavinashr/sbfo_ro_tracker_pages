@@ -382,7 +382,7 @@
                   <el-checkbox :model-value="allAccountsSelected" />
                   <span class="bf-select-all-label">Select All Suggestions</span>
                 </div>
-                <div v-for="a in filteredAccounts" :key="a.value" class="combo-item combo-check-item" @mousedown.prevent="toggleAccount(a.value, a.label)">
+                <div v-for="a in filteredAccounts" :key="a.value" class="combo-item combo-check-item" @mousedown.prevent="handleAccountToggle(a.value, a.label)">
                   <el-checkbox :model-value="!!formData.account[a.value]" /><span>{{ a.label }}</span>
                 </div>
               </div>
@@ -797,6 +797,8 @@ const brandFamilyRef    = ref<HTMLElement | null>(null);
 const brandRef          = ref<HTMLElement | null>(null);
 
 const deptOpen = ref(false);
+const selectionPriority = ref<'channel' | 'account' | null>(null);
+const isReverseAction = ref(false);
 const ownerOpen = ref(false);
 const ownerSearch = ref("");
 function onOwnerBlur() { setTimeout(() => { ownerOpen.value = false; }, 120); }
@@ -910,18 +912,172 @@ function isChannelDisabled(ch: string) {
   if (formData.value.division === "Alcohol")     return ch === "Convenience" || ch === "Grocery";
   return false;
 }
-function toggleChannel(code: string, name: string) {
+async function toggleChannel(code: string, name: string) {
   if (isChannelDisabled(name)) return;
-  if (formData.value.channel[code]) delete formData.value.channel[code];
-  else formData.value.channel[code] = name;
+  
+  if (formData.value.channel[code]) {
+    delete formData.value.channel[code];
+
+    if (selectionPriority.value === 'account') {
+      const countryName = Object.values(formData.value.country)[0];
+      const division = formData.value.division;
+      
+      // Remove subchannels that belong to this channel
+      const subCodes = Object.keys(formData.value.subChannel);
+      for (const scCode of subCodes) {
+        const details = await lookupApi.getSubchannelDetails(division, scCode, countryName);
+        if (details?.channel?.code === code) {
+          delete formData.value.subChannel[scCode];
+        }
+      }
+
+      // Remove accounts that belong to this channel
+      const accCodes = Object.keys(formData.value.account);
+      for (const accCode of accCodes) {
+        const details = await lookupApi.getAccountDetails(division, accCode, countryName);
+        if (details?.channel?.code === code) {
+          delete formData.value.account[accCode];
+        }
+      }
+
+      if (Object.keys(formData.value.account).length === 0) {
+        selectionPriority.value = null;
+        formData.value.channel = {};
+        formData.value.subChannel = {};
+      } else {
+        await syncParentsFromAccounts();
+      }
+    }
+  } else {
+    if (!selectionPriority.value) selectionPriority.value = 'channel';
+    formData.value.channel[code] = name;
+  }
+  
+  if (Object.keys(formData.value.channel).length === 0 && selectionPriority.value === 'channel') {
+    selectionPriority.value = null;
+  }
 }
-function toggleSubChannel(code: string, name: string) {
-  if (formData.value.subChannel[code]) delete formData.value.subChannel[code];
-  else formData.value.subChannel[code] = name;
+
+async function syncChannelFromSubChannels() {
+  const subCodes = Object.keys(formData.value.subChannel);
+  const countryName = Object.values(formData.value.country)[0];
+  if (!formData.value.division || !countryName) return;
+
+  const newChannels: Record<string, string> = {};
+  isReverseAction.value = true;
+  
+  try {
+    const results = await Promise.all(
+      subCodes.map(code => lookupApi.getSubchannelDetails(formData.value.division, code, countryName))
+    );
+
+    results.forEach(details => {
+      if (details && details.channel) {
+        newChannels[details.channel.code] = details.channel.name;
+      }
+    });
+    formData.value.channel = newChannels;
+  } catch (e) {
+    console.error("Error syncing channels from subchannels:", e);
+  } finally {
+    await nextTick();
+    isReverseAction.value = false;
+  }
 }
-function toggleAccount(code: string, name: string) {
-  if (formData.value.account[code]) delete formData.value.account[code];
-  else formData.value.account[code] = name;
+
+async function toggleSubChannel(code: string, name: string) {
+  if (formData.value.subChannel[code]) {
+    delete formData.value.subChannel[code];
+
+    if (selectionPriority.value === 'account') {
+      const countryName = Object.values(formData.value.country)[0];
+      const division = formData.value.division;
+
+      // Remove accounts that belong to this subchannel
+      const accCodes = Object.keys(formData.value.account);
+      for (const accCode of accCodes) {
+        const details = await lookupApi.getAccountDetails(division, accCode, countryName);
+        if (details?.subchannel?.code === code) {
+          delete formData.value.account[accCode];
+        }
+      }
+
+      if (Object.keys(formData.value.account).length === 0) {
+        selectionPriority.value = null;
+        formData.value.channel = {};
+        formData.value.subChannel = {};
+      } else {
+        await syncParentsFromAccounts();
+      }
+    }
+  } else {
+    if (!selectionPriority.value) selectionPriority.value = 'channel';
+    formData.value.subChannel[code] = name;
+  }
+  
+  // Sync channel based on selected subchannels
+  if (selectionPriority.value === 'channel') {
+    // When priority is channel (top-down), we don't prune parents during selection.
+    // We only clear the account list to maintain hierarchy consistency as the 
+    // user filters down.
+    formData.value.account = {};
+  } else if (selectionPriority.value === 'account') {
+    // When priority is account, just sync the channel without clearing account
+    await syncChannelFromSubChannels();
+  }
+}
+
+async function syncParentsFromAccounts() {
+  const accountCodes = Object.keys(formData.value.account);
+  const countryName = Object.values(formData.value.country)[0];
+  if (!formData.value.division || !countryName) return;
+
+  const newChannels: Record<string, string> = {};
+  const newSubChannels: Record<string, string> = {};
+  isReverseAction.value = true;
+
+  try {
+    const results = await Promise.all(
+      accountCodes.map(code => lookupApi.getAccountDetails(formData.value.division, code, countryName))
+    );
+
+    results.forEach(details => {
+      if (details && details.channel && details.subchannel) {
+        newChannels[details.channel.code] = details.channel.name;
+        newSubChannels[details.subchannel.code] = details.subchannel.name;
+      }
+    });
+
+    formData.value.channel = newChannels;
+    formData.value.subChannel = newSubChannels;
+  } catch (e) {
+    console.error("Error syncing parents from accounts:", e);
+  } finally {
+    await nextTick();
+    isReverseAction.value = false;
+  }
+}
+
+async function handleAccountToggle(code: string, name: string) {
+  if (formData.value.account[code]) {
+    delete formData.value.account[code];
+    if (selectionPriority.value === 'account') {
+      if (Object.keys(formData.value.account).length === 0) {
+        selectionPriority.value = null;
+        formData.value.channel = {};
+        formData.value.subChannel = {};
+      } else {
+        await syncParentsFromAccounts();
+      }
+    }
+  } else {
+    if (!selectionPriority.value) selectionPriority.value = 'account';
+    formData.value.account[code] = name;
+    
+    if (selectionPriority.value === 'account') {
+      await syncParentsFromAccounts();
+    }
+  }
 }
 
 function onDeptBlur()       { setTimeout(() => { deptOpen.value = false; }, 120); }
@@ -953,28 +1109,111 @@ function toggleAllBrands() {
   }
 }
 
-function toggleAllChannels() {
+async function toggleAllChannels() {
   const suggestions = filteredChannels.value.filter(c => !isChannelDisabled(c.label));
+  
   if (allChannelsSelected.value) {
-    suggestions.forEach(c => delete formData.value.channel[c.value]);
+    if (selectionPriority.value === 'account') {
+      const countryName = Object.values(formData.value.country)[0];
+      const division = formData.value.division;
+      const codesToRemove = suggestions.map(c => c.value);
+
+      // Remove subchannels belonging to any of the removed channels
+      const subCodes = Object.keys(formData.value.subChannel);
+      for (const scCode of subCodes) {
+        const details = await lookupApi.getSubchannelDetails(division, scCode, countryName);
+        if (details?.channel?.code && codesToRemove.includes(details.channel.code)) {
+          delete formData.value.subChannel[scCode];
+        }
+      }
+
+      // Remove accounts belonging to any of the removed channels
+      const accCodes = Object.keys(formData.value.account);
+      for (const accCode of accCodes) {
+        const details = await lookupApi.getAccountDetails(division, accCode, countryName);
+        if (details?.channel?.code && codesToRemove.includes(details.channel.code)) {
+          delete formData.value.account[accCode];
+        }
+      }
+
+      if (Object.keys(formData.value.account).length === 0) {
+        selectionPriority.value = null;
+        formData.value.channel = {};
+        formData.value.subChannel = {};
+      } else {
+        await syncParentsFromAccounts();
+      }
+    } else {
+      suggestions.forEach(c => delete formData.value.channel[c.value]);
+    }
   } else {
+    if (!selectionPriority.value) selectionPriority.value = 'channel';
     suggestions.forEach(c => formData.value.channel[c.value] = c.label);
   }
-}
-
-function toggleAllSubChannels() {
-  if (allSubChannelsSelected.value) {
-    filteredSubChannels.value.forEach(s => delete formData.value.subChannel[s.value]);
-  } else {
-    filteredSubChannels.value.forEach(s => formData.value.subChannel[s.value] = s.label);
+  if (selectionPriority.value === 'channel' && Object.keys(formData.value.channel).length === 0) {
+    selectionPriority.value = null;
   }
 }
 
-function toggleAllAccounts() {
+async function toggleAllSubChannels() {
+  const suggestions = filteredSubChannels.value;
+
+  if (allSubChannelsSelected.value) {
+    if (selectionPriority.value === 'account') {
+      const countryName = Object.values(formData.value.country)[0];
+      const division = formData.value.division;
+      const codesToRemove = suggestions.map(s => s.value);
+
+      // Remove accounts belonging to any of the removed subchannels
+      const accCodes = Object.keys(formData.value.account);
+      for (const accCode of accCodes) {
+        const details = await lookupApi.getAccountDetails(division, accCode, countryName);
+        if (details?.subchannel?.code && codesToRemove.includes(details.subchannel.code)) {
+          delete formData.value.account[accCode];
+        }
+      }
+
+      if (Object.keys(formData.value.account).length === 0) {
+        selectionPriority.value = null;
+        formData.value.channel = {};
+        formData.value.subChannel = {};
+      } else {
+        await syncParentsFromAccounts();
+      }
+    } else {
+      suggestions.forEach(s => delete formData.value.subChannel[s.value]);
+    }
+  } else {
+    if (!selectionPriority.value) selectionPriority.value = 'channel';
+    suggestions.forEach(s => formData.value.subChannel[s.value] = s.label);
+  }
+
+  if (selectionPriority.value === 'channel') {
+    // When priority is channel (top-down), we don't prune parents during selection.
+    // We only clear the account list to maintain hierarchy consistency.
+    formData.value.account = {};
+  } else if (selectionPriority.value === 'account') {
+    // When priority is account, just sync the channel without clearing account
+    await syncChannelFromSubChannels();
+  }
+}
+
+async function toggleAllAccounts() {
   if (allAccountsSelected.value) {
     filteredAccounts.value.forEach(a => delete formData.value.account[a.value]);
   } else {
+    if (!selectionPriority.value) selectionPriority.value = 'account';
     filteredAccounts.value.forEach(a => formData.value.account[a.value] = a.label);
+  }
+
+  if (selectionPriority.value === 'account') {
+    if (Object.keys(formData.value.account).length === 0) {
+      selectionPriority.value = null;
+      formData.value.channel = {};
+      formData.value.subChannel = {};
+    } else {
+      await syncParentsFromAccounts();
+    }
   }
 }
 
@@ -1187,6 +1426,7 @@ watch(() => formData.value.division, async (division) => {
     formData.value.channel = {}; // Changed from []
     formData.value.subChannel = {}; // Changed from []
     formData.value.account = {}; // Changed from []
+    selectionPriority.value = null;
   }
   
   if (division) {
@@ -1210,6 +1450,7 @@ watch(() => formData.value.country, async (country) => {
     formData.value.channel = {}; // Changed from []
     formData.value.subChannel = {}; // Changed from []
     formData.value.account = {}; // Changed from []
+    selectionPriority.value = null;
   }
 
   if (Object.keys(country).length > 0 && formData.value.division) {
@@ -1223,77 +1464,102 @@ watch(() => formData.value.country, async (country) => {
 
       const data = await lookupApi.getChannels(formData.value.division, countryName);
       channelOptions.value = data.options;
+
+      const accData = await lookupApi.getAccounts(formData.value.division, "", countryName);
+      accountOptions.value = accData.options;
     } catch (error) {
       console.error("Error loading country-based lookups:", error);
       brandOptions.value = [];
       channelOptions.value = [];
+      accountOptions.value = [];
     }
   } else {
     brandOptions.value = [];
     channelOptions.value = [];
+    accountOptions.value = [];
   }
 });
 
 watch(() => formData.value.channel, async (channelsMap) => { // channelsMap is now Record<string, string>
-  if (!isLoadingEntry.value) {
-    formData.value.subChannel = {}; // Clear to {}
-    formData.value.account = {};    // Clear to {}
+  if (!isLoadingEntry.value && !isReverseAction.value) {
+    if (selectionPriority.value !== 'account') {
+      formData.value.subChannel = {}; // Clear to {}
+      formData.value.account = {};    // Clear to {}
+    }
   }
   
-  const channelCodes = Object.keys(channelsMap); // Get codes from the map
-  if (channelCodes.length > 0 && formData.value.division) {
+  const countryName = Object.values(formData.value.country)[0];
+  if (!formData.value.division || !countryName) {
+    subChannelOptions.value = [];
+    return;
+  }
+
+  if (selectionPriority.value === 'account') {
+    // If account clicked first, show ALL subchannels for the division/country
     try {
+      const data = await lookupApi.getSubchannels(formData.value.division, "", countryName);
+      subChannelOptions.value = data.options;
+    } catch (error) {
+      subChannelOptions.value = [];
+    }
+  } else {
+    const channelCodes = Object.keys(channelsMap); // Get codes from the map
+    if (channelCodes.length > 0) {
       const subchannelsMap = new Map<string, {value: string, label: string}>();
-      
-      // Extract country name from the dictionary
-      const countryName = Object.values(formData.value.country)[0];
-      
-      // Fetch subchannels for each selected channel and combine results
-      for (const channelCode of channelCodes) { // Iterate over codes
+      for (const channelCode of channelCodes) {
         if (channelCode) {
           const data = await lookupApi.getSubchannels(formData.value.division, channelCode, countryName);
           data.options.forEach(opt => subchannelsMap.set(opt.value, opt));
         }
       }
-      
       subChannelOptions.value = Array.from(subchannelsMap.values());
-    } catch (error) {
-      console.error("Error loading subchannels:", error);
+    } else {
       subChannelOptions.value = [];
     }
-  } else {
-    subChannelOptions.value = [];
   }
 }, { deep: true });
 
 watch(() => formData.value.subChannel, async (subChannelsMap) => { // subChannelsMap is now Record<string, string>
-  if (!isLoadingEntry.value) {
-    formData.value.account = {}; // Clear to {}
+  if (!isLoadingEntry.value && !isReverseAction.value) {
+    if (selectionPriority.value !== 'account') {
+      formData.value.account = {}; // Clear to {}
+    }
   }
   
-  const subchannelCodes = Object.keys(subChannelsMap); // Get codes from the map
-  if (subchannelCodes.length > 0 && formData.value.division) {
+  const countryName = Object.values(formData.value.country)[0];
+  if (!formData.value.division || !countryName) {
+    accountOptions.value = [];
+    return;
+  }
+
+  if (selectionPriority.value === 'account') {
+    // If account clicked first, show ALL accounts for the division/country
     try {
+      const data = await lookupApi.getAccounts(formData.value.division, "", countryName);
+      accountOptions.value = data.options;
+    } catch (error) {
+      accountOptions.value = [];
+    }
+  } else {
+    const subchannelCodes = Object.keys(subChannelsMap); // Get codes from the map
+    if (subchannelCodes.length > 0) {
       const accountsMap = new Map<string, {value: string, label: string}>();
-      
-      // Extract country name from the dictionary
-      const countryName = Object.values(formData.value.country)[0];
-      
-      // Fetch accounts for each selected subchannel and combine results
-      for (const subchannelCode of subchannelCodes) { // Iterate over codes
+      for (const subchannelCode of subchannelCodes) {
         if (subchannelCode) {
           const data = await lookupApi.getAccounts(formData.value.division, subchannelCode, countryName);
           data.options.forEach(opt => accountsMap.set(opt.value, opt));
         }
       }
-      
       accountOptions.value = Array.from(accountsMap.values());
-    } catch (error) {
-      console.error("Error loading accounts:", error);
-      accountOptions.value = [];
+    } else {
+      // Default to all accounts for division/country if no subchannel selected
+      try {
+        const data = await lookupApi.getAccounts(formData.value.division, "", countryName);
+        accountOptions.value = data.options;
+      } catch (e) {
+        accountOptions.value = [];
+      }
     }
-  } else {
-    accountOptions.value = [];
   }
 }, { deep: true });
 
@@ -1314,6 +1580,13 @@ watch(() => formData.value.brand, async (brandMap) => {
     brandFamilyOptions.value = [];
   }
     }, { deep: true });
+
+watch(accountOpen, async (isOpen) => {
+  if (!isOpen && Object.keys(formData.value.account).length > 0) {
+    await syncParentsFromAccounts();
+  }
+});
+
 watch(() => formData.value.ibpStep, (val) => {
   if (isInitialLoadRef.value) return;
   if (!CATEG_ACTIVE_IBP_STEPS.includes(val)) formData.value.categorisation = "";
@@ -1333,6 +1606,7 @@ watch(() => formData.value.rAndO, (val) => {
 
 watch(() => props.entry, async (entry) => {
   isLoadingEntry.value = true;
+  selectionPriority.value = null;
   if (entry) {
     isInitialLoadRef.value = true;
     const _d = (entry.division || "").toLowerCase();
@@ -1565,6 +1839,7 @@ async function validate() {
 
 function reset() {
   formData.value = defaultForm(); ownerSameAsCreator.value = true;
+  selectionPriority.value = null;
   usePeriodRange.value = false; // CHANGED HERE TO DEFAULT FALSE
   periodRangeStart.value = { period: "", year: "" }; periodRangeEnd.value = { period: "", year: "" };
   formRef.value?.clearValidate();

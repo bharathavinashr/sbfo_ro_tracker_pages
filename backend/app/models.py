@@ -20,8 +20,8 @@ class Entry(Base):
     add_to_forecast_by_period = Column(String(5), nullable=True)
     add_to_forecast_by_year = Column(String(4), nullable=True)
 
-    division = Column(String(100), nullable=False)
-    ibp_step = Column(String(100), nullable=True)
+    division = Column(JSONB, nullable=False)
+    ibp_step = Column(JSONB, nullable=True)
     country = Column(JSONB, nullable=False)  # Map: {company_code: country_name}
 
     channel = Column(JSONB, nullable=False)  # Map: {channel_code: channel_name}
@@ -33,7 +33,7 @@ class Entry(Base):
 
     r_and_o = Column(String(50), nullable=False)
     probability = Column(String(50), nullable=False)
-    categorisation = Column(String(100), nullable=False)
+    categorisation = Column(String(255), nullable=False)
 
     impact_period = Column(String(5), nullable=True)
     impact_year = Column(String(4), nullable=True)
@@ -43,9 +43,9 @@ class Entry(Base):
     volume_litres = Column(String(50), nullable=True)
     primary_impact = Column(String(20), nullable=True)  # "AUD", "NZD", "Volume"
 
-    owner = Column(String(100), nullable=False)
-    creator = Column(String(100), nullable=True)
-    modified_user = Column(String(100), nullable=True)
+    owner = Column(String(200), nullable=False)
+    creator = Column(String(200), nullable=True)
+    modified_user = Column(String(200), nullable=True)
 
     status = Column(String(50), nullable=True, default="Open")
     short_description = Column(Text, nullable=True)
@@ -110,9 +110,9 @@ class ROProduct(Base):
     brand_family_name = Column(String(200), nullable=False)
     brand_code = Column(String(20), nullable=False, index=True)
     brand_name = Column(String(200), nullable=False)
-    division = Column(String(100), nullable=False, index=True)
+    division = Column(String(255), nullable=False, index=True)
     company_code = Column(String(50), nullable=True)
-    country = Column(String(100), nullable=True, index=True)
+    country = Column(String(255), nullable=True, index=True)
 
 
 class ROCustomer(Base):
@@ -120,9 +120,9 @@ class ROCustomer(Base):
     __table_args__ = {"schema": SCHEMA}
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    division = Column(String(100), nullable=False, index=True)
+    division = Column(String(255), nullable=False, index=True)
     company_code = Column(String(50), nullable=True)
-    country = Column(String(100), nullable=True, index=True)
+    country = Column(String(255), nullable=True, index=True)
     channel_code = Column(String(50), nullable=False, index=True)
     channel_name = Column(String(200), nullable=False)
     subchannel_code = Column(String(50), nullable=False, index=True)
@@ -140,6 +140,6 @@ class Snapshot(Base):
     entry_id = Column(Integer, nullable=False)
     period = Column(String(10), nullable=False)
     year = Column(String(4), nullable=False)
-    ibp_step = Column(String(100), nullable=False)
+    ibp_step = Column(String(255), nullable=False)
     entry_data = Column(JSONB, nullable=False)
     created_at = Column(DateTime, server_default=func.now())

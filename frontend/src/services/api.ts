@@ -114,6 +114,13 @@ export const lookupApi = {
         params: { division, account_code: accountCode, country },
       })
       .then((r) => r.data),
+
+  getSubchannelDetails: (division: string, subchannelCode: string, country?: string): Promise<{ channel: { code: string; name: string } | null }> =>
+    api
+      .get("/api/lookups/subchannel-details", {
+        params: { division, subchannel_code: subchannelCode, country },
+      })
+      .then((r) => r.data),
 };
 
 export const snapshotApi = {

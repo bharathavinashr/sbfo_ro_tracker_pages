@@ -72,7 +72,7 @@ def get_channels(
 @router.get("/subchannels")
 def get_subchannels(
     division: str = Query(..., description="Division name"),
-    channel_code: str = Query(..., description="Channel code"),
+    channel_code: Optional[str] = Query(None, description="Channel code"),
     country: Optional[str] = Query(None, description="Country name"),
     db: Session = Depends(get_db),
 ):
@@ -84,13 +84,27 @@ def get_subchannels(
 @router.get("/accounts")
 def get_accounts(
     division: str = Query(..., description="Division name"),
-    subchannel_code: str = Query(..., description="Subchannel code"),
+    subchannel_code: Optional[str] = Query(None, description="Subchannel code"),
     country: Optional[str] = Query(None, description="Country name"),
     db: Session = Depends(get_db),
 ):
     """Get accounts (code and name) for a specific division and subchannel."""
     accounts = crud.get_accounts_by_division_and_subchannel(db, division, subchannel_code, country)
     return {"options": [{"value": a["code"], "label": a["name"]} for a in accounts]}
+
+
+@router.get("/subchannel-details")
+def get_subchannel_details(
+    division: str = Query(..., description="Division name"),
+    subchannel_code: str = Query(..., description="Subchannel code"),
+    country: Optional[str] = Query(None, description="Country name"),
+    db: Session = Depends(get_db),
+):
+    """Get channel details for a specific subchannel (for auto-population)."""
+    details = crud.get_channel_by_subchannel(db, division, subchannel_code, country)
+    if details:
+        return {"channel": details}
+    return {"channel": None}
 
 
 @router.get("/account-details")

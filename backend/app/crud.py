@@ -307,12 +307,13 @@ def get_channels_by_division(db: Session, division: str, country: str = None):
     return [{"code": r[0], "name": r[1]} for r in rows]
 
 
-def get_subchannels_by_division_and_channel(db: Session, division: str, channel_code: str, country: str = None):
+def get_subchannels_by_division_and_channel(db: Session, division: str, channel_code: str = None, country: str = None):
     """Get distinct subchannels (code and name) filtered by division, channel and country."""
-    query = db.query(models.ROCustomer.subchannel_code, models.ROCustomer.subchannel_name).filter(
-        models.ROCustomer.division == division,
-        models.ROCustomer.channel_code == channel_code
-    )
+    query = db.query(models.ROCustomer.subchannel_code, models.ROCustomer.subchannel_name).filter(models.ROCustomer.division == division)
+    
+    if channel_code:
+        query = query.filter(models.ROCustomer.channel_code == channel_code)
+        
     if country:
         query = query.filter(models.ROCustomer.country == country)
 
@@ -325,12 +326,31 @@ def get_subchannels_by_division_and_channel(db: Session, division: str, channel_
     return [{"code": r[0], "name": r[1]} for r in rows]
 
 
-def get_accounts_by_division_and_subchannel(db: Session, division: str, subchannel_code: str, country: str = None):
-    """Get distinct accounts (code and name) filtered by division, subchannel and country."""
-    query = db.query(models.ROCustomer.account_code, models.ROCustomer.account_name).filter(
+def get_channel_by_subchannel(db: Session, division: str, subchannel_code: str, country: str = None):
+    """Get channel details for a specific subchannel."""
+    query = db.query(
+        models.ROCustomer.channel_code,
+        models.ROCustomer.channel_name
+    ).filter(
         models.ROCustomer.division == division,
         models.ROCustomer.subchannel_code == subchannel_code
     )
+    if country:
+        query = query.filter(models.ROCustomer.country == country)
+
+    row = query.first()
+    if row:
+        return {"code": row[0], "name": row[1]}
+    return None
+
+
+def get_accounts_by_division_and_subchannel(db: Session, division: str, subchannel_code: str = None, country: str = None):
+    """Get distinct accounts (code and name) filtered by division, subchannel and country."""
+    query = db.query(models.ROCustomer.account_code, models.ROCustomer.account_name).filter(models.ROCustomer.division == division)
+    
+    if subchannel_code:
+        query = query.filter(models.ROCustomer.subchannel_code == subchannel_code)
+        
     if country:
         query = query.filter(models.ROCustomer.country == country)
 
