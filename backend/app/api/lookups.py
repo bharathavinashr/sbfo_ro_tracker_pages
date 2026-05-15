@@ -122,3 +122,29 @@ def get_account_details(
             "subchannel": {"code": details["subchannel_code"], "name": details["subchannel_name"]}
         }
     return {"channel": None, "subchannel": None}
+
+
+@router.get("/brand-family-details")
+def get_brand_family_details(
+    division: str = Query(..., description="Division name"),
+    brand_family_code: str = Query(..., description="Brand family code"),
+    country: Optional[str] = Query(None, description="Country name"),
+    db: Session = Depends(get_db),
+):
+    """Get brand details for a specific brand_family (for auto-population)."""
+    details = crud.get_brand_by_brand_family(db, division, brand_family_code, country)
+    if details:
+        return {"brand": details}
+    return {"brand": None}
+
+
+@router.get("/brand-families-by-brand")
+def get_brand_families_by_brand(
+    division: str = Query(..., description="Division name"),
+    brand_code: str = Query(..., description="Brand code"),
+    country: Optional[str] = Query(None, description="Country name"),
+    db: Session = Depends(get_db),
+):
+    """Get brand families for a specific brand."""
+    families = crud.get_brand_families_by_brand_code(db, division, brand_code, country)
+    return {"options": [{"value": f["code"], "label": f["name"]} for f in families]}

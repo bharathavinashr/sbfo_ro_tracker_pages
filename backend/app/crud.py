@@ -268,6 +268,39 @@ def get_product_codes(db: Session, division: str, brand_name: str, brand_family,
     }
 
 
+def get_brand_by_brand_family(db: Session, division: str, brand_family_code: str, country: str = None):
+    """Get brand details (code and name) for a specific brand_family_code."""
+    query = db.query(models.ROProduct.brand_code, models.ROProduct.brand_name).filter(
+        models.ROProduct.division == division,
+        models.ROProduct.brand_family_code == brand_family_code
+    )
+    if country:
+        query = query.filter(models.ROProduct.country == country)
+    
+    result = query.first()
+    if result:
+        return {"code": result[0], "name": result[1]}
+    return None
+
+
+def get_brand_families_by_brand_code(db: Session, division: str, brand_code: str, country: str = None):
+    """Get brand families for a specific brand_code."""
+    query = db.query(models.ROProduct.brand_family_code, models.ROProduct.brand_family_name).filter(
+        models.ROProduct.division == division,
+        models.ROProduct.brand_code == brand_code
+    )
+    if country:
+        query = query.filter(models.ROProduct.country == country)
+    
+    rows = (
+        query
+        .distinct()
+        .order_by(models.ROProduct.brand_family_name)
+        .all()
+    )
+    return [{"code": r[0], "name": r[1]} for r in rows]
+
+
 def get_all_users(db: Session):
     return (
         db.query(models.AppUser)

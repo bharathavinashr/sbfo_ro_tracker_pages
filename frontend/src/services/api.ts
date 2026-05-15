@@ -121,6 +121,20 @@ export const lookupApi = {
         params: { division, subchannel_code: subchannelCode, country },
       })
       .then((r) => r.data),
+
+  getBrandFamilyDetails: (division: string, brandFamilyCode: string, country?: string): Promise<{ brand: { code: string; name: string } | null }> =>
+    api
+      .get("/api/lookups/brand-family-details", {
+        params: { division, brand_family_code: brandFamilyCode, country },
+      })
+      .then((r) => r.data),
+
+  getBrandFamiliesByBrand: (division: string, brandCode: string, country?: string): Promise<{ options: { value: string; label: string }[] }> =>
+    api
+      .get("/api/lookups/brand-families-by-brand", {
+        params: { division, brand_code: brandCode, country },
+      })
+      .then((r) => r.data),
 };
 
 export const snapshotApi = {

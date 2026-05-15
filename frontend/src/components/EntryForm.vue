@@ -798,6 +798,7 @@ const brandRef          = ref<HTMLElement | null>(null);
 
 const deptOpen = ref(false);
 const selectionPriority = ref<'channel' | 'account' | null>(null);
+const brandSelectionPriority = ref<'brand' | 'brandFamily' | null>(null);
 const isReverseAction = ref(false);
 const ownerOpen = ref(false);
 const ownerSearch = ref("");
@@ -1080,6 +1081,62 @@ async function handleAccountToggle(code: string, name: string) {
   }
 }
 
+async function syncBrandFromBrandFamilies() {
+  const brandFamilyCodes = Object.keys(formData.value.brandFamily);
+  const countryName = Object.values(formData.value.country)[0];
+  if (!formData.value.division || !countryName) return;
+
+  const newBrands: Record<string, string> = {};
+  isReverseAction.value = true;
+
+  try {
+    const results = await Promise.all(
+      brandFamilyCodes.map(code => lookupApi.getBrandFamilyDetails(formData.value.division, code, countryName))
+    );
+
+    results.forEach(details => {
+      if (details && details.brand) {
+        newBrands[details.brand.code] = details.brand.name;
+      }
+    });
+
+    formData.value.brand = newBrands;
+  } catch (e) {
+    console.error("Error syncing brands from brand families:", e);
+  } finally {
+    await nextTick();
+    isReverseAction.value = false;
+  }
+}
+
+async function syncBrandFamiliesFromBrand() {
+  const brandCodes = Object.keys(formData.value.brand);
+  const countryName = Object.values(formData.value.country)[0];
+  if (!formData.value.division || !countryName) return;
+
+  const newBrandFamilies: Record<string, string> = {};
+  isReverseAction.value = true;
+
+  try {
+    const results = await Promise.all(
+      brandCodes.map(code => lookupApi.getBrandFamiliesByBrand(formData.value.division, code, countryName))
+    );
+
+    results.forEach(data => {
+      data.options.forEach(option => {
+        newBrandFamilies[option.value] = option.label;
+      });
+    });
+
+    formData.value.brandFamily = newBrandFamilies;
+  } catch (e) {
+    console.error("Error syncing brand families from brands:", e);
+  } finally {
+    await nextTick();
+    isReverseAction.value = false;
+  }
+}
+
 function onDeptBlur()       { setTimeout(() => { deptOpen.value = false; }, 120); }
 function onDivBlur()        { setTimeout(() => { divOpen.value = false; }, 120); }
 function onCountryBlur()    { setTimeout(() => { countryOpen.value = false; }, 120); }
@@ -1097,15 +1154,75 @@ function onImpactYearBlur()    { setTimeout(() => { impactYearOpen.value = false
 function onChildPeriodBlur(child: ChildImpactForm) { setTimeout(() => { child._periodOpen = false; }, 120); }
 function onChildYearBlur(child: ChildImpactForm)   { setTimeout(() => { child._yearOpen = false; }, 120); }
 
-function toggleBrand(code: string, name: string) {
-  if (formData.value.brand[code]) delete formData.value.brand[code];
-  else formData.value.brand[code] = name;
-}
-function toggleAllBrands() {
-  if (allBrandsSelected.value) {
-    filteredBrands.value.forEach(b => delete formData.value.brand[b.value]);
+async function toggleBrand(code: string, name: string) {
+  if (formData.value.brand[code]) {
+    delete formData.value.brand[code];
+
+    if (brandSelectionPriority.value === 'brandFamily') {
+      const countryName = Object.values(formData.value.country)[0];
+      const division = formData.value.division;
+      
+      // Remove brand families that belong to this brand
+      const bfCodes = Object.keys(formData.value.brandFamily);
+      for (const bfCode of bfCodes) {
+        const details = await lookupApi.getBrandFamilyDetails(division, bfCode, countryName);
+        if (details?.brand?.code === code) {
+          delete formData.value.brandFamily[bfCode];
+        }
+      }
+
+      if (Object.keys(formData.value.brandFamily).length === 0) {
+        brandSelectionPriority.value = null;
+        formData.value.brand = {};
+        formData.value.brandFamily = {};
+      } else {
+        await syncBrandFromBrandFamilies();
+      }
+    }
   } else {
-    filteredBrands.value.forEach(b => formData.value.brand[b.value] = b.label);
+    if (!brandSelectionPriority.value) brandSelectionPriority.value = 'brand';
+    formData.value.brand[code] = name;
+  }
+  
+  if (Object.keys(formData.value.brand).length === 0 && brandSelectionPriority.value === 'brand') {
+    brandSelectionPriority.value = null;
+  }
+}
+
+async function toggleAllBrands() {
+  const suggestions = filteredBrands.value;
+  
+  if (allBrandsSelected.value) {
+    if (brandSelectionPriority.value === 'brandFamily') {
+      const countryName = Object.values(formData.value.country)[0];
+      const division = formData.value.division;
+      const codesToRemove = suggestions.map(b => b.value);
+
+      // Remove brand families belonging to any of the removed brands
+      const bfCodes = Object.keys(formData.value.brandFamily);
+      for (const bfCode of bfCodes) {
+        const details = await lookupApi.getBrandFamilyDetails(division, bfCode, countryName);
+        if (details?.brand?.code && codesToRemove.includes(details.brand.code)) {
+          delete formData.value.brandFamily[bfCode];
+        }
+      }
+
+      if (Object.keys(formData.value.brandFamily).length === 0) {
+        brandSelectionPriority.value = null;
+        formData.value.brand = {};
+        formData.value.brandFamily = {};
+      } else {
+        await syncBrandFromBrandFamilies();
+      }
+    } else {
+      suggestions.forEach(b => delete formData.value.brand[b.value]);
+    }
+  } else {
+    if (!brandSelectionPriority.value) brandSelectionPriority.value = 'brand';
+    suggestions.forEach(b => formData.value.brand[b.value] = b.label);
+  }
+  if (brandSelectionPriority.value === 'brand' && Object.keys(formData.value.brand).length === 0) {
+    brandSelectionPriority.value = null;
   }
 }
 
@@ -1217,10 +1334,34 @@ async function toggleAllAccounts() {
   }
 }
 
-function toggleBrandFamily(code: string, name: string) {
-  if (formData.value.brandFamily[code]) delete formData.value.brandFamily[code];
-  else formData.value.brandFamily[code] = name;
+async function toggleBrandFamily(code: string, name: string) {
+  if (formData.value.brandFamily[code]) {
+    delete formData.value.brandFamily[code];
+
+    if (brandSelectionPriority.value === 'brandFamily') {
+      if (Object.keys(formData.value.brandFamily).length === 0) {
+        brandSelectionPriority.value = null;
+        formData.value.brand = {};
+        formData.value.brandFamily = {};
+      } else {
+        await syncBrandFromBrandFamilies();
+      }
+    }
+  } else {
+    if (!brandSelectionPriority.value) brandSelectionPriority.value = 'brandFamily';
+    formData.value.brandFamily[code] = name;
+  }
+  
+  // Sync brand based on selected brand families
+  if (brandSelectionPriority.value === 'brand') {
+    // When priority is brand (top-down), we don't prune families during selection.
+    // This allows user to refine selection naturally.
+  } else if (brandSelectionPriority.value === 'brandFamily') {
+    // When priority is brand family, just sync the brand without clearing anything
+    await syncBrandFromBrandFamilies();
+  }
 }
+
 function addCustomBrandFamily() {
   const val = brandFamilySearch.value.trim();
   if (val && !Object.values(formData.value.brandFamily).includes(val)) {
@@ -1228,11 +1369,44 @@ function addCustomBrandFamily() {
   }
   brandFamilySearch.value = "";
 }
-function toggleAllBrandFamilies() {
+async function toggleAllBrandFamilies() {
+  const suggestions = filteredBrandFamilies.value;
+
   if (allBrandFamiliesSelected.value) {
-    brandFamilyOptions.value.forEach(f => delete formData.value.brandFamily[f.value]);
+    if (brandSelectionPriority.value === 'brandFamily') {
+      const countryName = Object.values(formData.value.country)[0];
+      const division = formData.value.division;
+      const codesToRemove = suggestions.map(f => f.value);
+
+      // Remove brand families
+      const bfCodes = Object.keys(formData.value.brandFamily);
+      for (const bfCode of bfCodes) {
+        if (codesToRemove.includes(bfCode)) {
+          delete formData.value.brandFamily[bfCode];
+        }
+      }
+
+      if (Object.keys(formData.value.brandFamily).length === 0) {
+        brandSelectionPriority.value = null;
+        formData.value.brand = {};
+        formData.value.brandFamily = {};
+      } else {
+        await syncBrandFromBrandFamilies();
+      }
+    } else {
+      suggestions.forEach(f => delete formData.value.brandFamily[f.value]);
+    }
   } else {
-    brandFamilyOptions.value.forEach(f => formData.value.brandFamily[f.value] = f.label);
+    if (!brandSelectionPriority.value) brandSelectionPriority.value = 'brandFamily';
+    suggestions.forEach(f => formData.value.brandFamily[f.value] = f.label);
+  }
+
+  if (brandSelectionPriority.value === 'brandFamily') {
+    // When priority is brand family (top-down), we just update the brand families
+    // and sync brands from the selected families
+    if (Object.keys(formData.value.brandFamily).length > 0) {
+      await syncBrandFromBrandFamilies();
+    }
   }
 }
 
@@ -1462,6 +1636,15 @@ watch(() => formData.value.country, async (country) => {
       const brandData = await lookupApi.getBrands(formData.value.division, countryName);
       brandOptions.value = brandData.options;
 
+      // Load all available brand families for the division and country
+      const brandNames = brandData.options.map(b => b.label);
+      if (brandNames.length > 0) {
+        const brandFamilyData = await lookupApi.getBrandFamilies(brandNames, countryName, formData.value.division);
+        brandFamilyOptions.value = brandFamilyData.options;
+      } else {
+        brandFamilyOptions.value = [];
+      }
+
       const data = await lookupApi.getChannels(formData.value.division, countryName);
       channelOptions.value = data.options;
 
@@ -1470,11 +1653,13 @@ watch(() => formData.value.country, async (country) => {
     } catch (error) {
       console.error("Error loading country-based lookups:", error);
       brandOptions.value = [];
+      brandFamilyOptions.value = [];
       channelOptions.value = [];
       accountOptions.value = [];
     }
   } else {
     brandOptions.value = [];
+    brandFamilyOptions.value = [];
     channelOptions.value = [];
     accountOptions.value = [];
   }
@@ -1564,26 +1749,136 @@ watch(() => formData.value.subChannel, async (subChannelsMap) => { // subChannel
 }, { deep: true });
 
 watch(() => formData.value.brand, async (brandMap) => {
-  if (!isLoadingEntry.value) formData.value.brandFamily = {};
-  const brandNames = Object.values(brandMap);
-  if (brandNames.length) {
+  if (!isLoadingEntry.value && !isReverseAction.value) {
+    if (brandSelectionPriority.value !== 'brandFamily') {
+      formData.value.brandFamily = {}; // Clear to {}
+    }
+  }
+
+  const countryName = Object.values(formData.value.country)[0];
+  if (!formData.value.division || !countryName) {
+    brandFamilyOptions.value = [];
+    return;
+  }
+
+  if (brandSelectionPriority.value === 'brandFamily') {
+    // If brand family clicked first, show ALL brand families for the division/country
     try {
-        // Extract country name from the dictionary
-        const countryName = Object.values(formData.value.country)[0];
-        const data = await lookupApi.getBrandFamilies(brandNames, countryName, formData.value.division);
-      brandFamilyOptions.value = data.options;
+      // Similar to account, when brand family is the priority, we show all families 
+      // for the division/country regardless of the selected brands.
+      const allBrands = brandOptions.value.map(b => b.label);
+      if (allBrands.length > 0) {
+        const data = await lookupApi.getBrandFamilies(allBrands, countryName, formData.value.division);
+        brandFamilyOptions.value = data.options;
+      } else {
+        brandFamilyOptions.value = [];
+      }
     } catch (error) {
       console.error("Error loading brand families:", error);
       brandFamilyOptions.value = [];
     }
   } else {
-    brandFamilyOptions.value = [];
+    const brandCodes = Object.keys(brandMap);
+    if (brandCodes.length > 0) {
+      const brandFamiliesMap = new Map<string, {value: string, label: string}>();
+      for (const brandCode of brandCodes) {
+        if (brandCode) {
+          const data = await lookupApi.getBrandFamiliesByBrand(formData.value.division, brandCode, countryName);
+          data.options.forEach(opt => brandFamiliesMap.set(opt.value, opt));
+        }
+      }
+      brandFamilyOptions.value = Array.from(brandFamiliesMap.values());
+    } else {
+      // If no brands selected, show all available brand families
+      try {
+        const allBrands = brandOptions.value.map(b => b.label);
+        if (allBrands.length > 0) {
+          const data = await lookupApi.getBrandFamilies(allBrands, countryName, formData.value.division);
+          brandFamilyOptions.value = data.options;
+        } else {
+          brandFamilyOptions.value = [];
+        }
+      } catch (error) {
+        console.error("Error loading all brand families:", error);
+        brandFamilyOptions.value = [];
+      }
+    }
   }
-    }, { deep: true });
+}, { deep: true });
+
+watch(() => formData.value.brandFamily, async (brandFamilyMap) => {
+  if (!isLoadingEntry.value && !isReverseAction.value) {
+    if (brandSelectionPriority.value !== 'brand') {
+      // When brand family is selected first, show brand families for all selected brands
+    }
+  }
+  
+  if (brandSelectionPriority.value === 'brandFamily') {
+    if (Object.keys(brandFamilyMap).length > 0) {
+      // Sync brand from selected brand families
+      await syncBrandFromBrandFamilies();
+    }
+  }
+}, { deep: true });
+
+watch(brandFamilyOpen, async (isOpen) => {
+  if (isOpen) {
+    if (!brandSelectionPriority.value) brandSelectionPriority.value = 'brandFamily';
+    
+    // Ensure brand families are loaded if they happen to be empty when opening
+    if (brandFamilyOptions.value.length === 0) {
+      const countryName = Object.values(formData.value.country)[0];
+      if (formData.value.division && countryName) {
+        try {
+          const allBrands = brandOptions.value.map(b => b.label);
+          if (allBrands.length > 0) {
+            const data = await lookupApi.getBrandFamilies(allBrands, countryName, formData.value.division);
+            brandFamilyOptions.value = data.options;
+          }
+        } catch (e) {
+          console.error("Error loading brand families on open:", e);
+        }
+      }
+    }
+  }
+});
 
 watch(accountOpen, async (isOpen) => {
-  if (!isOpen && Object.keys(formData.value.account).length > 0) {
+  if (isOpen) {
+    if (!selectionPriority.value) selectionPriority.value = 'account';
+    
+    // Ensure accounts are loaded if they happen to be empty when opening
+    if (accountOptions.value.length === 0) {
+      const countryName = Object.values(formData.value.country)[0];
+      if (formData.value.division && countryName) {
+        try {
+          const data = await lookupApi.getAccounts(formData.value.division, "", countryName);
+          accountOptions.value = data.options;
+        } catch (e) {
+          console.error("Error loading accounts on open:", e);
+        }
+      }
+    }
+  } else if (Object.keys(formData.value.account).length > 0) {
     await syncParentsFromAccounts();
+  }
+});
+
+watch(brandOpen, (isOpen) => {
+  if (isOpen && !brandSelectionPriority.value) {
+    brandSelectionPriority.value = 'brand';
+  }
+});
+
+watch(channelOpen, (isOpen) => {
+  if (isOpen && !selectionPriority.value) {
+    selectionPriority.value = 'channel';
+  }
+});
+
+watch(subChannelOpen, (isOpen) => {
+  if (isOpen && !selectionPriority.value) {
+    selectionPriority.value = 'channel';
   }
 });
 
@@ -1607,6 +1902,7 @@ watch(() => formData.value.rAndO, (val) => {
 watch(() => props.entry, async (entry) => {
   isLoadingEntry.value = true;
   selectionPriority.value = null;
+  brandSelectionPriority.value = null;
   if (entry) {
     isInitialLoadRef.value = true;
     const _d = (entry.division || "").toLowerCase();
@@ -1840,6 +2136,7 @@ async function validate() {
 function reset() {
   formData.value = defaultForm(); ownerSameAsCreator.value = true;
   selectionPriority.value = null;
+  brandSelectionPriority.value = null;
   usePeriodRange.value = false; // CHANGED HERE TO DEFAULT FALSE
   periodRangeStart.value = { period: "", year: "" }; periodRangeEnd.value = { period: "", year: "" };
   formRef.value?.clearValidate();
