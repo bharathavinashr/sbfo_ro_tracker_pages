@@ -77,7 +77,7 @@ class UserOut(BaseModel):
     id: int
     email: str
     display_name: Optional[str] = None
-    role: int  # 0=System Admin, 1=User, 2=Department Approver, 3=Finance Approver
+    role: int  # 0=System Admin, 1=User, 2=IBP Step Approver, 3=Finance Approver, 4=Viewer
     ibp_steps: Optional[List[str]] = None  # None = all; list = restricted IBP steps (role 2 only)
     model_config = {"from_attributes": True}
 

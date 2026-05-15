@@ -55,10 +55,10 @@ export const useEntryStore = defineStore("entry", () => {
   });
 
   const canCreate = computed(() =>
-    ["User", "System Admin"].includes(userRole.value)
+    ["User", "IBP Step Approver", "System Admin"].includes(userRole.value)
   );
   const canApprove = computed(() =>
-    ["Department Approver", "Finance Approver", "System Admin"].includes(userRole.value)
+    ["IBP Step Approver", "Finance Approver", "System Admin"].includes(userRole.value)
   );
 
   async function fetchUsers() {

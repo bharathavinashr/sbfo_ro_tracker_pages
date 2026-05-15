@@ -57,14 +57,16 @@ export type UserRole =
   | "User"
   | "IBP Step Approver"
   | "Finance Approver"
-  | "System Admin";
+  | "System Admin"
+  | "Viewer";
 
-/** 0=System Admin, 1=User, 2=IBP Step Approver, 3=Finance Approver */
+/** 0=System Admin, 1=User, 2=IBP Step Approver, 3=Finance Approver, 4=Viewer */
 export const ROLE_MAP: Record<number, UserRole> = {
   0: "System Admin",
   1: "User",
   2: "IBP Step Approver",
   3: "Finance Approver",
+  4: "Viewer",
 };
 
 export interface AppUser {
@@ -101,7 +103,7 @@ export const BRANDS = [
   "Bowmore", "Auchentoshan", "Kilbeggan", "Other",
 ];
 export const USER_ROLES: UserRole[] = [
-  "User", "IBP Step Approver", "Finance Approver", "System Admin",
+  "User", "IBP Step Approver", "Finance Approver", "System Admin", "Viewer",
 ];
 
 export const COUNTRY_CURRENCY_MAP: Record<string, string> = {

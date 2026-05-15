@@ -226,7 +226,7 @@
           </div>
         </div>
 
-        <el-button v-if="!isReadOnly" size="small" plain @click="$emit('add')" style="color: black;">
+        <el-button v-if="!isReadOnly && store.canCreate" size="small" plain @click="$emit('add')" style="color: black;">
           <svg style="width:14px;height:14px;margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="12" y1="5" x2="12" y2="19"/>
             <line x1="5" y1="12" x2="19" y2="12"/>
@@ -962,7 +962,7 @@ function statusClass(status?: string): string {
 function canEditRow(row: Entry): boolean {
   const role = store.userRole;
   if (role === "System Admin") return true;
-  if (role === "User") return row.status === "Open";
+  if (role === "User" || role === "IBP Step Approver" || role === "Finance Approver") return row.status === "Open";
   return store.canCreate;
 }
 
@@ -985,7 +985,7 @@ async function handleEditClick(row: Entry) {
 function canDeleteRow(row: Entry): boolean {
   const role = store.userRole;
   if (role === "System Admin") return true;
-  if (role === "User") return row.status === "Open";
+  if (role === "User" || role === "IBP Step Approver") return row.status === "Open";
   return false;
 }
 
