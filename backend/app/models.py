@@ -84,8 +84,11 @@ class AppUser(Base):
     email = Column(String(200), nullable=False, unique=True)
     display_name = Column(String(100), nullable=True)
     role = Column(Integer, nullable=False)  # 0=System Admin, 1=User, 2=IBP Step Approver, 3=Finance Approver, 4=Viewer
-    ibp_steps = Column(JSONB, nullable=True)  # None = all; ["Supply","Marketing"] = restricted
+    ibp_steps = Column(JSONB, nullable=True) 
     is_active = Column(Boolean, default=True)
+    role_name = Column(String(50), nullable=True) # 0=System Admin, 1=User, 2=IBP Step Approver, 3=Finance Approver, 4=Viewer
+    country = Column(JSONB, nullable=True) # ["Australia", "New Zealand"]
+    division = Column(JSONB, nullable=True) # ["Alcohol", "Non-Alcohol"]
 
 
 class LookupOption(Base):

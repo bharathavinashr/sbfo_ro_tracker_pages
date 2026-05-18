@@ -11,7 +11,7 @@ def list_users(db: Session = Depends(get_db)):
     users = crud.get_all_users(db)
     return {
         "users": [
-            {"id": u.id, "email": u.email, "display_name": u.display_name, "role": u.role, "ibp_steps": u.ibp_steps}
+            {"id": u.id, "email": u.email, "display_name": u.display_name, "role": u.role, "ibp_steps": u.ibp_steps, "role_name": u.role_name, "country": u.country, "division": u.division}
             for u in users
         ]
     }

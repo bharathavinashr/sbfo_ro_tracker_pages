@@ -75,6 +75,8 @@ export interface AppUser {
   display_name?: string;
   role: number;
   ibp_steps?: string[] | null;  // null = all; array = restricted (role 2 only)
+  division?: string[] | null;
+  country?: string[] | null;
 }
 
 export const DIVISIONS = ["Alcohol", "Non-Alcohol"];

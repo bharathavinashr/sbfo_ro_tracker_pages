@@ -626,7 +626,14 @@ const countryOptions    = ref<{value: string, label: string}[]>([]);
 const channelOptions    = computed(() => lookupStore.getCached("channel"));
 const categOptions      = computed(() => lookupStore.getCached("categorisation"));
 const statusOptions     = computed(() => lookupStore.getCached("status"));
-const ibpStepOptions    = computed(() => lookupStore.getCached("ibp_step"));
+const ibpStepOptions    = computed(() => {
+  const steps = store.currentUser?.ibp_steps;
+  if (steps) {
+    const stepsArray = Array.isArray(steps) ? steps : String(steps).split(',').map(s => s.trim());
+    if (stepsArray.length > 0) return stepsArray;
+  }
+  return lookupStore.getCached("ibp_step");
+});
 const brandOptions      = computed(() => lookupStore.getCached("brand"));
 
 // Dynamic Country Loading for Filters
@@ -962,7 +969,10 @@ function statusClass(status?: string): string {
 function canEditRow(row: Entry): boolean {
   const role = store.userRole;
   if (role === "System Admin") return true;
-  if (role === "User" || role === "IBP Step Approver" || role === "Finance Approver") return row.status === "Open";
+  if (role === "IBP Step Approver") {
+    return row.status === "Open" && !!row.ibpStep && ibpStepOptions.value.includes(row.ibpStep);
+  }
+  if (role === "User" || role === "Finance Approver") return row.status === "Open";
   return store.canCreate;
 }
 
@@ -1000,7 +1010,10 @@ function canEditStatusRow(row: Entry): boolean {
 function allowedStatusRow(row: Entry): string[] {
   const role = store.userRole, status = row.status ?? "Open";
   if (role === "System Admin") return STATUS_OPTIONS;
-  if (role === "IBP Step Approver" && (status === "Open" || status === "Approved")) return ["Open","Approved"];
+  if (role === "IBP Step Approver") {
+    const isAllowedStep = row.ibpStep ? ibpStepOptions.value.includes(row.ibpStep) : false;
+    if (isAllowedStep && (status === "Open" || status === "Approved")) return ["Open", "Approved"];
+  }
   if (role === "Finance Approver") return ["Approved","Dismissed","Included in Forecast"];
   return [status];
 }

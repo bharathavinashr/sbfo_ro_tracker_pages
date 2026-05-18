@@ -202,7 +202,7 @@
               </el-input>
               <div v-if="countryOpen" class="combo-dropdown">
                 <div v-for="c in filteredCountries" :key="c.value" class="combo-item" @mousedown.prevent="formData.country = { [c.value]: c.label }; countrySearch = ''; countryOpen = false">{{ c.label }}</div>
-                <div v-if="filteredCountries.length === 0 && countrySearch" class="combo-custom" @mousedown.prevent="formData.country = { '0000': countrySearch }; countryOpen = false">Use custom value: "{{ countrySearch }}"</div>
+                <div v-if="filteredCountries.length === 0 && countrySearch" class="combo-custom" @mousedown.prevent="formData.country = { [countrySearch]: countrySearch }; countryOpen = false">Use custom value: "{{ countrySearch }}"</div>
                 </div>
               </div>
             </el-form-item>
@@ -722,21 +722,63 @@ const ownerOptions = computed(() =>
 
 // Product-based lookup data (from API)
 const divisionOptions = ref<string[]>([]);
-const countryOptions = ref<{value: string, label: string}[]>([]);
+// ─── CHANGE: countryOptions is now built from app_users, not fetched per division ───
+const countryOptions  = ref<{value: string, label: string}[]>([]);
 const brandOptions = ref<{value: string, label: string}[]>([]);
 const brandFamilyOptions = ref<{value: string, label: string}[]>([]);
 
 onMounted(async () => {
-  lookupStore.preload();
-  if (entryStore.users.length === 0) entryStore.fetchUsers();
-  // Load initial divisions
+  await lookupStore.preload();
+  if (entryStore.users.length === 0) await entryStore.fetchUsers();
+
+  // Load divisions
   try {
     const data = await lookupApi.getDivisions();
     divisionOptions.value = data.options.map(o => o.value);
   } catch (error) {
     console.error("Error loading divisions:", error);
   }
+
+  // ─── CHANGE: Build country options from app_users (same pattern as divisions) ───
+  // Country names come from the current user's `country` column in app_users.
+  // We map each country name to itself as both value and label (no company_code
+  // lookup needed — the dropdown only shows names, consistent with how divisions work).
+  const userCountryNames = userCountries.value; // string[] of country names
+  if (userCountryNames.length > 0) {
+    countryOptions.value = userCountryNames.map(name => ({ value: name, label: name }));
+  } else {
+    // Fallback: fetch all countries across all accessible divisions when user has no restriction
+    const accessibleDivs = userDivisions.value;
+    if (accessibleDivs.length > 0) {
+      try {
+        const allResults = await Promise.all(accessibleDivs.map(d => lookupApi.getCountries(d)));
+        const merged = new Map<string, string>();
+        allResults.forEach(res => {
+          res.options.forEach(o => merged.set(o.value, o.label));
+        });
+        countryOptions.value = Array.from(merged.entries()).map(([value, label]) => ({ value, label }));
+      } catch (e) {
+        console.error("Error pre-fetching all countries:", e);
+      }
+    }
+  }
+
+  // Auto-select logic for new entries
+  if (!props.entry) {
+    if (userIbpSteps.value.length === 1) {
+      formData.value.ibpStep = userIbpSteps.value[0];
+    }
+    if (userDivisions.value.length === 1) {
+      formData.value.division = userDivisions.value[0];
+    }
+    // ─── CHANGE: Auto-select country from app_users list (not from division fetch) ───
+    const availableCountries = availableCountryOptions.value;
+    if (availableCountries.length === 1) {
+      formData.value.country = { [availableCountries[0].value]: availableCountries[0].label };
+    }
+  }
 });
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Lookup options (from store)
@@ -879,9 +921,49 @@ const filteredSubChannels   = computed(() => subChannelOptions.value.filter(s =>
 const filteredBrands        = computed(() => brandOptions.value.filter(b => b.label.toLowerCase().includes(brandSearch.value.toLowerCase())));
 const filteredAccounts      = computed(() => accountOptions.value.filter(a => a.label.toLowerCase().includes(accountSearch.value.toLowerCase())));
 const filteredBrandFamilies = computed(() => brandFamilyOptions.value.filter(f => f.label.toLowerCase().includes(brandFamilySearch.value.toLowerCase())));
-const filteredIbpSteps      = computed(() => ibpStepOptions.value.filter(d => d.toLowerCase().includes(ibpStepSearch.value.toLowerCase())));
-const filteredDivs          = computed(() => divisionOptions.value.filter(d => d.toLowerCase().includes(divSearch.value.toLowerCase())));
-const filteredCountries     = computed(() => countryOptions.value.filter(c => c.label.toLowerCase().includes(countrySearch.value.toLowerCase())));
+
+// User restricted options logic
+const userIbpSteps = computed(() => {
+  const steps = (entryStore.currentUser as any)?.ibp_steps;
+  if (steps) {
+    return Array.isArray(steps) ? steps : String(steps).split(',').map(s => s.trim());
+  }
+  return ibpStepOptions.value;
+});
+
+const userDivisions = computed(() => {
+  const divs = (entryStore.currentUser as any)?.division;
+  if (divs) {
+    return Array.isArray(divs) ? divs : String(divs).split(',').map(s => s.trim());
+  }
+  return divisionOptions.value;
+});
+
+// ─── CHANGE: userCountries reads from app_users `country` column directly ───
+// The column stores an array like ["Australia", "New Zealand"].
+// No longer derived from countryOptions (which was fetched per division).
+const userCountries = computed(() => {
+  const cnts = (entryStore.currentUser as any)?.country;
+  if (cnts) {
+    return Array.isArray(cnts) ? cnts : String(cnts).split(',').map(s => s.trim());
+  }
+  // No restriction — all available countries (populated in onMounted fallback)
+  return countryOptions.value.map(c => c.label);
+});
+
+// ─── CHANGE: availableCountryOptions filters the static countryOptions list
+// by the user's country restriction — exactly like availableDivisionOptions ───
+const availableCountryOptions = computed(() => {
+  const allowed = userCountries.value;
+  // If allowed is empty or matches all, return all
+  if (!allowed.length) return countryOptions.value;
+  return countryOptions.value.filter(opt => allowed.includes(opt.label));
+});
+
+const filteredIbpSteps = computed(() => userIbpSteps.value.filter(d => d.toLowerCase().includes(ibpStepSearch.value.toLowerCase())));
+const filteredDivs = computed(() => userDivisions.value.filter(d => d.toLowerCase().includes(divSearch.value.toLowerCase())));
+const filteredCountries = computed(() => availableCountryOptions.value.filter(c => c.label.toLowerCase().includes(countrySearch.value.toLowerCase())));
+
 const filteredCreationPeriods = computed(() => PERIODS.filter(p => periodToMonth(p).toLowerCase().includes(creationPeriodSearch.value.toLowerCase()) || p.toLowerCase().includes(creationPeriodSearch.value.toLowerCase())));
 const filteredCreationYears = computed(() => yearOptions.map(String).filter(y => y.includes(creationYearSearch.value)));
 const filteredAtfbPeriods   = computed(() => PERIODS.filter(p => p.toLowerCase().includes(atfbPeriodSearch.value.toLowerCase())));
@@ -897,8 +979,8 @@ const filteredImpactYears = computed(() => yearOptions.map(String).filter(y => y
 const getFilteredChildPeriods = (search?: string) => PERIODS.filter(p => periodToMonth(p).toLowerCase().includes((search || '').toLowerCase()) || p.toLowerCase().includes((search || '').toLowerCase()));
 const getFilteredChildYears = (search?: string) => yearOptions.map(String).filter(y => y.includes(search || ''));
 
-const allBrandFamiliesSelected = computed(() => brandFamilyOptions.value.length > 0 && brandFamilyOptions.value.every(f => !!formData.value.brandFamily[f.value])); // No change
-const allBrandsSelected = computed(() => filteredBrands.value.length > 0 && filteredBrands.value.every(b => !!formData.value.brand[b.value])); // No change
+const allBrandFamiliesSelected = computed(() => brandFamilyOptions.value.length > 0 && brandFamilyOptions.value.every(f => !!formData.value.brandFamily[f.value]));
+const allBrandsSelected = computed(() => filteredBrands.value.length > 0 && filteredBrands.value.every(b => !!formData.value.brand[b.value]));
 const allChannelsSelected = computed(() => {
   const suggestions = filteredChannels.value.filter(c => !isChannelDisabled(c.label));
   return suggestions.length > 0 && suggestions.every(c => !!formData.value.channel[c.value]);
@@ -1016,14 +1098,9 @@ async function toggleSubChannel(code: string, name: string) {
     formData.value.subChannel[code] = name;
   }
   
-  // Sync channel based on selected subchannels
   if (selectionPriority.value === 'channel') {
-    // When priority is channel (top-down), we don't prune parents during selection.
-    // We only clear the account list to maintain hierarchy consistency as the 
-    // user filters down.
     formData.value.account = {};
   } else if (selectionPriority.value === 'account') {
-    // When priority is account, just sync the channel without clearing account
     await syncChannelFromSubChannels();
   }
 }
@@ -1306,11 +1383,8 @@ async function toggleAllSubChannels() {
   }
 
   if (selectionPriority.value === 'channel') {
-    // When priority is channel (top-down), we don't prune parents during selection.
-    // We only clear the account list to maintain hierarchy consistency.
     formData.value.account = {};
   } else if (selectionPriority.value === 'account') {
-    // When priority is account, just sync the channel without clearing account
     await syncChannelFromSubChannels();
   }
 }
@@ -1352,12 +1426,9 @@ async function toggleBrandFamily(code: string, name: string) {
     formData.value.brandFamily[code] = name;
   }
   
-  // Sync brand based on selected brand families
   if (brandSelectionPriority.value === 'brand') {
-    // When priority is brand (top-down), we don't prune families during selection.
-    // This allows user to refine selection naturally.
+    // no-op during top-down selection
   } else if (brandSelectionPriority.value === 'brandFamily') {
-    // When priority is brand family, just sync the brand without clearing anything
     await syncBrandFromBrandFamilies();
   }
 }
@@ -1365,7 +1436,7 @@ async function toggleBrandFamily(code: string, name: string) {
 function addCustomBrandFamily() {
   const val = brandFamilySearch.value.trim();
   if (val && !Object.values(formData.value.brandFamily).includes(val)) {
-    formData.value.brandFamily[val] = val; // Use name as code for custom
+    formData.value.brandFamily[val] = val;
   }
   brandFamilySearch.value = "";
 }
@@ -1374,11 +1445,8 @@ async function toggleAllBrandFamilies() {
 
   if (allBrandFamiliesSelected.value) {
     if (brandSelectionPriority.value === 'brandFamily') {
-      const countryName = Object.values(formData.value.country)[0];
-      const division = formData.value.division;
       const codesToRemove = suggestions.map(f => f.value);
 
-      // Remove brand families
       const bfCodes = Object.keys(formData.value.brandFamily);
       for (const bfCode of bfCodes) {
         if (codesToRemove.includes(bfCode)) {
@@ -1402,8 +1470,6 @@ async function toggleAllBrandFamilies() {
   }
 
   if (brandSelectionPriority.value === 'brandFamily') {
-    // When priority is brand family (top-down), we just update the brand families
-    // and sync brands from the selected families
     if (Object.keys(formData.value.brandFamily).length > 0) {
       await syncBrandFromBrandFamilies();
     }
@@ -1433,10 +1499,10 @@ interface FormData {
   addToForecastByYear:   string;
   division:              string;
   ibpStep:               string;
-  country:               Record<string, string>;  // {company_code: country_name}
-  channel:               Record<string, string>; // Changed from string[]
-  subChannel:            Record<string, string>; // Changed from string[]
-  account:               Record<string, string>; // Changed from string[]
+  country:               Record<string, string>;
+  channel:               Record<string, string>;
+  subChannel:            Record<string, string>;
+  account:               Record<string, string>;
   brand:                 Record<string, string>;
   brandFamily:           Record<string, string>;
   rAndO:                 string;
@@ -1466,7 +1532,7 @@ function onOwnerCheckboxChange(val: boolean) {
   if (val) formData.value.owner = formData.value.creator;
 }
 
-const usePeriodRange   = ref(false); // DEFAULT SET TO FALSE HERE
+const usePeriodRange   = ref(false);
 const periodRangeStart = ref({ period: "", year: "" });
 const periodRangeEnd   = ref({ period: "", year: "" });
 
@@ -1497,7 +1563,7 @@ function defaultForm(): FormData {
     addToForecastByPeriod: currentPeriod,
     addToForecastByYear:   String(currentYear),
     division:        "", ibpStep:         "", country:         {},
-    channel:         {}, subChannel:      {}, account:         {}, // Changed from []
+    channel:         {}, subChannel:      {}, account:         {},
     brand:           {}, brandFamily:     {}, rAndO:           "Risk",
     probability:     "", categorisation:  "", impactPeriod:    currentPeriod,
     impactYear:      String(currentYear), impactValue:     "", primaryImpact:   "AUD",
@@ -1512,7 +1578,6 @@ const isLoadingEntry  = ref(false);
 const hasChildImpacts = computed(() => formData.value.childImpacts.length > 0);
 
 function getUnitOptions(countryDict: Record<string, string>): string[] {
-  // Extract country name from the dictionary (get first value)
   const countryName = Object.values(countryDict)[0];
   if (countryName === "Australia")   return ["AUD", "Volume"];
   if (countryName === "New Zealand") return ["NZD", "Volume"];
@@ -1591,64 +1656,61 @@ watch(() => formData.value.primaryImpact, (newUnit, oldUnit) => {
 });
 watch(() => formData.value.secondaryUnit, (val) => { if (isLoadingEntry.value) return; formData.value.childImpacts.forEach(ci => { ci.secondaryUnit = val; }); });
 
+// ─── CHANGE: Division watch — no longer resets country; only resets
+// channel/brand/etc. and reloads dependent lookups if country already selected ───
 watch(() => formData.value.division, async (division) => {
   if (!isLoadingEntry.value) {
     formData.value.brand = {};
     formData.value.brandFamily = {};
-    formData.value.country = {};
-    countryOptions.value = [];
-    formData.value.channel = {}; // Changed from []
-    formData.value.subChannel = {}; // Changed from []
-    formData.value.account = {}; // Changed from []
+    formData.value.channel = {};
+    formData.value.subChannel = {};
+    formData.value.account = {};
     selectionPriority.value = null;
+    brandSelectionPriority.value = null;
   }
-  
-  if (division) {
-    try {
-      // Load countries for the division from ro_customers
-      const countryData = await lookupApi.getCountries(division);
-      countryOptions.value = countryData.options;  // Store as {value, label} pairs
-    } catch (error) {
-      console.error("Error loading countries:", error);
-      countryOptions.value = [];
-    }
-  } else {
-    countryOptions.value = [];
-  }
-});
 
+  // If both division and country are already set, reload dependent lookups
+  if (division && Object.keys(formData.value.country).length > 0) {
+    await loadCountryBasedLookups(formData.value.country, division);
+  }
+}, { immediate: true });
+
+// ─── CHANGE: Country watch — no longer fetches countries from the API;
+// it only clears dependent fields and reloads lookups that depend on country+division ───
 watch(() => formData.value.country, async (country) => {
   if (!isLoadingEntry.value) {
     formData.value.brand = {};
     formData.value.brandFamily = {};
-    formData.value.channel = {}; // Changed from []
-    formData.value.subChannel = {}; // Changed from []
-    formData.value.account = {}; // Changed from []
+    formData.value.channel = {};
+    formData.value.subChannel = {};
+    formData.value.account = {};
     selectionPriority.value = null;
+    brandSelectionPriority.value = null;
   }
 
-  if (Object.keys(country).length > 0 && formData.value.division) {
+  await loadCountryBasedLookups(country, formData.value.division);
+});
+
+async function loadCountryBasedLookups(country: Record<string, string>, division: string) {
+  if (Object.keys(country).length > 0 && division) {
     try {
-      // Extract country name from the dictionary value
       const countryName = Object.values(country)[0];
       
-      // Load brands filtered by division and country
-      const brandData = await lookupApi.getBrands(formData.value.division, countryName);
+      const brandData = await lookupApi.getBrands(division, countryName);
       brandOptions.value = brandData.options;
 
-      // Load all available brand families for the division and country
       const brandNames = brandData.options.map(b => b.label);
       if (brandNames.length > 0) {
-        const brandFamilyData = await lookupApi.getBrandFamilies(brandNames, countryName, formData.value.division);
+        const brandFamilyData = await lookupApi.getBrandFamilies(brandNames, countryName, division);
         brandFamilyOptions.value = brandFamilyData.options;
       } else {
         brandFamilyOptions.value = [];
       }
 
-      const data = await lookupApi.getChannels(formData.value.division, countryName);
+      const data = await lookupApi.getChannels(division, countryName);
       channelOptions.value = data.options;
 
-      const accData = await lookupApi.getAccounts(formData.value.division, "", countryName);
+      const accData = await lookupApi.getAccounts(division, "", countryName);
       accountOptions.value = accData.options;
     } catch (error) {
       console.error("Error loading country-based lookups:", error);
@@ -1663,13 +1725,13 @@ watch(() => formData.value.country, async (country) => {
     channelOptions.value = [];
     accountOptions.value = [];
   }
-});
+}
 
-watch(() => formData.value.channel, async (channelsMap) => { // channelsMap is now Record<string, string>
+watch(() => formData.value.channel, async (channelsMap) => {
   if (!isLoadingEntry.value && !isReverseAction.value) {
     if (selectionPriority.value !== 'account') {
-      formData.value.subChannel = {}; // Clear to {}
-      formData.value.account = {};    // Clear to {}
+      formData.value.subChannel = {};
+      formData.value.account = {};
     }
   }
   
@@ -1680,7 +1742,6 @@ watch(() => formData.value.channel, async (channelsMap) => { // channelsMap is n
   }
 
   if (selectionPriority.value === 'account') {
-    // If account clicked first, show ALL subchannels for the division/country
     try {
       const data = await lookupApi.getSubchannels(formData.value.division, "", countryName);
       subChannelOptions.value = data.options;
@@ -1688,7 +1749,7 @@ watch(() => formData.value.channel, async (channelsMap) => { // channelsMap is n
       subChannelOptions.value = [];
     }
   } else {
-    const channelCodes = Object.keys(channelsMap); // Get codes from the map
+    const channelCodes = Object.keys(channelsMap);
     if (channelCodes.length > 0) {
       const subchannelsMap = new Map<string, {value: string, label: string}>();
       for (const channelCode of channelCodes) {
@@ -1704,10 +1765,10 @@ watch(() => formData.value.channel, async (channelsMap) => { // channelsMap is n
   }
 }, { deep: true });
 
-watch(() => formData.value.subChannel, async (subChannelsMap) => { // subChannelsMap is now Record<string, string>
+watch(() => formData.value.subChannel, async (subChannelsMap) => {
   if (!isLoadingEntry.value && !isReverseAction.value) {
     if (selectionPriority.value !== 'account') {
-      formData.value.account = {}; // Clear to {}
+      formData.value.account = {};
     }
   }
   
@@ -1718,7 +1779,6 @@ watch(() => formData.value.subChannel, async (subChannelsMap) => { // subChannel
   }
 
   if (selectionPriority.value === 'account') {
-    // If account clicked first, show ALL accounts for the division/country
     try {
       const data = await lookupApi.getAccounts(formData.value.division, "", countryName);
       accountOptions.value = data.options;
@@ -1726,7 +1786,7 @@ watch(() => formData.value.subChannel, async (subChannelsMap) => { // subChannel
       accountOptions.value = [];
     }
   } else {
-    const subchannelCodes = Object.keys(subChannelsMap); // Get codes from the map
+    const subchannelCodes = Object.keys(subChannelsMap);
     if (subchannelCodes.length > 0) {
       const accountsMap = new Map<string, {value: string, label: string}>();
       for (const subchannelCode of subchannelCodes) {
@@ -1737,7 +1797,6 @@ watch(() => formData.value.subChannel, async (subChannelsMap) => { // subChannel
       }
       accountOptions.value = Array.from(accountsMap.values());
     } else {
-      // Default to all accounts for division/country if no subchannel selected
       try {
         const data = await lookupApi.getAccounts(formData.value.division, "", countryName);
         accountOptions.value = data.options;
@@ -1751,7 +1810,7 @@ watch(() => formData.value.subChannel, async (subChannelsMap) => { // subChannel
 watch(() => formData.value.brand, async (brandMap) => {
   if (!isLoadingEntry.value && !isReverseAction.value) {
     if (brandSelectionPriority.value !== 'brandFamily') {
-      formData.value.brandFamily = {}; // Clear to {}
+      formData.value.brandFamily = {};
     }
   }
 
@@ -1762,10 +1821,7 @@ watch(() => formData.value.brand, async (brandMap) => {
   }
 
   if (brandSelectionPriority.value === 'brandFamily') {
-    // If brand family clicked first, show ALL brand families for the division/country
     try {
-      // Similar to account, when brand family is the priority, we show all families 
-      // for the division/country regardless of the selected brands.
       const allBrands = brandOptions.value.map(b => b.label);
       if (allBrands.length > 0) {
         const data = await lookupApi.getBrandFamilies(allBrands, countryName, formData.value.division);
@@ -1789,7 +1845,6 @@ watch(() => formData.value.brand, async (brandMap) => {
       }
       brandFamilyOptions.value = Array.from(brandFamiliesMap.values());
     } else {
-      // If no brands selected, show all available brand families
       try {
         const allBrands = brandOptions.value.map(b => b.label);
         if (allBrands.length > 0) {
@@ -1807,15 +1862,8 @@ watch(() => formData.value.brand, async (brandMap) => {
 }, { deep: true });
 
 watch(() => formData.value.brandFamily, async (brandFamilyMap) => {
-  if (!isLoadingEntry.value && !isReverseAction.value) {
-    if (brandSelectionPriority.value !== 'brand') {
-      // When brand family is selected first, show brand families for all selected brands
-    }
-  }
-  
   if (brandSelectionPriority.value === 'brandFamily') {
     if (Object.keys(brandFamilyMap).length > 0) {
-      // Sync brand from selected brand families
       await syncBrandFromBrandFamilies();
     }
   }
@@ -1825,7 +1873,6 @@ watch(brandFamilyOpen, async (isOpen) => {
   if (isOpen) {
     if (!brandSelectionPriority.value) brandSelectionPriority.value = 'brandFamily';
     
-    // Ensure brand families are loaded if they happen to be empty when opening
     if (brandFamilyOptions.value.length === 0) {
       const countryName = Object.values(formData.value.country)[0];
       if (formData.value.division && countryName) {
@@ -1847,7 +1894,6 @@ watch(accountOpen, async (isOpen) => {
   if (isOpen) {
     if (!selectionPriority.value) selectionPriority.value = 'account';
     
-    // Ensure accounts are loaded if they happen to be empty when opening
     if (accountOptions.value.length === 0) {
       const countryName = Object.values(formData.value.country)[0];
       if (formData.value.division && countryName) {
@@ -1923,9 +1969,9 @@ watch(() => props.entry, async (entry) => {
       addToForecastByYear:   entry.addToForecastByYear   || String(currentYear),
       division:       entry.division      || "", ibpStep:         entry.ibpStep       || "",
       country:        ensureObject(entry.country),
-      channel:        ensureObject(entry.channel), // Changed to ensureObject
-      subChannel:     ensureObject(entry.subChannel), // Changed to ensureObject
-      account:        ensureObject(entry.account), // Changed to ensureObject
+      channel:        ensureObject(entry.channel),
+      subChannel:     ensureObject(entry.subChannel),
+      account:        ensureObject(entry.account),
       brand:          ensureObject(entry.brand),
       brandFamily:    ensureObject(entry.brandFamily),
       rAndO:          entry.rAndO         || "Risk", probability:     entry.probability   || "",
@@ -1959,7 +2005,6 @@ watch(() => props.entry, async (entry) => {
     };
     
     await nextTick();
-    // Ensure watches triggered by the formData update have finished before releasing the lock
     setTimeout(() => {
       isInitialLoadRef.value = false;
       isLoadingEntry.value = false;
@@ -1967,7 +2012,7 @@ watch(() => props.entry, async (entry) => {
   } else {
     formData.value = defaultForm();
     ownerSameAsCreator.value = true;
-    usePeriodRange.value     = false; // CHANGED HERE TO DEFAULT FALSE
+    usePeriodRange.value     = false;
     periodRangeStart.value   = { period: "", year: "" };
     periodRangeEnd.value     = { period: "", year: "" };
     isLoadingEntry.value = false;
@@ -1980,9 +2025,9 @@ const rules: FormRules = {
   division: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
   ibpStep: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
   country: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
-  channel: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }], // Updated
-  subChannel: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }], // Updated
-  account: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }], // Updated
+  channel: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
+  subChannel: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
+  account: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
   brand: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
   brandFamily: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
   rAndO: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
@@ -2117,14 +2162,12 @@ async function validate() {
       formData.value.impactValue = cleanNumStr(formData.value.impactValue); formData.value.secondaryValue = cleanNumStr(formData.value.secondaryValue);
     }
     
-    // channel, subChannel, and account are now already code-name maps in formData
-    
     const { nsvAud, nsvNzd, volumeLitres } = mapToFields(formData.value.primaryImpact, formData.value.impactValue, formData.value.secondaryUnit, formData.value.secondaryValue);
     return {
       ...formData.value,
-      channel: formData.value.channel, // Directly use the map
-      subChannel: formData.value.subChannel, // Directly use the map
-      account: formData.value.account, // Directly use the map
+      channel: formData.value.channel,
+      subChannel: formData.value.subChannel,
+      account: formData.value.account,
       nsvAud, nsvNzd, volumeLitres,
       childImpacts: formData.value.childImpacts.map(ci => {
         const m = mapToFields(ci.impactUnit, ci.impactValue, ci.secondaryUnit, ci.secondaryValue); return { impactYear: ci.impactYear, impactPeriod: ci.impactPeriod, ...m };
@@ -2137,7 +2180,7 @@ function reset() {
   formData.value = defaultForm(); ownerSameAsCreator.value = true;
   selectionPriority.value = null;
   brandSelectionPriority.value = null;
-  usePeriodRange.value = false; // CHANGED HERE TO DEFAULT FALSE
+  usePeriodRange.value = false;
   periodRangeStart.value = { period: "", year: "" }; periodRangeEnd.value = { period: "", year: "" };
   formRef.value?.clearValidate();
 }
@@ -2319,7 +2362,7 @@ defineExpose({ validate, reset });
   background: #f4f5f7;
 }
 .toggle-btn.is-active {
-  background: #0e1015; /* Dark almost black color */
+  background: #0e1015;
   color: #fff;
 }
 
@@ -2361,7 +2404,6 @@ defineExpose({ validate, reset });
   display: flex;
   align-items: center;
   justify-content: space-between;
-  /* width: 100%; */
   min-height: 36px;
   padding: 0 14px;
   border: 1px solid transparent;
@@ -2408,7 +2450,7 @@ defineExpose({ validate, reset });
 .range-block { display: flex; flex-direction: column; }
 .prorate-btn {
   width: 100%;
-  background-color: #727285; /* Soft grey/purple like image */
+  background-color: #727285;
   border-color: #727285;
   color: #fff;
   height: 40px;
@@ -2462,7 +2504,7 @@ defineExpose({ validate, reset });
 .submit-action-btn {
   width: 100%;
   height: 52px;
-  background-color: #0e1015; /* Pure black block matching the screenshot */
+  background-color: #0e1015;
   color: #fff;
   font-size: 16px;
   font-weight: 700;
