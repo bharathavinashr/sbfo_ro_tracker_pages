@@ -50,11 +50,14 @@ class Entry(Base):
     status = Column(String(50), nullable=True, default="Open")
     short_description = Column(Text, nullable=True)
     description = Column(Text, nullable=True)
-    impact_type = Column(String(10), nullable=True, default="NSV")
+    financial_impact_type = Column(String(10), nullable=True, default="NSV")
     volume_cases = Column(String(50), nullable=True)
 
     last_modified = Column(DateTime, server_default=func.now(), onupdate=func.now())
     created_at = Column(DateTime, server_default=func.now())
+
+    volume_impact_type = Column(String(20), nullable=True) # Stores "Cases" or "9LE"
+    volume_impact_value = Column(String(50), nullable=True)
 
 
 class ChildImpact(Base):
@@ -74,6 +77,8 @@ class ChildImpact(Base):
     nsv_nzd = Column(String(50), nullable=True)
     volume_litres = Column(String(50), nullable=True)
     volume_cases = Column(String(50), nullable=True)
+    volume_impact_value = Column(String(50), nullable=True)
+    volume_impact_value = Column(String(50), nullable=True)
 
 
 class AppUser(Base):

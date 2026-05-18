@@ -10,6 +10,7 @@ class ChildImpactBase(BaseModel):
     nsv_nzd: Optional[str] = None
     volume_litres: Optional[str] = None
     volume_cases: Optional[str] = None
+    volume_impact_value: Optional[str] = None
 
 
 class ChildImpactOut(ChildImpactBase):
@@ -45,8 +46,10 @@ class EntryBase(BaseModel):
     status: Optional[str] = "Open"
     short_description: Optional[str] = None
     description: Optional[str] = None
-    impact_type: Optional[str] = "NSV"
+    financial_impact_type: Optional[str] = "NSV"
     volume_cases: Optional[str] = None
+    volume_impact_type: Optional[str] = None
+    volume_impact_value: Optional[str] = None
 
 
 class EntryCreate(EntryBase):

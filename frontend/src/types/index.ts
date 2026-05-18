@@ -6,6 +6,7 @@ export interface ChildImpact {
   nsvNzd?: string;
   volumeLitres?: string;
   volumeCases?: string;
+  volumeImpactValue?: string;
   impact?: string;
   impactCurrency?: string;
   volumeImpact?: string;
@@ -37,9 +38,11 @@ export interface Entry {
   nsvNzd?: string;
   volumeLitres?: string;
   primaryImpact?: string;
-  impactType?: string;
+  financialImpactType?: string;
   volumeCases?: string;
   shortDescription?: string;
+  volumeImpactType?: string;
+  volumeImpactValue?: string;
   detailedDescription?: string;
   owner: string;
   creator?: string;

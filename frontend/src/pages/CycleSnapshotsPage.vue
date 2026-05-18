@@ -191,14 +191,14 @@
             </template>
           </el-table-column>
 
-          <el-table-column v-if="visibleColumns.impactType" label="Impact Type" width="130">
+          <el-table-column v-if="visibleColumns.financialImpactType" label="Impact Type" width="130">
             <template #default="{ row }">
-              <div>{{ row.impactType || '-' }}</div>
-              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.impactType && row.previousValues.impactType !== row.impactType" class="prev-value">{{ row.previousValues.impactType }}</div>
+              <div>{{ row.financialImpactType || '-' }}</div>
+              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.financialImpactType && row.previousValues.financialImpactType !== row.financialImpactType" class="prev-value">{{ row.previousValues.financialImpactType }}</div>
             </template>
           </el-table-column>
 
-          <el-table-column v-if="visibleColumns.currency" label="Currency" width="110">
+          <el-table-column v-if="visibleColumns.currency" label="Financial Impact Currency" width="110">
             <template #default="{ row }">
               <div>{{ row.impactCurrency || '-' }}</div>
               <div v-if="row.changeStatus === 'Modified' && row.previousValues?.impactCurrency && row.previousValues.impactCurrency !== row.impactCurrency" class="prev-value">{{ row.previousValues.impactCurrency }}</div>
@@ -216,6 +216,22 @@
             <template #default="{ row }">
               <div>{{ row.volumeCases || '-' }}</div>
               <div v-if="row.changeStatus === 'Modified' && row.previousValues?.volumeCases && row.previousValues.volumeCases !== row.volumeCases" class="prev-value">{{ row.previousValues.volumeCases }}</div>
+            </template>
+          </el-table-column>
+
+          <el-table-column v-if="visibleColumns.volumeImpactType" label="Volume Impact Type" width="160">
+            <template #default="{ row }">
+              <div>{{ row.volumeImpactType || '-' }}</div>
+              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.volumeImpactType && row.previousValues.volumeImpactType !== row.volumeImpactType" class="prev-value">{{ row.previousValues.volumeImpactType }}</div>
+            </template>
+          </el-table-column>
+
+          <el-table-column v-if="visibleColumns.volumeImpactValue" label="Volume Impact Value" width="160">
+            <template #default="{ row }">
+              <div class="tr">{{ row.volumeImpactValue ? Number(row.volumeImpactValue).toLocaleString() : '-' }}</div>
+              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.volumeImpactValue && row.previousValues.volumeImpactValue !== row.volumeImpactValue" class="prev-value tr">
+                {{ row.previousValues.volumeImpactValue ? Number(row.previousValues.volumeImpactValue).toLocaleString() : '-' }}
+              </div>
             </template>
           </el-table-column>
 
@@ -346,7 +362,7 @@ interface ChildImpact {
   impact: string;
   impactUnit: string;
   secondaryImpact?: string;
-  impactType?: string;
+  financialImpactType?: string;
   impactCurrency?: string;
   impactValue?: string;
   volumeCases?: string;
@@ -380,10 +396,12 @@ interface Entry {
   status?: string;
   description?: string;
   detailedDescription?: string;
-  impactType?: string;
+  financialImpactType?: string;
   impactCurrency?: string;
   impactValue?: string;
   volumeCases?: string;
+  volumeImpactType?: string;
+  volumeImpactValue?: string;
   childImpacts?: ChildImpact[];
 }
 
@@ -424,10 +442,12 @@ const visibleColumns = ref<Record<string, boolean>>({
   owner: true,
   status: true,
   lastModified: false,
-  impactType: false,
+  financialImpactType: false,
   currency: false,
   impact: true,
   volumeCases: false,
+  volumeImpactType: true,
+  volumeImpactValue: true,
   impactPeriods: true,
 });
 
@@ -448,10 +468,12 @@ const columnDefs = [
   { key: 'owner', label: 'Owner' },
   { key: 'status', label: 'Entry Status' },
   { key: 'lastModified', label: 'Last Modified' },
-  { key: 'impactType', label: 'Impact Type' },
-  { key: 'currency', label: 'Currency' },
+  { key: 'financialImpactType', label: 'Impact Type' },
+  { key: 'currency', label: 'Financial Impact Currency' },
   { key: 'impact', label: 'Impact' },
   { key: 'volumeCases', label: 'Volume (Cases)' },
+  { key: 'volumeImpactType', label: 'Volume Impact Type' },
+  { key: 'volumeImpactValue', label: 'Volume Impact Value' },
   { key: 'impactPeriods', label: 'Impact Period(s)' },
 ];
 
@@ -637,9 +659,10 @@ function compareEntries(baseEntry: Entry, compEntry: Entry): { modifiedFields: s
     secondaryImpactUnit: "Secondary Impact Unit", status: "Status",
     description: "Description", detailedDescription: "Detailed Description",
     owner: "Owner", addToForecastByPeriod: "Add to Forecast By Period",
-    addToForecastByYear: "Add to Forecast By Year", impactType: "Impact Type",
-    impactCurrency: "Currency", impactValue: "Impact Value",
-    volumeCases: "Volume (Cases)", noVolumeImpact: "No Volume Impact"
+    addToForecastByYear: "Add to Forecast By Year", financialImpactType: "Impact Type",
+    impactCurrency: "Financial Impact Currency", impactValue: "Impact Value",
+    volumeCases: "Volume (Cases)", volumeImpactType: "Volume Impact Type",
+    volumeImpactValue: "Volume Impact Value", noVolumeImpact: "No Volume Impact"
   };
 
   for (const field of Object.keys(fieldDisplayNames)) {

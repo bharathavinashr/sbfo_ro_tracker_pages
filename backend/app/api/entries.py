@@ -19,35 +19,48 @@ def _calculate_impact(entry, child_impacts) -> tuple:
     primary_impact = entry.primary_impact or ""
     impact_value = None
     impact_currency = primary_impact if primary_impact in ["AUD", "NZD"] else None
+    vol_impact_value = None
     
     if child_impacts:
-        # Sum child impacts based on primary_impact type
-        total = 0
+        # Sum child impacts
+        total_fin = 0
+        total_vol = 0
         for ci in child_impacts:
             if primary_impact == "AUD" and ci.nsv_aud:
                 try:
-                    total += float(ci.nsv_aud)
+                    total_fin += float(ci.nsv_aud)
                 except (ValueError, TypeError):
                     pass
             elif primary_impact == "NZD" and ci.nsv_nzd:
                 try:
-                    total += float(ci.nsv_nzd)
+                    total_fin += float(ci.nsv_nzd)
                 except (ValueError, TypeError):
                     pass
-        if total != 0:
-            impact_value = str(total)
+
+            if ci.volume_impact_value:
+                try:
+                    total_vol += float(ci.volume_impact_value)
+                except (ValueError, TypeError):
+                    pass
+
+        if total_fin != 0:
+            impact_value = str(total_fin)
+        if total_vol != 0:
+            vol_impact_value = str(total_vol)
     else:
         # Use entry's own value
         if primary_impact == "AUD" and entry.nsv_aud:
             impact_value = entry.nsv_aud
         elif primary_impact == "NZD" and entry.nsv_nzd:
             impact_value = entry.nsv_nzd
+        
+        vol_impact_value = entry.volume_impact_value
     
-    return impact_value, impact_currency
+    return impact_value, impact_currency, vol_impact_value
 
 
 def _entry_to_dict(entry, child_impacts) -> dict:
-    impact_value, impact_currency = _calculate_impact(entry, child_impacts)
+    impact_value, impact_currency, vol_impact_value = _calculate_impact(entry, child_impacts)
     primary_impact = entry.primary_impact or ""
     
     return {
@@ -82,8 +95,10 @@ def _entry_to_dict(entry, child_impacts) -> dict:
         "status": entry.status,
         "shortDescription": entry.short_description,
         "description": entry.description,
-        "impactType": entry.impact_type,
+        "financialImpactType": entry.financial_impact_type,
         "volumeCases": entry.volume_cases,
+        "volumeImpactType": entry.volume_impact_type,
+        "volumeImpactValue": vol_impact_value,
         "impact": impact_value,
         "impactCurrency": impact_currency,
         "lastModified": entry.last_modified.isoformat() + "Z" if entry.last_modified else None,
@@ -96,6 +111,8 @@ def _entry_to_dict(entry, child_impacts) -> dict:
                 "nsvNzd": ci.nsv_nzd,
                 "volumeLitres": ci.volume_litres,
                 "volumeCases": ci.volume_cases,
+                "volumeImpactType": entry.volume_impact_type, # Child impacts inherit parent's volume type
+                "volumeImpactValue": ci.volume_impact_value,
                 "impact": ci.nsv_aud if (primary_impact == "AUD" and ci.nsv_aud) else (ci.nsv_nzd if (primary_impact == "NZD" and ci.nsv_nzd) else None),
                 "impactCurrency": primary_impact if primary_impact in ["AUD", "NZD"] else None,
             }

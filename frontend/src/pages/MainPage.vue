@@ -243,8 +243,10 @@ async function handleSave() {
       status: data.status,
       short_description: data.shortDescription,
       description: data.detailedDescription,          // ← was data.description
-      impact_type: data.impactType,
+      financial_impact_type: data.financialImpactType,
       volume_cases: (data as any).volumeCases ?? null, // ← cast if field is missing from type
+      volume_impact_type: data.volumeImpactType,
+      volume_impact_value: (data as any).volumeImpactValue,
       child_impacts: data.childImpacts.map((ci) => ({
         impact_year: ci.impactYear,
         impact_period: ci.impactPeriod,
@@ -252,6 +254,7 @@ async function handleSave() {
         nsv_nzd: ci.nsvNzd,
         volume_litres: ci.volumeLitres,
         volume_cases: (ci as any).volumeCases ?? null, // ← cast if missing from child type
+        volume_impact_value: ci.volumeImpactValue,
       })),
     };
 

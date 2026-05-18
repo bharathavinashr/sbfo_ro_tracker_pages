@@ -36,6 +36,37 @@ def create_snapshot(data: SnapshotCreate, db: Session = Depends(get_db)):
     # Create snapshot records for each entry
     snapshots = []
     for entry in entries:
+        child_impacts = get_child_impacts(db, entry.id)
+        
+        # Determine primary impact value for display
+        impact_value = None
+        vol_impact_value = None
+
+        if child_impacts:
+            total_fin = 0
+            total_vol = 0
+            for ci in child_impacts:
+                if entry.primary_impact == "AUD" and ci.nsv_aud:
+                    try: total_fin += float(ci.nsv_aud)
+                    except: pass
+                elif entry.primary_impact == "NZD" and ci.nsv_nzd:
+                    try: total_fin += float(ci.nsv_nzd)
+                    except: pass
+                
+                if ci.volume_impact_value:
+                    try: total_vol += float(ci.volume_impact_value)
+                    except: pass
+            
+            if total_fin != 0: impact_value = str(total_fin)
+            if total_vol != 0: vol_impact_value = str(total_vol)
+            if entry.primary_impact == "Volume" and total_vol != 0: impact_value = str(total_vol)
+        else:
+            if entry.primary_impact == "AUD": impact_value = entry.nsv_aud
+            elif entry.primary_impact == "NZD": impact_value = entry.nsv_nzd
+            elif entry.primary_impact == "Volume": impact_value = entry.volume_impact_value or entry.volume_litres
+            
+            vol_impact_value = entry.volume_impact_value
+
         entry_data = {
             "id": entry.id,
             "original_entry_id": entry.original_entry_id,
@@ -65,6 +96,10 @@ def create_snapshot(data: SnapshotCreate, db: Session = Depends(get_db)):
             "status": entry.status,
             "short_description": entry.short_description,
             "description": entry.description,
+            "primary_impact": entry.primary_impact,
+            "volume_impact_type": entry.volume_impact_type,
+            "volume_impact_value": vol_impact_value,
+            "impact": impact_value,
         }
         
         snapshot = Snapshot(
@@ -162,8 +197,36 @@ def get_snapshot_by_id(snapshot_id: str, db: Session = Depends(get_db)):
                 "nsvNzd": ci.nsv_nzd,
                 "volumeLitres": ci.volume_litres,
                 "volumeCases": ci.volume_cases,
+                "volumeImpactType": entry.volume_impact_type, # Child impacts inherit parent's volume type
+                "volumeImpactValue": ci.volume_impact_value,
             })
         
+        impact_value = None
+        vol_impact_value = None
+
+        if child_impacts:
+            total_fin = 0
+            total_vol = 0
+            for ci in child_impacts:
+                if entry.primary_impact == "AUD" and ci.nsv_aud:
+                    try: total_fin += float(ci.nsv_aud)
+                    except: pass
+                elif entry.primary_impact == "NZD" and ci.nsv_nzd:
+                    try: total_fin += float(ci.nsv_nzd)
+                    except: pass
+                if ci.volume_impact_value:
+                    try: total_vol += float(ci.volume_impact_value)
+                    except: pass
+            if total_fin != 0: impact_value = str(total_fin)
+            if total_vol != 0: vol_impact_value = str(total_vol)
+            if entry.primary_impact == "Volume" and total_vol != 0: impact_value = str(total_vol)
+        else:
+            if entry.primary_impact == "AUD": impact_value = entry.nsv_aud
+            elif entry.primary_impact == "NZD": impact_value = entry.nsv_nzd
+            elif entry.primary_impact == "Volume": impact_value = entry.volume_impact_value or entry.volume_litres
+            
+            vol_impact_value = entry.volume_impact_value
+
         entries_data.append({
             "id": entry.id,
             "originalEntryId": entry.original_entry_id,
@@ -190,6 +253,7 @@ def get_snapshot_by_id(snapshot_id: str, db: Session = Depends(get_db)):
             "nsvNzd": entry.nsv_nzd,
             "volumeLitres": entry.volume_litres,
             "volumeCases": entry.volume_cases,
+            "impact": impact_value,
             "primaryImpact": entry.primary_impact,
             "owner": entry.owner,
             "creator": entry.creator,
@@ -197,7 +261,9 @@ def get_snapshot_by_id(snapshot_id: str, db: Session = Depends(get_db)):
             "status": entry.status,
             "shortDescription": entry.short_description,
             "description": entry.description,
-            "impactType": entry.impact_type,
+            "volumeImpactType": entry.volume_impact_type,
+            "volumeImpactValue": vol_impact_value,
+            "financialImpactType": entry.financial_impact_type,
             "lastModified": entry.last_modified.isoformat() if entry.last_modified else None,
             "childImpacts": child_impacts_data,
         })

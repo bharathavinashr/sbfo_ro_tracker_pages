@@ -142,6 +142,7 @@ def _new_version_with_status(db: Session, entry_id: int, new_status: str, modifi
             nsv_nzd=ci.nsv_nzd,
             volume_litres=ci.volume_litres,
             volume_cases=ci.volume_cases,
+            volume_impact_value=ci.volume_impact_value,
         ))
 
     db.commit()

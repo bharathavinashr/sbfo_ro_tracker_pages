@@ -174,10 +174,12 @@
               <el-checkbox v-model="colVisible.addToForecastBy">Add to Forecast By</el-checkbox>
               <el-checkbox v-model="colVisible.categorisation">Categorisation</el-checkbox>
               <el-checkbox v-model="colVisible.description">Short Description</el-checkbox>
-              <el-checkbox v-model="colVisible.impactType">Impact Type</el-checkbox>
-              <el-checkbox v-model="colVisible.currency">Currency</el-checkbox>
+              <el-checkbox v-model="colVisible.financialImpactType">Impact Type</el-checkbox>
+              <el-checkbox v-model="colVisible.currency">Financial Impact Currency</el-checkbox>
               <el-checkbox v-model="colVisible.impact">Impact</el-checkbox>
-              <el-checkbox v-model="colVisible.volumeCases">Volume (Cases)</el-checkbox>
+              <el-checkbox v-model="colVisible.volumeCases">Volume Impact</el-checkbox>
+              <el-checkbox v-model="colVisible.volumeImpactType">Volume Impact Type</el-checkbox>
+              <el-checkbox v-model="colVisible.volumeImpactValue">Volume Impact Value</el-checkbox>
               <el-checkbox v-model="colVisible.impactPeriods">Impact Period(s)</el-checkbox>
               <el-checkbox v-model="colVisible.subChannel">Sub-Channel</el-checkbox>
               <el-checkbox v-model="colVisible.account">Account</el-checkbox>
@@ -279,10 +281,12 @@
               <th v-if="colVisible.owner"          class="col-md">Owner</th>
               <th v-if="colVisible.status"         class="col-md">Status</th>
               <th v-if="colVisible.lastModified"   class="col-lg">Last Modified</th>
-              <th v-if="colVisible.impactType"     class="col-md">Impact Type</th>
-              <th v-if="colVisible.currency"       class="col-sm">Currency</th>
-              <th v-if="colVisible.impact"         class="col-md tr">Impact</th>
-              <th v-if="colVisible.volumeCases"    class="col-md tr">Volume (Cases)</th>
+              <th v-if="colVisible.financialImpactType"     class="col-md">Financial Impact Type</th>
+              <th v-if="colVisible.currency"       class="col-sm">Financial Impact Currency</th>
+              <th v-if="colVisible.impact"         class="col-md tr">Financial Impact Value</th>
+              <th v-if="colVisible.volumeCases"    class="col-md tr">Volume Impact</th>
+              <th v-if="colVisible.volumeImpactType" class="col-sm">Volume Impact Type</th>
+              <th v-if="colVisible.volumeImpactValue" class="col-md tr">Volume Impact Value</th>
               <template v-if="phasedImpactViews.length > 0">
                 <th v-for="col in phasedColumns" :key="col.label" class="col-phased tc">{{ col.label }}</th>
               </template>
@@ -333,10 +337,15 @@
                     <span v-else :class="['status-badge', statusClass(row.status)]">{{ row.status }}</span>
                   </td>
                   <td v-if="colVisible.lastModified" class="cell-muted">{{ formatDate(row.lastModified) }}</td>
-                  <td v-if="colVisible.impactType">{{ row.impactType || '-' }}</td>
+                  <td v-if="colVisible.financialImpactType">{{ row.financialImpactType || '-' }}</td>
                   <td v-if="colVisible.currency">{{ row.impactCurrency || '-' }}</td>
                   <td v-if="colVisible.impact" class="tr fw">{{ row.impact ? Number(row.impact).toLocaleString() : '-' }}</td>
-                  <td v-if="colVisible.volumeCases" class="tr">{{ row.volumeImpact ? Number(row.volumeImpact).toLocaleString() : '-' }}</td>
+                  <td v-if="colVisible.volumeCases" class="tr"> <!-- This column is for the parent's aggregated volume impact -->
+                    {{ (row as any).volumeCases ? Number((row as any).volumeCases).toLocaleString() : '-' }}
+                    <div v-if="(row as any).volumeImpactValue" class="cell-sub">({{ (row as any).volumeImpactType }})</div>
+                  </td>
+                  <td v-if="colVisible.volumeImpactType">{{ (row as any).volumeImpactType || '-' }}</td>
+                  <td v-if="colVisible.volumeImpactValue" class="tr">{{ (row as any).volumeImpactValue ? Number((row as any).volumeImpactValue).toLocaleString() : '-' }}</td>
                   <template v-if="phasedImpactViews.length > 0">
                     <td v-for="col in phasedColumns" :key="col.label" class="tc phased-cell">
                       {{ formatPhasedCell(getAggregatedImpact(row, col)) }}
@@ -390,10 +399,12 @@
                       <span :class="['status-badge', statusClass(row.status), 'dim']">{{ row.status }}</span>
                     </td>
                     <td v-if="colVisible.lastModified"   class="cell-muted">{{ formatDate(row.lastModified) }}</td>
-                    <td v-if="colVisible.impactType"     class="cell-muted">{{ row.impactType || '-' }}</td>
+                    <td v-if="colVisible.financialImpactType"     class="cell-muted">{{ row.financialImpactType || '-' }}</td>
                     <td v-if="colVisible.currency"       class="cell-muted">{{ row.impactCurrency || '-' }}</td>
                     <td v-if="colVisible.impact"         class="tr fw cell-muted">{{ ci.impact ? Number(ci.impact).toLocaleString() : '-' }}</td>
-                    <td v-if="colVisible.volumeCases"    class="tr cell-muted">{{ ci.volumeImpact ? Number(ci.volumeImpact).toLocaleString() : '-' }}</td>
+                    <td v-if="colVisible.volumeCases"    class="tr cell-muted">{{ ci.volumeCases ? Number(ci.volumeCases).toLocaleString() : '-' }}</td>
+                    <td v-if="colVisible.volumeImpactType" class="cell-muted">{{ row.volumeImpactType || '-' }}</td>
+                    <td v-if="colVisible.volumeImpactValue" class="tr cell-muted">{{ ci.volumeImpactValue ? Number(ci.volumeImpactValue).toLocaleString() : '-' }}</td>
                     <template v-if="phasedImpactViews.length > 0">
                       <td v-for="col in phasedColumns" :key="col.label" class="tc cell-muted phased-cell">
                         {{ formatPhasedCellChild(ci, col) }}
@@ -430,10 +441,12 @@
           <th v-if="colVisible.owner"          class="col-md">Owner</th>
           <th v-if="colVisible.status"         class="col-md">Status</th>
           <th v-if="colVisible.lastModified"   class="col-lg">Last Modified</th>
-          <th v-if="colVisible.impactType"     class="col-md">Impact Type</th>
-          <th v-if="colVisible.currency"       class="col-sm">Currency</th>
-          <th v-if="colVisible.impact"         class="col-md tr">Impact</th>
+          <th v-if="colVisible.financialImpactType"     class="col-md">Financial Impact Type</th>
+          <th v-if="colVisible.currency"       class="col-sm">Financial Impact Currency</th>
+          <th v-if="colVisible.impact"         class="col-md tr">Financial Impact Value</th>
           <th v-if="colVisible.volumeCases"    class="col-md tr">Volume (Cases)</th>
+          <th v-if="colVisible.volumeImpactType" class="col-sm">Volume Impact Type</th>
+          <th v-if="colVisible.volumeImpactValue" class="col-md tr">Volume Impact Value</th>
           <template v-if="phasedImpactViews.length > 0">
             <th v-for="col in phasedColumns" :key="col.label" class="col-phased tc">{{ col.label }}</th>
           </template>
@@ -487,10 +500,12 @@
                 <span v-else :class="['status-badge', statusClass(row.status)]">{{ row.status }}</span>
               </td>
               <td v-if="colVisible.lastModified" class="cell-muted">{{ formatDate(row.lastModified) }}</td>
-              <td v-if="colVisible.impactType">{{ row.impactType || '-' }}</td>
+              <td v-if="colVisible.financialImpactType">{{ row.financialImpactType || '-' }}</td>
               <td v-if="colVisible.currency">{{ row.impactCurrency || '-' }}</td>
               <td v-if="colVisible.impact" class="tr fw">{{ row.impact ? Number(row.impact).toLocaleString() : '-' }}</td>
-              <td v-if="colVisible.volumeCases" class="tr">{{ row.volumeImpact ? Number(row.volumeImpact).toLocaleString() : '-' }}</td>
+                  <td v-if="colVisible.volumeCases" class="tr">{{ row.volumeCases ? Number(row.volumeCases).toLocaleString() : '-' }}</td>
+              <td v-if="colVisible.volumeImpactType">{{ (row as any).volumeImpactType || '-' }}</td>
+              <td v-if="colVisible.volumeImpactValue" class="tr">{{ (row as any).volumeImpactValue ? Number((row as any).volumeImpactValue).toLocaleString() : '-' }}</td>
               <template v-if="phasedImpactViews.length > 0">
                 <td v-for="col in phasedColumns" :key="col.label" class="tc phased-cell">
                   {{ formatPhasedCell(getAggregatedImpact(row, col)) }}
@@ -544,10 +559,12 @@
                   <span :class="['status-badge', statusClass(row.status), 'dim']">{{ row.status }}</span>
                 </td>
                 <td v-if="colVisible.lastModified"   class="cell-muted">-</td>
-                <td v-if="colVisible.impactType"     class="cell-muted">{{ row.impactType || '-' }}</td>
+                <td v-if="colVisible.financialImpactType"     class="cell-muted">{{ row.financialImpactType || '-' }}</td>
                 <td v-if="colVisible.currency"       class="cell-muted">{{ row.impactCurrency || '-' }}</td>
                 <td v-if="colVisible.impact"         class="tr fw cell-muted">{{ ci.impact ? Number(ci.impact).toLocaleString() : '-' }}</td>
-                <td v-if="colVisible.volumeCases"    class="tr cell-muted">{{ ci.volumeImpact ? Number(ci.volumeImpact).toLocaleString() : '-' }}</td>
+                <td v-if="colVisible.volumeCases"    class="tr cell-muted">{{ ci.volumeCases ? Number(ci.volumeCases).toLocaleString() : '-' }}</td>
+                <td v-if="colVisible.volumeImpactType" class="cell-muted">{{ row.volumeImpactType || '-' }}</td>
+                <td v-if="colVisible.volumeImpactValue" class="tr cell-muted">{{ ci.volumeImpactValue ? Number(ci.volumeImpactValue).toLocaleString() : '-' }}</td>
                 <template v-if="phasedImpactViews.length > 0">
                   <td v-for="col in phasedColumns" :key="col.label" class="tc cell-muted phased-cell">
                     {{ formatPhasedCellChild(ci, col) }}
@@ -789,10 +806,12 @@ const colVisible = ref({
   addToForecastBy:false,
   categorisation: true,
   description:    true,
-  impactType:     true,
+  financialImpactType:     true,
   currency:       false,
   impact:         true,
   volumeCases:    false,
+  volumeImpactType: true,
+  volumeImpactValue: true,
   impactPeriods:  true,
   subChannel:     true,
   account:        true,
@@ -830,7 +849,7 @@ function toggleAllPhasedViews(checked: boolean) {
 
 // Auto-enable Impact Type column when any phased view is active
 watch(phasedImpactViews, (val) => {
-  if (val.length > 0) colVisible.value.impactType = true;
+  if (val.length > 0) colVisible.value.financialImpactType = true;
 });
 
 interface PhasedCol {
@@ -1099,10 +1118,12 @@ function exportToCSV(rows: Entry[], filename = `entries_${new Date().toISOString
   if (cv.owner)           headers.push("Owner");
   if (cv.status)          headers.push("Status");
   if (cv.lastModified)    headers.push("Last Modified");
-  if (cv.impactType)      headers.push("Impact Type");
-  if (cv.currency)        headers.push("Currency");
+  if (cv.financialImpactType)      headers.push("Impact Type");
+  if (cv.currency)        headers.push("Financial Impact Currency");
   if (cv.impact)          headers.push("Impact");
   if (cv.volumeCases)     headers.push("Volume (Cases)");
+  if (cv.volumeImpactType) headers.push("Volume Impact Type");
+  if (cv.volumeImpactValue) headers.push("Volume Impact Value");
   if (phasedImpactViews.value.length > 0) {
     phasedColumns.value.forEach(c => headers.push(c.label));
   } else if (cv.impactPeriods) {
@@ -1128,10 +1149,12 @@ function exportToCSV(rows: Entry[], filename = `entries_${new Date().toISOString
     if (cv.owner)           r.push(escapeCSV(e.owner || ""));
     if (cv.status)          r.push(escapeCSV(e.status || "Open"));
     if (cv.lastModified)    r.push(escapeCSV(formatDate(e.lastModified)));
-    if (cv.impactType)      r.push(escapeCSV(e.impactType || ""));
+    if (cv.financialImpactType)      r.push(escapeCSV(e.financialImpactType || ""));
     if (cv.currency)        r.push(escapeCSV(e.impactCurrency || ""));
     if (cv.impact)          r.push(e.impact ? String(parseFloat(e.impact)) : "");
     if (cv.volumeCases)     r.push((e as any).volumeImpact ? String(parseFloat((e as any).volumeImpact)) : "");
+    if (cv.volumeImpactType) r.push(escapeCSV((e as any).volumeImpactType || ""));
+    if (cv.volumeImpactValue) r.push((e as any).volumeImpactValue ? String(parseFloat((e as any).volumeImpactValue)) : "");
     if (phasedImpactViews.value.length > 0) {
       phasedColumns.value.forEach(col => {
         const v = getAggregatedImpact(e, col);

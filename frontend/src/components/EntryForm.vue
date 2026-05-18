@@ -565,39 +565,60 @@
             </el-col>
 
             <el-col :span="12">
-              <el-form-item label="Impact Type">
-                <div class="toggle-group">
-                  <button type="button" class="toggle-btn" :class="{ 'is-active': formData.primaryImpact !== 'Volume' && formData.impactType === 'NSV' }" @click="formData.impactType = 'NSV'">NSV</button>
-                  <button type="button" class="toggle-btn" :class="{ 'is-active': formData.primaryImpact !== 'Volume' && formData.impactType === 'COGS' }" @click="formData.impactType = 'COGS'">COGS</button>
-                  <button type="button" class="toggle-btn" :class="{ 'is-active': formData.primaryImpact !== 'Volume' && formData.impactType === 'LOGS' }" @click="formData.impactType = 'LOGS'">LOGS</button>
-                  <button type="button" class="toggle-btn" :class="{ 'is-active': formData.impactType === 'OI' }" @click="formData.impactType = 'OI'">OI</button>
+              
+              <div class="impact-section-subtitle">Financial Impact</div>
+              <el-form-item class="mt-2">
+                <template #label>{{ getfinancialImpactTypeLabel(formData.financialImpactType) }}</template>
+                <div class="input-with-dropdown">
+                  <el-input
+                    :model-value="formData.impactValue"
+                    :disabled="hasChildImpacts"
+                    placeholder="Enter financial impact value"
+                    @input="formData.impactValue = cleanNumStr($event as string)"
+                    @blur="formData.impactValue = formatNumStr(formData.impactValue)"
+                    @focus="formData.impactValue = cleanNumStr(formData.impactValue)"
+                  />
+                  <el-dropdown trigger="click" @command="formData.financialImpactType = $event">
+                    <el-button type="primary" class="black-dropdown-btn">
+                      {{ formData.financialImpactType }}
+                    </el-button>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item command="NSV">NSV</el-dropdown-item>
+                        <el-dropdown-item command="COGS">COGS</el-dropdown-item>
+                        <el-dropdown-item command="LOGS">LOGS</el-dropdown-item>
+                        <el-dropdown-item command="GP">GP</el-dropdown-item>
+                        <el-dropdown-item command="OI">OI</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
                 </div>
               </el-form-item>
 
-              <el-form-item class="mt-3">
-                <template #label>{{ getImpactTypeLabel(formData.impactType) }}</template>
-                <el-input
-                  :model-value="formData.impactValue"
-                  :disabled="hasChildImpacts"
-                  placeholder="Enter impact value"
-                  @input="formData.impactValue = cleanNumStr($event as string)"
-                  @blur="formData.impactValue = formatNumStr(formData.impactValue)"
-                  @focus="formData.impactValue = cleanNumStr(formData.impactValue)"
-                />
-              </el-form-item>
-
-              <el-form-item v-if="['NSV', 'COGS'].includes(formData.impactType)" class="mt-3">
-                <template #label>
-                  Volume (Cases) <span v-if="formData.impactType === 'COGS'" class="optional-tag">(optional)</span>
-                </template>
-                <el-input
-                  :model-value="formData.secondaryValue"
-                  :disabled="hasChildImpacts"
-                  placeholder="Enter volume in cases"
-                  @input="formData.secondaryValue = cleanNumStr($event as string)"
-                  @blur="formData.secondaryValue = formatNumStr(formData.secondaryValue)"
-                  @focus="formData.secondaryValue = cleanNumStr(formData.secondaryValue)"
-                />
+              <div class="impact-section-subtitle mt-4">Volume Impact</div>
+              <el-form-item class="mt-2">
+                <template #label>Volume ({{ formData.volumeImpactType }})</template>
+                <div class="input-with-dropdown">
+                  <el-input
+                    :model-value="formData.secondaryValue"
+                    :disabled="hasChildImpacts"
+                    placeholder="Enter volume"
+                    @input="formData.secondaryValue = cleanNumStr($event as string)"
+                    @blur="formData.secondaryValue = formatNumStr(formData.secondaryValue)"
+                    @focus="formData.secondaryValue = cleanNumStr(formData.secondaryValue)"
+                  />
+                  <el-dropdown trigger="click" @command="formData.volumeImpactType = $event">
+                    <el-button type="primary" class="black-dropdown-btn">
+                      {{ formData.volumeImpactType }}
+                    </el-button>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item command="Cases">Cases</el-dropdown-item>
+                        <el-dropdown-item command="9LE">9LE</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
               </el-form-item>
               
               <div class="add-impact-row">
@@ -611,7 +632,7 @@
 
         <div v-for="(child, idx) in formData.childImpacts" :key="idx" class="impact-child-card">
           <el-row :gutter="16" align="middle">
-            <el-col :span="['NSV', 'COGS'].includes(formData.impactType) ? 6 : 8">
+            <el-col :span="6">
               <div class="sub-label">Period <span class="impact-required">*</span></div>
               <div class="combo-wrap" style="margin-top: 6px">
                 <el-input
@@ -631,7 +652,7 @@
                 </div>
               </div>
             </el-col>
-            <el-col :span="['NSV', 'COGS'].includes(formData.impactType) ? 6 : 8">
+            <el-col :span="6">
               <div class="sub-label">Year</div>
               <div class="combo-wrap" style="margin-top: 6px">
                 <el-input
@@ -651,8 +672,8 @@
                 </div>
               </div>
             </el-col>
-            <el-col :span="['NSV', 'COGS'].includes(formData.impactType) ? 6 : 8">
-              <div class="sub-label">{{ getImpactTypeLabel(formData.impactType) }} <span class="impact-required">*</span></div>
+            <el-col :span="6">
+              <div class="sub-label">{{ getfinancialImpactTypeLabel(formData.financialImpactType) }} <span class="impact-required">*</span></div>
               <el-input
                 :model-value="child.impactValue"
                 placeholder="Enter value"
@@ -662,10 +683,9 @@
                 @focus="child.impactValue = cleanNumStr(child.impactValue)"
               />
             </el-col>
-            <el-col v-if="['NSV', 'COGS'].includes(formData.impactType)" :span="6">
+            <el-col :span="6">
               <div class="sub-label">
-                Volume (Cases) <span v-if="formData.impactType === 'COGS'" class="optional-tag">(optional)</span>
-                <span v-else class="impact-required">*</span>
+                Volume ({{ formData.volumeImpactType }})
               </div>
               <el-input
                 :model-value="child.secondaryValue"
@@ -684,11 +704,11 @@
 
         <div v-if="hasChildImpacts" class="totals-bar">
           <div class="totals-item">
-            <span class="totals-label">Total {{ getImpactTypeLabel(formData.impactType) }}</span>
+            <span class="totals-label">Total {{ getfinancialImpactTypeLabel(formData.financialImpactType) }}</span>
             <span class="totals-value">{{ formatNumStr(totalPrimaryImpact) }} {{ currencyCode }}</span>
           </div>
-          <div v-if="secondaryTotalVisible && ['NSV', 'COGS'].includes(formData.impactType)" class="totals-item">
-            <span class="totals-label">Total Volume (Cases)</span>
+          <div v-if="secondaryTotalVisible" class="totals-item">
+            <span class="totals-label">Total Volume ({{ formData.volumeImpactType }})</span>
             <span class="totals-value">{{ formatNumStr(totalSecondaryImpact) }}</span>
           </div>
         </div>
@@ -722,7 +742,6 @@ const ownerOptions = computed(() =>
 
 // Product-based lookup data (from API)
 const divisionOptions = ref<string[]>([]);
-// ─── CHANGE: countryOptions is now built from app_users, not fetched per division ───
 const countryOptions  = ref<{value: string, label: string}[]>([]);
 const brandOptions = ref<{value: string, label: string}[]>([]);
 const brandFamilyOptions = ref<{value: string, label: string}[]>([]);
@@ -762,18 +781,12 @@ onMounted(async () => {
     console.error("Error loading divisions:", error);
   }
 
-  // ─── CHANGE: Build country options from app_users (same pattern as divisions) ───
-  // Country names come from the current user's `country` column in app_users.
-  // We map each country name to itself as both value and label (no company_code
-  // lookup needed — the dropdown only shows names, consistent with how divisions work).
   const rawCountryData = (entryStore.currentUser as any)?.country;
   const userCountryData = ensureObject(rawCountryData); 
 
   if (Object.keys(userCountryData).length > 0) {
-    // Populate countryOptions directly from the user's country map
     countryOptions.value = Object.entries(userCountryData).map(([value, label]) => ({ value, label: label as string }));
   } else {
-    // Fallback: fetch all countries across all accessible divisions when user has no restriction
     const accessibleDivs = userDivisions.value;
     if (accessibleDivs.length > 0) {
       try {
@@ -789,7 +802,6 @@ onMounted(async () => {
     }
   }
 
-  // Auto-select logic for new entries
   if (!props.entry) {
     if (userIbpSteps.value.length === 1) {
       formData.value.ibpStep = userIbpSteps.value[0];
@@ -797,14 +809,12 @@ onMounted(async () => {
     if (userDivisions.value.length === 1) {
       formData.value.division = userDivisions.value[0];
     }
-    // ─── CHANGE: Auto-select country from app_users list (not from division fetch) ───
     const availableCountries = availableCountryOptions.value;
     if (availableCountries.length === 1) {
       formData.value.country = { [availableCountries[0].value]: availableCountries[0].label };
     }
   }
 });
-
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Lookup options (from store)
@@ -815,7 +825,6 @@ const probabilityOptions = computed(() => lookupStore.getCached("probability"));
 const CATEG_ACTIVE_IBP_STEPS = ["Portfolio Review", "Demand Review", "Supply Review", "Overheads (Pre-Exec)"];
 const categActive = computed(() => CATEG_ACTIVE_IBP_STEPS.includes(formData.value.ibpStep));
 
-// Field disable states based on dependencies
 const countryDivisionActive = computed(() => Object.keys(formData.value.country).length > 0 && !!formData.value.division);
 const channelDisabledMessage = computed(() => {
   if (Object.keys(formData.value.country).length > 0 && !formData.value.division) {
@@ -883,7 +892,6 @@ const ibpStepSearch = ref("");
 const divOpen = ref(false);
 const divSearch = ref("");
 
-// Categorisation dropdown state
 const categOpen = ref(false);
 const categSearch = ref("");
 function onCategBlur() { setTimeout(() => { categOpen.value = false; }, 120); }
@@ -898,26 +906,25 @@ const atfbPeriodOpen = ref(false);
 const atfbPeriodSearch = ref("");
 const atfbYearOpen = ref(false);
 const atfbYearSearch = ref("");
-// Range Start States
 const prStartPeriodOpen = ref(false);
 const prStartPeriodSearch = ref("");
 const prStartYearOpen = ref(false);
 const prStartYearSearch = ref("");
-// Range End States
 const prEndPeriodOpen = ref(false);
 const prEndPeriodSearch = ref("");
 const prEndYearOpen = ref(false);
 const prEndYearSearch = ref("");
-// Impact Single States
 const impactPeriodOpen = ref(false);
 const impactPeriodSearch = ref("");
 const impactYearOpen = ref(false);
 const impactYearSearch = ref("");
+
 function handleBrandFamilyClickOutside() { brandFamilyOpen.value = false; }
 function handleBrandClickOutside()       { brandOpen.value = false; }
 function handleChannelClickOutside()     { channelOpen.value = false; }
 function handleSubChannelClickOutside()  { subChannelOpen.value = false; }
 function handleAccountClickOutside()     { accountOpen.value = false; }
+
 const currentYear   = new Date().getFullYear();
 const yearOptions   = Array.from({ length: 10 }, (_, i) => currentYear - 2 + i);
 const filteredChannels      = computed(() => channelOptions.value.filter(c => c.label.toLowerCase().includes(channelSearch.value.toLowerCase())));
@@ -926,7 +933,6 @@ const filteredBrands        = computed(() => brandOptions.value.filter(b => b.la
 const filteredAccounts      = computed(() => accountOptions.value.filter(a => a.label.toLowerCase().includes(accountSearch.value.toLowerCase())));
 const filteredBrandFamilies = computed(() => brandFamilyOptions.value.filter(f => f.label.toLowerCase().includes(brandFamilySearch.value.toLowerCase())));
 
-// User restricted options logic
 const userIbpSteps = computed(() => {
   const steps = (entryStore.currentUser as any)?.ibp_steps;
   if (steps) {
@@ -943,20 +949,13 @@ const userDivisions = computed(() => {
   return divisionOptions.value;
 });
 
-// ─── CHANGE: userCountries reads from app_users `country` column directly ───
-// The column stores an array like ["Australia", "New Zealand"].
-// No longer derived from countryOptions (which was fetched per division).
-// Now stores an object like {"0014": "New Zealand", "0015": "Australia"}.
 const userCountries = computed(() => {
   const cnts = ensureObject((entryStore.currentUser as any)?.country);
-  return Object.values(cnts); // Extract country names (labels)
+  return Object.values(cnts);
 });
 
-// ─── CHANGE: availableCountryOptions filters the static countryOptions list
-// by the user's country restriction — exactly like availableDivisionOptions ───
 const availableCountryOptions = computed(() => {
   const allowed = userCountries.value;
-  // If allowed is empty or matches all, return all
   if (!allowed.length) return countryOptions.value;
   return countryOptions.value.filter(opt => allowed.includes(opt.label));
 });
@@ -1006,7 +1005,6 @@ async function toggleChannel(code: string, name: string) {
       const countryName = Object.values(formData.value.country)[0];
       const division = formData.value.division;
       
-      // Remove subchannels that belong to this channel
       const subCodes = Object.keys(formData.value.subChannel);
       for (const scCode of subCodes) {
         const details = await lookupApi.getSubchannelDetails(division, scCode, countryName);
@@ -1015,7 +1013,6 @@ async function toggleChannel(code: string, name: string) {
         }
       }
 
-      // Remove accounts that belong to this channel
       const accCodes = Object.keys(formData.value.account);
       for (const accCode of accCodes) {
         const details = await lookupApi.getAccountDetails(division, accCode, countryName);
@@ -1077,7 +1074,6 @@ async function toggleSubChannel(code: string, name: string) {
       const countryName = Object.values(formData.value.country)[0];
       const division = formData.value.division;
 
-      // Remove accounts that belong to this subchannel
       const accCodes = Object.keys(formData.value.account);
       for (const accCode of accCodes) {
         const details = await lookupApi.getAccountDetails(division, accCode, countryName);
@@ -1222,7 +1218,6 @@ function onCreationPeriodBlur() { setTimeout(() => { creationPeriodOpen.value = 
 function onCreationYearBlur()   { setTimeout(() => { creationYearOpen.value = false; }, 120); }
 function onAtfbPeriodBlur()     { setTimeout(() => { atfbPeriodOpen.value = false; }, 120); }
 function onAtfbYearBlur()       { setTimeout(() => { atfbYearOpen.value = false; }, 120); }
-
 function onPrStartPeriodBlur() { setTimeout(() => { prStartPeriodOpen.value = false; }, 120); }
 function onPrStartYearBlur()   { setTimeout(() => { prStartYearOpen.value = false; }, 120); }
 function onPrEndPeriodBlur()   { setTimeout(() => { prEndPeriodOpen.value = false; }, 120); }
@@ -1240,7 +1235,6 @@ async function toggleBrand(code: string, name: string) {
       const countryName = Object.values(formData.value.country)[0];
       const division = formData.value.division;
       
-      // Remove brand families that belong to this brand
       const bfCodes = Object.keys(formData.value.brandFamily);
       for (const bfCode of bfCodes) {
         const details = await lookupApi.getBrandFamilyDetails(division, bfCode, countryName);
@@ -1276,7 +1270,6 @@ async function toggleAllBrands() {
       const division = formData.value.division;
       const codesToRemove = suggestions.map(b => b.value);
 
-      // Remove brand families belonging to any of the removed brands
       const bfCodes = Object.keys(formData.value.brandFamily);
       for (const bfCode of bfCodes) {
         const details = await lookupApi.getBrandFamilyDetails(division, bfCode, countryName);
@@ -1313,7 +1306,6 @@ async function toggleAllChannels() {
       const division = formData.value.division;
       const codesToRemove = suggestions.map(c => c.value);
 
-      // Remove subchannels belonging to any of the removed channels
       const subCodes = Object.keys(formData.value.subChannel);
       for (const scCode of subCodes) {
         const details = await lookupApi.getSubchannelDetails(division, scCode, countryName);
@@ -1322,7 +1314,6 @@ async function toggleAllChannels() {
         }
       }
 
-      // Remove accounts belonging to any of the removed channels
       const accCodes = Object.keys(formData.value.account);
       for (const accCode of accCodes) {
         const details = await lookupApi.getAccountDetails(division, accCode, countryName);
@@ -1359,7 +1350,6 @@ async function toggleAllSubChannels() {
       const division = formData.value.division;
       const codesToRemove = suggestions.map(s => s.value);
 
-      // Remove accounts belonging to any of the removed subchannels
       const accCodes = Object.keys(formData.value.account);
       for (const accCode of accCodes) {
         const details = await lookupApi.getAccountDetails(division, accCode, countryName);
@@ -1428,7 +1418,6 @@ async function toggleBrandFamily(code: string, name: string) {
   }
   
   if (brandSelectionPriority.value === 'brand') {
-    // no-op during top-down selection
   } else if (brandSelectionPriority.value === 'brandFamily') {
     await syncBrandFromBrandFamilies();
   }
@@ -1488,6 +1477,7 @@ interface ChildImpactForm {
   secondaryValue: string;
   secondaryUnit:  string;
   _periodOpen?:   boolean;
+  volumeImpactValue?: string; // Added for child impacts
   _periodSearch?: string;
   _yearOpen?:     boolean;
   _yearSearch?:   string;
@@ -1515,7 +1505,9 @@ interface FormData {
   primaryImpact:         string;
   secondaryValue:        string;
   secondaryUnit:         string;
-  impactType:            string;
+  financialImpactType:   string;
+  volumeImpactType:      string;
+  volumeImpactValue:     string;
   owner:                 string;
   creator:               string;
   status:                string;
@@ -1568,7 +1560,9 @@ function defaultForm(): FormData {
     brand:           {}, brandFamily:     {}, rAndO:           "Risk",
     probability:     "", categorisation:  "", impactPeriod:    currentPeriod,
     impactYear:      String(currentYear), impactValue:     "", primaryImpact:   "AUD",
-    secondaryValue:  "", secondaryUnit:   "Volume", impactType:      "NSV",
+    secondaryValue:  "", secondaryUnit:   "Volume", financialImpactType:      "NSV",
+    volumeImpactType: "Cases",
+    volumeImpactValue: "",
     owner:           email, creator:         email, status:          "Open",
     shortDescription:    "", detailedDescription: "", childImpacts:    [],
   };
@@ -1591,10 +1585,10 @@ const isAlcohol = computed(() => {
   return d.includes("alcohol") && !d.includes("non-alcohol");
 });
 
-function getImpactTypeLabel(impactType: string): string {
+function getfinancialImpactTypeLabel(financialImpactType: string): string {
   const currency = formData.value.primaryImpact === "NZD" ? "NZD" : "AUD";
-  const labels: Record<string, string> = { NSV: `NSV (${currency})`, COGS: `COGS (${currency})`, LOGS: `LOGS (${currency})`, OI: `OI (${currency})` };
-  return labels[impactType] || "Impact Value";
+  const labels: Record<string, string> = { NSV: `NSV (${currency})`, COGS: `COGS (${currency})`, LOGS: `LOGS (${currency})`, GP: `GP (${currency})`, OI: `OI (${currency})` };
+  return labels[financialImpactType] || "Financial Impact Value";
 }
 const currencyCode = computed(() => formData.value.primaryImpact === "NZD" ? "NZD" : formData.value.primaryImpact === "AUD" ? "AUD" : "");
 
@@ -1657,8 +1651,6 @@ watch(() => formData.value.primaryImpact, (newUnit, oldUnit) => {
 });
 watch(() => formData.value.secondaryUnit, (val) => { if (isLoadingEntry.value) return; formData.value.childImpacts.forEach(ci => { ci.secondaryUnit = val; }); });
 
-// ─── CHANGE: Division watch — no longer resets country; only resets
-// channel/brand/etc. and reloads dependent lookups if country already selected ───
 watch(() => formData.value.division, async (division) => {
   if (!isLoadingEntry.value) {
     formData.value.brand = {};
@@ -1670,14 +1662,11 @@ watch(() => formData.value.division, async (division) => {
     brandSelectionPriority.value = null;
   }
 
-  // If both division and country are already set, reload dependent lookups
   if (division && Object.keys(formData.value.country).length > 0) {
     await loadCountryBasedLookups(formData.value.country, division);
   }
 }, { immediate: true });
 
-// ─── CHANGE: Country watch — no longer fetches countries from the API;
-// it only clears dependent fields and reloads lookups that depend on country+division ───
 watch(() => formData.value.country, async (country) => {
   if (!isLoadingEntry.value) {
     formData.value.brand = {};
@@ -1932,8 +1921,8 @@ watch(subChannelOpen, (isOpen) => {
 watch(() => formData.value.ibpStep, (val) => {
   if (isInitialLoadRef.value) return;
   if (!CATEG_ACTIVE_IBP_STEPS.includes(val)) formData.value.categorisation = "";
-  if (val === "Demand Review") formData.value.impactType = "NSV";
-  else if (formData.value.impactType === "NSV") formData.value.impactType = "OI";
+  if (val === "Demand Review") formData.value.financialImpactType = "NSV";
+  else if (formData.value.financialImpactType === "NSV") formData.value.financialImpactType = "OI";
 });
 watch(() => formData.value.rAndO, (val) => {
   if (isInitialLoadRef.value) return;
@@ -1960,12 +1949,12 @@ watch(() => props.entry, async (entry) => {
     };
     
     const creator = entry.creator || currentUserEmail.value;
-    const owner   = entry.owner   || currentUserEmail.value;
+    const owner   = entry.owner  || currentUserEmail.value;
     ownerSameAsCreator.value = owner === creator;
 
     formData.value = {
-      creationDatePeriod:    entry.creationDatePeriod    || currentPeriod,
-      creationDateYear:      entry.creationDateYear      || String(currentYear),
+      creationDatePeriod:    entry.creationDatePeriod  || currentPeriod,
+      creationDateYear:      entry.creationDateYear    || String(currentYear),
       addToForecastByPeriod: entry.addToForecastByPeriod || currentPeriod,
       addToForecastByYear:   entry.addToForecastByYear   || String(currentYear),
       division:       entry.division      || "", ibpStep:         entry.ibpStep       || "",
@@ -1978,12 +1967,14 @@ watch(() => props.entry, async (entry) => {
       rAndO:          entry.rAndO         || "Risk", probability:     entry.probability   || "",
       categorisation: entry.categorisation|| "", impactPeriod:   entry.impactPeriod  || "",
       impactYear:     entry.impactYear    || (entry.childImpacts?.length ? "" : String(currentYear)),
-      primaryImpact:  entry.primaryImpact || "AUD", impactType:     entry.impactType    || "OI",
-      impactValue: formatNumStr(entry.primaryImpact === "NZD" ? (entry.nsvNzd || "") : entry.primaryImpact === "Volume" ? fromStorage("Volume", entry.volumeLitres || "") : (entry.nsvAud || "")),
+      primaryImpact:  entry.primaryImpact || "AUD", financialImpactType:     entry.financialImpactType    || "OI",
+      volumeImpactType: (entry as any).volumeImpactType || "Cases",
+      volumeImpactValue: (entry as any).volumeImpactValue || "",
+      impactValue: formatNumStr(entry.primaryImpact === "NZD" ? (entry.nsvNzd || "") : entry.primaryImpact === "Volume" ? ((entry as any).volumeImpactValue || fromStorage("Volume", entry.volumeLitres || "")) : (entry.nsvAud || "")),
       ...((): { secondaryUnit: string; secondaryValue: string } => {
         const pi = entry.primaryImpact || "AUD";
         const candidates = [
-          { unit: "AUD", val: entry.nsvAud || "" }, { unit: "NZD", val: entry.nsvNzd || "" }, { unit: "Volume", val: fromStorage("Volume", entry.volumeLitres || "") },
+          { unit: "AUD", val: entry.nsvAud || "" }, { unit: "NZD", val: entry.nsvNzd || "" }, { unit: "Volume", val: (entry as any).volumeImpactValue || fromStorage("Volume", entry.volumeLitres || "") },
         ].filter(c => c.unit !== pi);
         const found = candidates.find(c => c.val) ?? candidates[0];
         return { secondaryUnit: found.unit, secondaryValue: formatNumStr(found.val) };
@@ -1998,7 +1989,7 @@ watch(() => props.entry, async (entry) => {
         const sec = secondaryCandidates.find(c => c.val) ?? secondaryCandidates[0];
         return {
           impactYear: ci.impactYear || "", impactPeriod: ci.impactPeriod || "", impactUnit: primary,
-          impactValue: formatNumStr(primary === "NZD" ? (ci.nsvNzd || "") : primary === "Volume" ? fromStorage("Volume", ci.volumeLitres || "") : (ci.nsvAud || "")),
+          impactValue: formatNumStr(primary === "NZD" ? (ci.nsvNzd || "") : primary === "Volume" ? (ci.volumeImpactValue || fromStorage("Volume", ci.volumeLitres || "")) : (ci.nsvAud || "")),
           secondaryUnit:  sec.unit, secondaryValue: formatNumStr(sec.val),
           _periodOpen: false, _periodSearch: "", _yearOpen: false, _yearSearch: ""
         };
@@ -2130,7 +2121,7 @@ function toStorage(unit: string, val: string): string {
   if (!val || unit !== "Volume" || !isAlcohol.value) return val;
   const n = parseFloat(val); return isNaN(n) ? val : String(n * 9);
 }
-function mapToFields(primaryUnit: string, primaryVal: string, secUnit: string, secVal: string) {
+function mapToFields(primaryUnit: string, primaryVal: string, secUnit: string, secVal: string): { nsvAud: string; nsvNzd: string; volumeLitres: string; volumeImpactValue: string } {
   const set = (unit: string) => unit === primaryUnit ? toStorage(unit, primaryVal) : unit === secUnit ? toStorage(unit, secVal) : "";
   return { nsvAud: set("AUD"), nsvNzd: set("NZD"), volumeLitres: set("Volume") };
 }
@@ -2164,14 +2155,25 @@ async function validate() {
     }
     
     const { nsvAud, nsvNzd, volumeLitres } = mapToFields(formData.value.primaryImpact, formData.value.impactValue, formData.value.secondaryUnit, formData.value.secondaryValue);
+    const volumeImpactValue = formData.value.primaryImpact === "Volume" ? formData.value.impactValue : (formData.value.secondaryUnit === "Volume" ? formData.value.secondaryValue : "");
+
     return {
       ...formData.value,
+      // Ensure volumeImpactValue is correctly set for the parent entry
+      volumeImpactValue: cleanNumStr(volumeImpactValue),
       channel: formData.value.channel,
       subChannel: formData.value.subChannel,
       account: formData.value.account,
       nsvAud, nsvNzd, volumeLitres,
       childImpacts: formData.value.childImpacts.map(ci => {
-        const m = mapToFields(ci.impactUnit, ci.impactValue, ci.secondaryUnit, ci.secondaryValue); return { impactYear: ci.impactYear, impactPeriod: ci.impactPeriod, ...m };
+        const m = mapToFields(ci.impactUnit, ci.impactValue, ci.secondaryUnit, ci.secondaryValue);
+        const childVolumeImpactValue = ci.impactUnit === "Volume" ? ci.impactValue : (ci.secondaryUnit === "Volume" ? ci.secondaryValue : "");
+        return {
+          impactYear: ci.impactYear,
+          impactPeriod: ci.impactPeriod,
+          ...m,
+          volumeImpactValue: cleanNumStr(childVolumeImpactValue),
+        };
       }),
     };
   } catch { return null; }
@@ -2380,6 +2382,35 @@ defineExpose({ validate, reset });
   color: #fff;
 }
 
+/* ── Input + Dropdown Styling ───────────────────────────────────────── */
+.impact-section-subtitle {
+  font-size: 14px;
+  font-weight: 700;
+  /* font-style: italic; */
+  color: #1a1a1a;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+.input-with-dropdown {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  width: 100%;
+}
+.black-dropdown-btn {
+  background-color: #0e1015 !important;
+  border-color: #0e1015 !important;
+  color: #fff !important;
+  font-weight: 600;
+  width: 100px;
+  height: 100%;
+  border-radius: 4px;
+}
+.black-dropdown-btn:hover, .black-dropdown-btn:focus {
+  background-color: #2a2d35 !important;
+  border-color: #2a2d35 !important;
+}
+
 /* ── Custom Combobox UI ────────────────────────────────────────────────────────────── */
 .combo-wrap { position: relative; width: 100%; }
 .combo-dropdown {
@@ -2431,7 +2462,6 @@ defineExpose({ validate, reset });
 .combo-trigger .has-value { color: #000; font-weight: 500; }
 .combo-trigger .placeholder { color: #a8a8a8; }
 
-/* Placeholder turned into black when it represents a selected value */
 .has-selected-value :deep(input::placeholder) {
   color: #000 !important;
   opacity: 1;
@@ -2514,26 +2544,9 @@ defineExpose({ validate, reset });
 .totals-label { font-size: 13px; font-weight: 600; color: #555; }
 .totals-value { font-size: 18px; font-weight: 700; color: #1a1a1a; }
 
-/* ── Submit Action Button ─────────────────────────────────────────────────── */
-.submit-action-btn {
-  width: 100%;
-  height: 52px;
-  background-color: #0e1015;
-  color: #fff;
-  font-size: 16px;
-  font-weight: 700;
-  border: none;
-  border-radius: 6px;
-  margin-top: 32px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-.submit-action-btn:hover {
-  background-color: #2a2d35;
-}
-
 /* Spacing Utils */
 .mt-1 { margin-top: 4px; }
 .mt-2 { margin-top: 8px; }
 .mt-3 { margin-top: 12px; }
+.mt-4 { margin-top: 24px; }
 </style>
