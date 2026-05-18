@@ -513,7 +513,7 @@
                       class="prorate-btn"
                       :disabled="!periodRangeStart.period || !periodRangeStart.year || !periodRangeEnd.period || !periodRangeEnd.year"
                       @click="createChildImpactsFromRange"
-                    >Generate Prorated Impacts</el-button>
+                    >Generate Monthly Impacts</el-button>
                   </div>
                 </template>
 
@@ -1532,22 +1532,22 @@ function onOwnerCheckboxChange(val: boolean) {
   if (val) formData.value.owner = formData.value.creator;
 }
 
-const usePeriodRange   = ref(false);
-const periodRangeStart = ref({ period: "", year: "" });
-const periodRangeEnd   = ref({ period: "", year: "" });
-
-function onCancelPeriodRange(val: boolean) {
-  if (!val) {
-    periodRangeStart.value = { period: "", year: "" };
-    periodRangeEnd.value   = { period: "", year: "" };
-  }
-}
-
-const formRef       = ref<FormInstance>();
 const currentMonth  = new Date().getMonth() + 1;
 const currentPeriod = `F${String(currentMonth).padStart(2, "0")}`;
 const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
+const usePeriodRange   = ref(false);
+const periodRangeStart = ref({ period: currentPeriod, year: String(currentYear) });
+const periodRangeEnd   = ref({ period: currentPeriod, year: String(currentYear) });
+
+function onCancelPeriodRange(val: boolean) {
+  if (!val) {
+    periodRangeStart.value = { period: currentPeriod, year: String(currentYear) };
+    periodRangeEnd.value   = { period: currentPeriod, year: String(currentYear) };
+  }
+}
+
+const formRef       = ref<FormInstance>();
 function periodToMonth(period: string): string {
   if (!period) return period;
   const n = parseInt(period.replace("F", ""), 10);
@@ -2013,8 +2013,8 @@ watch(() => props.entry, async (entry) => {
     formData.value = defaultForm();
     ownerSameAsCreator.value = true;
     usePeriodRange.value     = false;
-    periodRangeStart.value   = { period: "", year: "" };
-    periodRangeEnd.value     = { period: "", year: "" };
+    periodRangeStart.value   = { period: currentPeriod, year: String(currentYear) };
+    periodRangeEnd.value     = { period: currentPeriod, year: String(currentYear) };
     isLoadingEntry.value = false;
   }
 }, { immediate: true });
@@ -2109,7 +2109,7 @@ function createChildImpactsFromRange() {
     _periodOpen: false, _periodSearch: "", _yearOpen: false, _yearSearch: ""
   }));
   formData.value.impactPeriod = ""; formData.value.impactValue = ""; formData.value.secondaryValue = "";
-  usePeriodRange.value = false; periodRangeStart.value = { period: "", year: "" }; periodRangeEnd.value = { period: "", year: "" };
+  usePeriodRange.value = false; periodRangeStart.value = { period: currentPeriod, year: String(currentYear) }; periodRangeEnd.value = { period: currentPeriod, year: String(currentYear) };
   ElMessage.success(`Created ${periods.length} child impacts with prorated values`);
 }
 
@@ -2181,7 +2181,8 @@ function reset() {
   selectionPriority.value = null;
   brandSelectionPriority.value = null;
   usePeriodRange.value = false;
-  periodRangeStart.value = { period: "", year: "" }; periodRangeEnd.value = { period: "", year: "" };
+  periodRangeStart.value = { period: currentPeriod, year: String(currentYear) };
+  periodRangeEnd.value   = { period: currentPeriod, year: String(currentYear) };
   formRef.value?.clearValidate();
 }
 
@@ -2327,6 +2328,18 @@ defineExpose({ validate, reset });
 :deep(.owner-checkbox .el-checkbox__input .el-checkbox__inner) {
   border-color: #000;
 }
+
+:deep(.period-range-check .el-checkbox__label) {
+  color: #000 !important;
+}
+:deep(.period-range-check .el-checkbox__input.is-checked .el-checkbox__inner) {
+  background-color: #000 !important;
+  border-color: #000 !important;
+}
+:deep(.period-range-check .el-checkbox__input .el-checkbox__inner) {
+  border-color: #000;
+}
+
 .sub-label {
   font-size: 12px;
   font-weight: 600;
@@ -2447,13 +2460,13 @@ defineExpose({ validate, reset });
   margin-bottom: 16px;
 }
 
-.range-block { display: flex; flex-direction: column; }
+.range-block { display: flex; flex-direction: column; width: 100%;}
 .prorate-btn {
   width: 100%;
-  background-color: #727285;
-  border-color: #727285;
+  background-color: #000;
+  border-color: #000;
   color: #fff;
-  height: 40px;
+  height: 30px;
   font-weight: 600;
   margin-top: 24px;
   border-radius: 6px;
