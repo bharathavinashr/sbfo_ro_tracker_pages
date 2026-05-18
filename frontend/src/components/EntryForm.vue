@@ -2123,7 +2123,13 @@ function toStorage(unit: string, val: string): string {
 }
 function mapToFields(primaryUnit: string, primaryVal: string, secUnit: string, secVal: string): { nsvAud: string; nsvNzd: string; volumeLitres: string; volumeImpactValue: string } {
   const set = (unit: string) => unit === primaryUnit ? toStorage(unit, primaryVal) : unit === secUnit ? toStorage(unit, secVal) : "";
-  return { nsvAud: set("AUD"), nsvNzd: set("NZD"), volumeLitres: set("Volume") };
+  const getRaw = (unit: string) => unit === primaryUnit ? primaryVal : unit === secUnit ? secVal : "";
+  return {
+    nsvAud: set("AUD"),
+    nsvNzd: set("NZD"),
+    volumeLitres: set("Volume"),
+    volumeImpactValue: getRaw("Volume"),
+  };
 }
 
 async function validate() {
@@ -2153,9 +2159,8 @@ async function validate() {
       if (!usePeriodRange.value && !isPeriodAfter(formData.value.impactPeriod, formData.value.impactYear, formData.value.addToForecastByPeriod, formData.value.addToForecastByYear)) { ElMessage.error("Primary Impact Period must be after Add to Forecast By period"); return null; }
       formData.value.impactValue = cleanNumStr(formData.value.impactValue); formData.value.secondaryValue = cleanNumStr(formData.value.secondaryValue);
     }
-    
-    const { nsvAud, nsvNzd, volumeLitres } = mapToFields(formData.value.primaryImpact, formData.value.impactValue, formData.value.secondaryUnit, formData.value.secondaryValue);
-    const volumeImpactValue = formData.value.primaryImpact === "Volume" ? formData.value.impactValue : (formData.value.secondaryUnit === "Volume" ? formData.value.secondaryValue : "");
+
+    const { nsvAud, nsvNzd, volumeLitres, volumeImpactValue } = mapToFields(formData.value.primaryImpact, formData.value.impactValue, formData.value.secondaryUnit, formData.value.secondaryValue);
 
     return {
       ...formData.value,
@@ -2167,12 +2172,11 @@ async function validate() {
       nsvAud, nsvNzd, volumeLitres,
       childImpacts: formData.value.childImpacts.map(ci => {
         const m = mapToFields(ci.impactUnit, ci.impactValue, ci.secondaryUnit, ci.secondaryValue);
-        const childVolumeImpactValue = ci.impactUnit === "Volume" ? ci.impactValue : (ci.secondaryUnit === "Volume" ? ci.secondaryValue : "");
         return {
           impactYear: ci.impactYear,
           impactPeriod: ci.impactPeriod,
           ...m,
-          volumeImpactValue: cleanNumStr(childVolumeImpactValue),
+          volumeImpactValue: cleanNumStr(m.volumeImpactValue),
         };
       }),
     };
