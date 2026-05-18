@@ -727,6 +727,29 @@ const countryOptions  = ref<{value: string, label: string}[]>([]);
 const brandOptions = ref<{value: string, label: string}[]>([]);
 const brandFamilyOptions = ref<{value: string, label: string}[]>([]);
 
+// ─── Data Parsing Helpers ──────────────────────────────────────────────────
+function ensureObject(v: any): Record<string, string> {
+  if (!v) return {};
+  if (typeof v === 'object' && !Array.isArray(v)) return v;
+  try {
+    const p = JSON.parse(v);
+    return (p && typeof p === 'object' && !Array.isArray(p)) ? p : {};
+  } catch { return {}; }
+}
+
+function ensureValues(v: any): string[] {
+  if (!v) return [];
+  if (Array.isArray(v)) return v;
+  if (typeof v === 'object') return Object.values(v);
+  try {
+    const p = JSON.parse(v);
+    if (Array.isArray(p)) return p;
+    if (p && typeof p === 'object') return Object.values(p);
+  } catch {}
+  return [String(v)];
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 onMounted(async () => {
   await lookupStore.preload();
   if (entryStore.users.length === 0) await entryStore.fetchUsers();
@@ -743,9 +766,12 @@ onMounted(async () => {
   // Country names come from the current user's `country` column in app_users.
   // We map each country name to itself as both value and label (no company_code
   // lookup needed — the dropdown only shows names, consistent with how divisions work).
-  const userCountryNames = userCountries.value; // string[] of country names
-  if (userCountryNames.length > 0) {
-    countryOptions.value = userCountryNames.map(name => ({ value: name, label: name }));
+  const rawCountryData = (entryStore.currentUser as any)?.country;
+  const userCountryData = ensureObject(rawCountryData); 
+
+  if (Object.keys(userCountryData).length > 0) {
+    // Populate countryOptions directly from the user's country map
+    countryOptions.value = Object.entries(userCountryData).map(([value, label]) => ({ value, label: label as string }));
   } else {
     // Fallback: fetch all countries across all accessible divisions when user has no restriction
     const accessibleDivs = userDivisions.value;
@@ -754,7 +780,7 @@ onMounted(async () => {
         const allResults = await Promise.all(accessibleDivs.map(d => lookupApi.getCountries(d)));
         const merged = new Map<string, string>();
         allResults.forEach(res => {
-          res.options.forEach(o => merged.set(o.value, o.label));
+          res.options.forEach(o => merged.set(String(o.value), o.label));
         });
         countryOptions.value = Array.from(merged.entries()).map(([value, label]) => ({ value, label }));
       } catch (e) {
@@ -852,28 +878,6 @@ const filteredOwners = computed(() => {
     return label.toLowerCase().includes(s);
   });
 });
-// ─── Data Parsing Helpers ──────────────────────────────────────────────────
-const ensureObject = (v: any): Record<string, string> => {
-  if (!v) return {};
-  if (typeof v === 'object' && !Array.isArray(v)) return v;
-  try {
-    const p = JSON.parse(v);
-    return (p && typeof p === 'object' && !Array.isArray(p)) ? p : {};
-  } catch { return {}; }
-};
-
-const ensureValues = (v: any): string[] => {
-  if (!v) return [];
-  if (Array.isArray(v)) return v;
-  if (typeof v === 'object') return Object.values(v);
-  try {
-    const p = JSON.parse(v);
-    if (Array.isArray(p)) return p;
-    if (p && typeof p === 'object') return Object.values(p);
-  } catch {}
-  return [String(v)];
-};
-// ─────────────────────────────────────────────────────────────────────────────
 
 const ibpStepSearch = ref("");
 const divOpen = ref(false);
@@ -942,13 +946,10 @@ const userDivisions = computed(() => {
 // ─── CHANGE: userCountries reads from app_users `country` column directly ───
 // The column stores an array like ["Australia", "New Zealand"].
 // No longer derived from countryOptions (which was fetched per division).
+// Now stores an object like {"0014": "New Zealand", "0015": "Australia"}.
 const userCountries = computed(() => {
-  const cnts = (entryStore.currentUser as any)?.country;
-  if (cnts) {
-    return Array.isArray(cnts) ? cnts : String(cnts).split(',').map(s => s.trim());
-  }
-  // No restriction — all available countries (populated in onMounted fallback)
-  return countryOptions.value.map(c => c.label);
+  const cnts = ensureObject((entryStore.currentUser as any)?.country);
+  return Object.values(cnts); // Extract country names (labels)
 });
 
 // ─── CHANGE: availableCountryOptions filters the static countryOptions list

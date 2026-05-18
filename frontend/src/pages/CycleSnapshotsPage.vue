@@ -64,13 +64,13 @@
           :row-class-name="getRowClass"
           style="width: 100%"
         >
-          <el-table-column v-if="visibleColumns.changeStatus" label="Status" width="110" fixed>
+          <el-table-column v-if="visibleColumns.changeStatus" label="Change" width="110" fixed>
             <template #default="{ row }">
               <el-tag :type="statusTagType(row.changeStatus)" size="small">{{ row.changeStatus }}</el-tag>
             </template>
           </el-table-column>
 
-          <el-table-column v-if="visibleColumns.modifiedFields" label="Modified Fields" width="200">
+          <el-table-column v-if="visibleColumns.modifiedFields" label="Modified Columns" width="200">
             <template #default="{ row }">
               <template v-if="row.changeStatus === 'Modified' && row.modifiedFields?.length">
                 <el-tag
@@ -102,8 +102,8 @@
 
           <el-table-column v-if="visibleColumns.country" label="Country" width="110">
             <template #default="{ row }">
-              <div>{{ row.country }}</div>
-              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.country && row.previousValues.country !== row.country" class="prev-value">{{ row.previousValues.country }}</div>
+              <div>{{ formatValue(row.country) }}</div>
+              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.country && formatValue(row.previousValues.country) !== formatValue(row.country)" class="prev-value">{{ formatValue(row.previousValues.country) }}</div>
             </template>
           </el-table-column>
 
@@ -123,23 +123,23 @@
 
           <el-table-column v-if="visibleColumns.customer" label="Customer(s)" width="160">
             <template #default="{ row }">
-              <div v-if="row.account">{{ row.account }}</div>
-              <div v-if="row.subChannel" class="text-small text-muted">{{ row.subChannel }}</div>
-              <div v-if="row.channel" class="text-small text-muted text-italic">{{ row.channel }}</div>
+              <div v-if="row.account">{{ formatValue(row.account) }}</div>
+              <div v-if="row.subChannel" class="text-small text-muted">{{ formatValue(row.subChannel) }}</div>
+              <div v-if="row.channel" class="text-small text-muted text-italic">{{ formatValue(row.channel) }}</div>
               <span v-if="!row.account && !row.subChannel && !row.channel">-</span>
               <div v-if="row.changeStatus === 'Modified' && (row.previousValues?.channel || row.previousValues?.subChannel || row.previousValues?.account)" class="prev-value">
-                {{ [row.previousValues.channel, row.previousValues.subChannel, row.previousValues.account].filter(Boolean).join(', ') }}
+                {{ [formatValue(row.previousValues.channel), formatValue(row.previousValues.subChannel), formatValue(row.previousValues.account)].filter(Boolean).join(', ') }}
               </div>
             </template>
           </el-table-column>
 
           <el-table-column v-if="visibleColumns.product" label="Product" width="160">
             <template #default="{ row }">
-              <div v-if="row.brand">{{ row.brand }}</div>
-              <div v-if="row.brandFamily" class="text-small text-muted">{{ formatBrandFamily(row.brandFamily) }}</div>
+              <div v-if="row.brand">{{ formatValue(row.brand) }}</div>
+              <div v-if="row.brandFamily" class="text-small text-muted">{{ formatValue(row.brandFamily) }}</div>
               <span v-if="!row.brand && !row.brandFamily">-</span>
               <div v-if="row.changeStatus === 'Modified' && (row.previousValues?.brand || row.previousValues?.brandFamily)" class="prev-value">
-                {{ [row.previousValues.brand, formatBrandFamily(row.previousValues?.brandFamily)].filter(Boolean).join(', ') }}
+                {{ [formatValue(row.previousValues.brand), formatValue(row.previousValues.brandFamily)].filter(Boolean).join(', ') }}
               </div>
             </template>
           </el-table-column>
@@ -604,16 +604,16 @@ function formatImpactPeriods(childImpacts?: Array<{ impactPeriod: string; impact
   return sorted.map(c => `${periodToMonthAbbr(c.impactPeriod)} ${c.impactYear}`).join(', ');
 }
 
-function formatBrandFamily(brandFamily: string | string[] | Record<string, string> | undefined): string {
-  if (!brandFamily) return '';
-  if (Array.isArray(brandFamily)) return brandFamily.join(', ');
-  if (typeof brandFamily === 'object') return Object.values(brandFamily).join(', ');
+function formatValue(v: any): string {
+  if (!v) return '';
+  if (Array.isArray(v)) return v.join(', ');
+  if (typeof v === 'object') return Object.values(v).join(', ');
   try {
-    const parsed = JSON.parse(brandFamily);
+    const parsed = JSON.parse(v);
     if (Array.isArray(parsed)) return parsed.join(', ');
     if (parsed && typeof parsed === 'object') return Object.values(parsed).join(', ');
   } catch {}
-  return brandFamily;
+  return String(v);
 }
 
 function formatProbability(probability: string): { text: string; opacity: string } {
@@ -645,12 +645,15 @@ function compareEntries(baseEntry: Entry, compEntry: Entry): { modifiedFields: s
   for (const field of Object.keys(fieldDisplayNames)) {
     const bv = baseEntry[field as keyof Entry];
     const cv = compEntry[field as keyof Entry];
-    if (Array.isArray(bv) && Array.isArray(cv)) {
-      if (JSON.stringify([...bv].sort()) !== JSON.stringify([...cv as string[]].sort())) {
-        modifiedFields.push(fieldDisplayNames[field]);
-        previousValues[field] = bv;
-      }
-    } else if (bv !== cv) {
+
+    const isComplex = ['country', 'channel', 'subChannel', 'account', 'brand', 'brandFamily'].includes(field);
+    const isDiff = isComplex 
+      ? formatValue(bv) !== formatValue(cv)
+      : (Array.isArray(bv) && Array.isArray(cv))
+        ? JSON.stringify([...bv].sort()) !== JSON.stringify([...cv as string[]].sort())
+        : bv !== cv;
+
+    if (isDiff) {
       modifiedFields.push(fieldDisplayNames[field]);
       previousValues[field] = bv;
     }

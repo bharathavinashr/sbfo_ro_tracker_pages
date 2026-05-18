@@ -87,7 +87,7 @@ class AppUser(Base):
     ibp_steps = Column(JSONB, nullable=True) 
     is_active = Column(Boolean, default=True)
     role_name = Column(String(50), nullable=True) # 0=System Admin, 1=User, 2=IBP Step Approver, 3=Finance Approver, 4=Viewer
-    country = Column(JSONB, nullable=True) # ["Australia", "New Zealand"]
+    country = Column(JSONB, nullable=True) # {"0014": "New Zealand", "0015": "Australia"}
     division = Column(JSONB, nullable=True) # ["Alcohol", "Non-Alcohol"]
 
 

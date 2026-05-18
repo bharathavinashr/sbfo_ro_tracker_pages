@@ -17,11 +17,11 @@
             </el-col>
             <el-col :span="3">
               <label class="info-label">Country</label>
-              <div class="info-value">{{ latestVersion?.country }}</div>
+              <div class="info-value">{{ formatValue(latestVersion?.country) }}</div>
             </el-col>
             <el-col :span="3">
               <label class="info-label">Brand</label>
-              <div class="info-value">{{ latestVersion?.brand }}</div>
+              <div class="info-value">{{ formatValue(latestVersion?.brand) }}</div>
             </el-col>
             <el-col :span="6">
               <label class="info-label">Owner</label>
@@ -86,7 +86,7 @@
 
       <el-table-column label="Country" width="120">
         <template #default="{ row, $index }">
-          {{ row.country }}
+          {{ formatValue(row.country) }}
           <el-tag v-if="hasChanged($index, 'country')" type="warning" size="small" style="margin-left:4px">Updated</el-tag>
         </template>
       </el-table-column>
@@ -102,6 +102,13 @@
         <template #default="{ row, $index }">
           {{ row.categorisation }}
           <el-tag v-if="hasChanged($index, 'categorisation')" type="warning" size="small" style="margin-left:4px">Updated</el-tag>
+        </template>
+      </el-table-column>
+
+      <el-table-column label="Brand" min-width="120">
+        <template #default="{ row, $index }">
+          {{ formatValue(row.brand) }}
+          <el-tag v-if="hasChanged($index, 'brand')" type="warning" size="small" style="margin-left:4px">Updated</el-tag>
         </template>
       </el-table-column>
 
@@ -174,7 +181,28 @@ function hasChanged(index: number, field: keyof Entry): boolean {
   if (index >= versions.value.length - 1) return false;
   const current = versions.value[index];
   const prev = versions.value[index + 1];
-  return JSON.stringify(current[field]) !== JSON.stringify(prev[field]);
+
+  const v1 = current[field];
+  const v2 = prev[field];
+
+  const complexFields = ['country', 'brand', 'brandFamily', 'channel', 'subChannel', 'account'];
+  if (complexFields.includes(field as string)) {
+    return formatValue(v1) !== formatValue(v2);
+  }
+
+  return JSON.stringify(v1) !== JSON.stringify(v2);
+}
+
+function formatValue(v: any): string {
+  if (!v) return '';
+  if (Array.isArray(v)) return v.join(', ');
+  if (typeof v === 'object') return Object.values(v).join(', ');
+  try {
+    const parsed = JSON.parse(v);
+    if (Array.isArray(parsed)) return parsed.join(', ');
+    if (parsed && typeof parsed === 'object') return Object.values(parsed).join(', ');
+  } catch {}
+  return String(v);
 }
 
 function statusType(status?: string) {
