@@ -42,6 +42,9 @@
           {{ filteredCount }} {{ filteredCount === 1 ? 'entry' : 'entries' }} will be locked for {{ form.ibpStep }}
         </p>
       </el-form-item>
+      <el-form-item>
+        <el-checkbox v-model="form.isFinal">Mark as Final Version</el-checkbox>
+      </el-form-item>
     </el-form>
 
     <template #footer>
@@ -88,6 +91,7 @@ const form = ref({
   period: "",
   year: currentYear.toString(),
   ibpStep: "",
+  isFinal: false,
 });
 
 const totalEntries = computed(() => store.displayEntries.length);
@@ -107,7 +111,8 @@ watch(visible, (val) => {
 
 function handleClose() {
   visible.value = false;
-  form.value = { period: "", year: currentYear.toString(), ibpStep: "" }; // Reset form on close
+  // Reset form on close
+  form.value = { period: "", year: currentYear.toString(), ibpStep: "", isFinal: false };
 }
 
 async function handleCreateSnapshot() {
@@ -115,14 +120,15 @@ async function handleCreateSnapshot() {
     ElMessage.warning("Please select period, year, and IBP Step");
     return;
   }
-  
+
   loading.value = true;
   try {
     const snapshotName = `${form.value.ibpStep} - ${form.value.period} ${form.value.year}`;
     const result = await snapshotApi.create({
       period: form.value.period,
       year: form.value.year,
-      ibp_step: form.value.ibpStep
+      ibp_step: form.value.ibpStep,
+      is_final: form.value.isFinal,
     });
     ElMessage.success(`Locked view created: ${snapshotName} (${result.entries_count} entries)`);
     handleClose();
