@@ -581,6 +581,7 @@
                   <el-dropdown trigger="click" @command="formData.financialImpactType = $event">
                     <el-button type="primary" class="black-dropdown-btn">
                       {{ formData.financialImpactType }}
+                      <el-icon class="el-icon--right"><ArrowDown /></el-icon>
                     </el-button>
                     <template #dropdown>
                       <el-dropdown-menu>
@@ -610,6 +611,7 @@
                   <el-dropdown trigger="click" @command="formData.volumeImpactType = $event">
                     <el-button type="primary" class="black-dropdown-btn">
                       {{ formData.volumeImpactType }}
+                      <el-icon class="el-icon--right"><ArrowDown /></el-icon>
                     </el-button>
                     <template #dropdown>
                       <el-dropdown-menu>
@@ -2406,7 +2408,7 @@ defineExpose({ validate, reset });
   border-color: #0e1015 !important;
   color: #fff !important;
   font-weight: 600;
-  width: 100px;
+  width: 110px;
   height: 100%;
   border-radius: 4px;
 }
