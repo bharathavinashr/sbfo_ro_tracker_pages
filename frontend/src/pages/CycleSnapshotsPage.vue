@@ -4,7 +4,7 @@
       <el-button :icon="ArrowLeft" @click="router.push('/')">Back to Main</el-button>
       <div>
         <h1 class="page-title">
-          {{ showComparison ? 'Snapshot Comparison' : 'View Snapshots' }}
+          {{ showComparison ? 'Snapshot Comparison' : 'Browse Snapshots' }}
         </h1>
         <p class="page-subtitle">
           {{ showComparison
@@ -288,7 +288,7 @@
         <template #image>
           <el-icon :size="60"><Calendar /></el-icon>
         </template>
-        <p>Use the Lock View button on the main page to create your first snapshot</p>
+        <p>Use the Generate Snapshot button on the main page to create your first snapshot</p>
       </el-empty>
 
       <div v-else class="snapshots-grid">

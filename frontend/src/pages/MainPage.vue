@@ -68,7 +68,7 @@
           :icon="Lock"
           @click="lockViewOpen = true"
         >
-          Lock View
+          Generate Snapshot
         </el-button>
 
         <el-button
@@ -119,7 +119,7 @@
       </template>
     </el-dialog>
 
-    <!-- Lock View Dialog -->
+    <!-- Generate Snapshot Dialog -->
     <LockView v-model="lockViewOpen" />
 
   </div>
