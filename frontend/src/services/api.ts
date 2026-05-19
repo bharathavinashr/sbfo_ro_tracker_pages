@@ -146,4 +146,6 @@ export const snapshotApi = {
     api.get(`/api/snapshots/${snapshotId}`).then((r) => r.data),
   delete: (snapshotId: string) =>
     api.delete(`/api/snapshots/${snapshotId}`).then((r) => r.data),
+  updateFinal: (snapshotId: string, isFinal: boolean) =>
+    api.patch(`/api/snapshots/${snapshotId}/final`, { isFinal }).then((r) => r.data),
 };

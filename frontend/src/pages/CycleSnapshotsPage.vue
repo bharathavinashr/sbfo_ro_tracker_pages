@@ -314,7 +314,18 @@
                         @change="toggleSnapshotSelection(snapshot.snapshot_id)"
                       />
                       <span class="snapshot-name">{{ snapshot.name }}</span>
+                      <el-tag v-if="snapshot.is_final" type="success" size="small" effect="dark" class="final-tag">Final</el-tag>
                     </div>
+                    <el-dropdown trigger="click" @command="handleToggleFinal(snapshot)">
+                      <el-button link :icon="MoreFilled" />
+                      <template #dropdown>
+                        <el-dropdown-menu>
+                          <el-dropdown-item command="toggle">
+                            {{ snapshot.is_final ? 'Unmark as Final Version' : 'Mark as Final Version' }}
+                          </el-dropdown-item>
+                        </el-dropdown-menu>
+                      </template>
+                    </el-dropdown>
                   </div>
                 </template>
                 <div class="card-content">
@@ -342,7 +353,7 @@
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { ArrowLeft, Calendar, Loading, Delete, Close, Grid, ScaleToOriginal } from "@element-plus/icons-vue";
+import { ArrowLeft, Calendar, Loading, Delete, Close, Grid, ScaleToOriginal, MoreFilled } from "@element-plus/icons-vue";
 import { snapshotApi } from "@/services/api";
 
 interface SnapshotGroup {
@@ -353,6 +364,7 @@ interface SnapshotGroup {
   ibp_step: string;
   entries_count: number;
   created_at: string;
+  is_final: boolean;
 }
 
 interface ChildImpact {
@@ -540,6 +552,24 @@ async function handleDeleteSnapshot(snapshotId: string, snapshotName: string) {
     if (error !== 'cancel') {
       ElMessage.error(error?.response?.data?.detail || "Failed to delete snapshot");
     }
+  }
+}
+
+async function handleToggleFinal(snapshot: SnapshotGroup) {
+  try {
+    const newVal = !snapshot.is_final;
+    await snapshotApi.updateFinal(snapshot.snapshot_id, newVal);
+    ElMessage.success(`Snapshot ${newVal ? 'marked as final' : 'unmarked as final'}`);
+    await fetchSnapshots();
+  } catch (error: any) {
+    // Handle FastAPI validation error arrays (422) vs standard error strings
+    const detail = error?.response?.data?.detail;
+    const message = Array.isArray(detail) 
+      ? detail.map(d => `${d.loc[d.loc.length - 1]}: ${d.msg}`).join(', ')
+      : detail;
+    
+    ElMessage.error(message || error.message || "Failed to update snapshot status");
+    console.error("Snapshot toggle error:", error);
   }
 }
 
@@ -966,6 +996,14 @@ async function handleCompare() {
 .snapshot-name {
   font-weight: 600;
   font-size: 16px;
+}
+
+.final-tag {
+  margin-left: 8px;
+}
+
+.el-dropdown-link {
+  cursor: pointer;
 }
 
 .card-content {

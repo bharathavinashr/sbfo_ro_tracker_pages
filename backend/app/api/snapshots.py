@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, List
 from datetime import datetime
 import uuid
@@ -19,6 +19,10 @@ class SnapshotCreate(BaseModel):
     year: str
     ibp_step: str
     is_final: Optional[bool] = False
+
+class SnapshotFinalUpdate(BaseModel):
+    is_final: bool = Field(validation_alias="isFinal")
+    model_config = ConfigDict(populate_by_name=True)
 
 
 @router.post("")
@@ -156,10 +160,11 @@ def get_all_snapshots(db: Session = Depends(get_db)):
             Snapshot.period,
             Snapshot.year,
             Snapshot.ibp_step,
+            Snapshot.is_final,
             func.count(Snapshot.id).label("entries_count"),
             func.min(Snapshot.created_at).label("created_at"),
         )
-        .group_by(Snapshot.snapshot_id, Snapshot.period, Snapshot.year, Snapshot.ibp_step)
+        .group_by(Snapshot.snapshot_id, Snapshot.period, Snapshot.year, Snapshot.ibp_step, Snapshot.is_final)
         .order_by(func.min(Snapshot.created_at).desc())
         .all()
     )
@@ -173,12 +178,43 @@ def get_all_snapshots(db: Session = Depends(get_db)):
             "period": snap.period,
             "year": snap.year,
             "ibp_step": snap.ibp_step,
+            "is_final": snap.is_final,
             "entries_count": snap.entries_count,
             "created_at": snap.created_at.isoformat() if snap.created_at else None,
         })
     
     return {"snapshots": result}
 
+
+@router.patch("/{snapshot_id}/final")
+def toggle_snapshot_final(snapshot_id: str, data: SnapshotFinalUpdate, db: Session = Depends(get_db)):
+    # Get the snapshot info from the first record
+    first_record = db.query(Snapshot).filter(Snapshot.snapshot_id == snapshot_id).first()
+    if not first_record:
+        raise HTTPException(status_code=404, detail="Snapshot not found")
+
+    if data.is_final:
+        # Check if another snapshot for same period/year/step is already final
+        existing_final = (
+            db.query(Snapshot)
+            .filter(
+                Snapshot.period == first_record.period,
+                Snapshot.year == first_record.year,
+                Snapshot.ibp_step == first_record.ibp_step,
+                Snapshot.is_final == True,
+                Snapshot.snapshot_id != snapshot_id
+            )
+            .first()
+        )
+        if existing_final:
+            raise HTTPException(
+                status_code=400,
+                detail=f"A final version for {first_record.ibp_step} in {first_record.period} {first_record.year} already exists."
+            )
+
+    db.query(Snapshot).filter(Snapshot.snapshot_id == snapshot_id).update({"is_final": data.is_final})
+    db.commit()
+    return {"success": True, "is_final": data.is_final}
 
 @router.get("/{snapshot_id}")
 def get_snapshot_by_id(snapshot_id: str, db: Session = Depends(get_db)):
