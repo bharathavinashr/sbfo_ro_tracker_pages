@@ -202,7 +202,7 @@
               <circle cx="12" cy="12" r="3"/>
             </svg>
             <span class="phased-view-text">
-              {{ phasedImpactViews.length === 0 ? 'View Phased Impact' : `${phasedImpactViews.length} selected` }}
+              {{ phasedImpactViews.length === 0 ? 'View Financial Impact by' : `${phasedImpactViews.length} selected` }}
             </span>
             <svg class="chevron-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="6 9 12 15 18 9"/>
@@ -222,6 +222,42 @@
               <el-checkbox
                 :model-value="phasedImpactViews.includes(opt.key)"
                 @change="togglePhasedView(opt.key)"
+              />
+              <span>{{ opt.label }}</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="phased-view-control" v-click-outside="closePhasedVolumeMenu">
+          <button
+            class="phased-view-trigger"
+            :class="{ 'phased-view-active': phasedVolumeViews.length > 0 }"
+            @click.stop="phasedVolumeMenuOpen = !phasedVolumeMenuOpen">
+            <svg style="width:14px;height:14px;margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <span class="phased-view-text">
+              {{ phasedVolumeViews.length === 0 ? 'View Volume Impact by' : `${phasedVolumeViews.length} selected` }}
+            </span>
+            <svg class="chevron-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div v-if="phasedVolumeMenuOpen" class="phased-view-dropdown" @click.stop>
+            <label class="gbd-item gbd-all">
+              <el-checkbox
+                :model-value="phasedVolumeViews.length === phasedViewOptions.length"
+                :indeterminate="phasedVolumeViews.length > 0 && phasedVolumeViews.length < phasedViewOptions.length"
+                @change="toggleAllPhasedVolumeViews"
+              />
+              <span class="gbd-label-bold">Select All</span>
+            </label>
+            <div class="gbd-divider" />
+            <label v-for="opt in phasedViewOptions" :key="opt.key" class="gbd-item">
+              <el-checkbox
+                :model-value="phasedVolumeViews.includes(opt.key)"
+                @change="togglePhasedVolumeView(opt.key)"
               />
               <span>{{ opt.label }}</span>
             </label>
@@ -287,7 +323,7 @@
               <th v-if="colVisible.volumeCases"    class="col-md tr">Volume Impact</th>
               <th v-if="colVisible.volumeImpactType" class="col-sm">Volume Impact Type</th>
               <th v-if="colVisible.volumeImpactValue" class="col-md tr">Volume Impact Value</th>
-              <template v-if="phasedImpactViews.length > 0">
+              <template v-if="hasPhasedViews">
                 <th v-for="col in phasedColumns" :key="col.label" class="col-phased tc">{{ col.label }}</th>
               </template>
               <th v-else-if="colVisible.impactPeriods" class="col-lg">Impact Period(s)</th>
@@ -346,7 +382,7 @@
                   </td>
                   <td v-if="colVisible.volumeImpactType">{{ (row as any).volumeImpactType || '-' }}</td>
                   <td v-if="colVisible.volumeImpactValue" class="tr">{{ (row as any).volumeImpactValue ? Number((row as any).volumeImpactValue).toLocaleString() : '-' }}</td>
-                  <template v-if="phasedImpactViews.length > 0">
+                  <template v-if="hasPhasedViews">
                     <td v-for="col in phasedColumns" :key="col.label" class="tc phased-cell">
                       {{ formatPhasedCell(getAggregatedImpact(row, col)) }}
                     </td>
@@ -405,7 +441,7 @@
                     <td v-if="colVisible.volumeCases"    class="tr cell-muted">{{ ci.volumeCases ? Number(ci.volumeCases).toLocaleString() : '-' }}</td>
                     <td v-if="colVisible.volumeImpactType" class="cell-muted">{{ row.volumeImpactType || '-' }}</td>
                     <td v-if="colVisible.volumeImpactValue" class="tr cell-muted">{{ ci.volumeImpactValue ? Number(ci.volumeImpactValue).toLocaleString() : '-' }}</td>
-                    <template v-if="phasedImpactViews.length > 0">
+                    <template v-if="hasPhasedViews">
                       <td v-for="col in phasedColumns" :key="col.label" class="tc cell-muted phased-cell">
                         {{ formatPhasedCellChild(ci, col) }}
                       </td>
@@ -447,7 +483,7 @@
           <th v-if="colVisible.volumeCases"    class="col-md tr">Volume (Cases)</th>
           <th v-if="colVisible.volumeImpactType" class="col-sm">Volume Impact Type</th>
           <th v-if="colVisible.volumeImpactValue" class="col-md tr">Volume Impact Value</th>
-          <template v-if="phasedImpactViews.length > 0">
+          <template v-if="hasPhasedViews">
             <th v-for="col in phasedColumns" :key="col.label" class="col-phased tc">{{ col.label }}</th>
           </template>
           <th v-else-if="colVisible.impactPeriods" class="col-lg">Impact Period(s)</th>
@@ -506,7 +542,7 @@
                   <td v-if="colVisible.volumeCases" class="tr">{{ row.volumeCases ? Number(row.volumeCases).toLocaleString() : '-' }}</td>
               <td v-if="colVisible.volumeImpactType">{{ (row as any).volumeImpactType || '-' }}</td>
               <td v-if="colVisible.volumeImpactValue" class="tr">{{ (row as any).volumeImpactValue ? Number((row as any).volumeImpactValue).toLocaleString() : '-' }}</td>
-              <template v-if="phasedImpactViews.length > 0">
+              <template v-if="hasPhasedViews">
                 <td v-for="col in phasedColumns" :key="col.label" class="tc phased-cell">
                   {{ formatPhasedCell(getAggregatedImpact(row, col)) }}
                 </td>
@@ -565,7 +601,7 @@
                 <td v-if="colVisible.volumeCases"    class="tr cell-muted">{{ ci.volumeCases ? Number(ci.volumeCases).toLocaleString() : '-' }}</td>
                 <td v-if="colVisible.volumeImpactType" class="cell-muted">{{ row.volumeImpactType || '-' }}</td>
                 <td v-if="colVisible.volumeImpactValue" class="tr cell-muted">{{ ci.volumeImpactValue ? Number(ci.volumeImpactValue).toLocaleString() : '-' }}</td>
-                <template v-if="phasedImpactViews.length > 0">
+                <template v-if="hasPhasedViews">
                   <td v-for="col in phasedColumns" :key="col.label" class="tc cell-muted phased-cell">
                     {{ formatPhasedCellChild(ci, col) }}
                   </td>
@@ -806,12 +842,12 @@ const colVisible = ref({
   addToForecastBy:false,
   categorisation: true,
   description:    true,
-  financialImpactType:     true,
+  financialImpactType:     false,
   currency:       false,
-  impact:         true,
+  impact:         false,
   volumeCases:    false,
-  volumeImpactType: true,
-  volumeImpactValue: true,
+  volumeImpactType: false,
+  volumeImpactValue: false,
   impactPeriods:  true,
   subChannel:     true,
   account:        true,
@@ -823,39 +859,11 @@ const colVisible = ref({
 });
 
 // ─── Phased Impact View (multi-select) ───────────────────────────────────────
-const phasedImpactViews = ref<string[]>([]);
-const phasedMenuOpen    = ref(false);
-
-const closePhasedMenu = () => {
-  phasedMenuOpen.value = false;
-};
-
-const phasedViewOptions = [
-  { key: "month",     label: "Month" },
-  { key: "quarter",   label: "Quarter" },
-  { key: "half-year", label: "Half Year" },
-  { key: "year",      label: "Year" },
-];
-
-function togglePhasedView(key: string) {
-  const i = phasedImpactViews.value.indexOf(key);
-  if (i === -1) phasedImpactViews.value.push(key);
-  else          phasedImpactViews.value.splice(i, 1);
-}
-
-function toggleAllPhasedViews(checked: boolean) {
-  phasedImpactViews.value = checked ? phasedViewOptions.map(o => o.key) : [];
-}
-
-// Auto-enable Impact Type column when any phased view is active
-watch(phasedImpactViews, (val) => {
-  if (val.length > 0) colVisible.value.financialImpactType = true;
-});
-
 interface PhasedCol {
   label:   string;
   periods: string[];
   year:    string;
+  type:    'financial' | 'volume';
 }
 
 const MONTH_ABBRS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -865,50 +873,117 @@ function periodToMonthAbbr(period: string): string {
   return (i >= 0 && i < 12) ? MONTH_ABBRS[i] : period;
 }
 
+const phasedViewOptions = [
+  { key: "month",     label: "Month" },
+  { key: "quarter",   label: "Quarter" },
+  { key: "half-year", label: "Half Year" },
+  { key: "year",      label: "Year" },
+];
+
+const phasedImpactViews = ref<string[]>([]);
+const phasedMenuOpen    = ref(false);
+const closePhasedMenu = () => { phasedMenuOpen.value = false; };
+function togglePhasedView(key: string) {
+  const i = phasedImpactViews.value.indexOf(key);
+  if (i === -1) phasedImpactViews.value.push(key);
+  else          phasedImpactViews.value.splice(i, 1);
+}
+function toggleAllPhasedViews(checked: boolean) {
+  phasedImpactViews.value = checked ? phasedViewOptions.map(o => o.key) : [];
+}
+watch(phasedImpactViews, (val) => {
+  const isActive = val.length > 0;
+  colVisible.value.financialImpactType = isActive;
+  colVisible.value.currency = isActive;
+  colVisible.value.impact = isActive;
+}, { deep: true });
+
+const phasedVolumeViews = ref<string[]>([]);
+const phasedVolumeMenuOpen = ref(false);
+const closePhasedVolumeMenu = () => { phasedVolumeMenuOpen.value = false; };
+function togglePhasedVolumeView(key: string) {
+  const i = phasedVolumeViews.value.indexOf(key);
+  if (i === -1) phasedVolumeViews.value.push(key);
+  else          phasedVolumeViews.value.splice(i, 1);
+}
+function toggleAllPhasedVolumeViews(checked: boolean) {
+  phasedVolumeViews.value = checked ? phasedViewOptions.map(o => o.key) : [];
+}
+watch(phasedVolumeViews, (val) => {
+  const isActive = val.length > 0;
+  colVisible.value.volumeImpactType = isActive;
+  colVisible.value.volumeImpactValue = isActive;
+}, { deep: true });
+
+const hasPhasedViews = computed(() => phasedImpactViews.value.length > 0 || phasedVolumeViews.value.length > 0);
+
 // Build columns for all currently-selected phased views, in definition order
 const phasedColumns = computed((): PhasedCol[] => {
   const cols: PhasedCol[] = [];
   const currentYear = new Date().getFullYear();
   const years = [currentYear, currentYear + 1];
-  // Preserve the order defined in phasedViewOptions
-  const activeKeys = phasedViewOptions.map(o => o.key).filter(k => phasedImpactViews.value.includes(k));
 
-  for (const view of activeKeys) {
+  // Financial Impact Columns
+  const activeImpactKeys = phasedViewOptions.map(o => o.key).filter(k => phasedImpactViews.value.includes(k));
+  for (const view of activeImpactKeys) {
     if (view === "month") {
       for (const y of years)
         for (let m = 1; m <= 12; m++)
-          cols.push({ label: `${MONTH_ABBRS[m-1]} ${y}`, periods: [`F${String(m).padStart(2,"0")}`], year: String(y) });
+          cols.push({ label: `${MONTH_ABBRS[m-1]} ${y} ($)`, periods: [`F${String(m).padStart(2,"0")}`], year: String(y), type: 'financial' });
     } else if (view === "quarter") {
       for (const y of years)
         for (let q = 1; q <= 4; q++) {
           const sm = (q-1)*3 + 1;
-          cols.push({ label: `Q${q} ${y}`, year: String(y),
-            periods: [sm, sm+1, sm+2].map(m => `F${String(m).padStart(2,"0")}`) });
+          cols.push({ label: `Q${q} ${y} ($)`, year: String(y), periods: [sm, sm+1, sm+2].map(m => `F${String(m).padStart(2,"0")}`), type: 'financial' });
         }
     } else if (view === "half-year") {
       for (const y of years) {
-        cols.push({ label: `H1 ${y}`, year: String(y), periods: ["F01","F02","F03","F04","F05","F06"] });
-        cols.push({ label: `H2 ${y}`, year: String(y), periods: ["F07","F08","F09","F10","F11","F12"] });
+        cols.push({ label: `H1 ${y} ($)`, year: String(y), periods: ["F01","F02","F03","F04","F05","F06"], type: 'financial' });
+        cols.push({ label: `H2 ${y} ($)`, year: String(y), periods: ["F07","F08","F09","F10","F11","F12"], type: 'financial' });
       }
     } else if (view === "year") {
       for (const y of years)
-        cols.push({ label: `${y} Total`, year: String(y),
-          periods: Array.from({length:12},(_,i) => `F${String(i+1).padStart(2,"0")}`) });
+        cols.push({ label: `${y} Total ($)`, year: String(y), periods: Array.from({length:12},(_,i) => `F${String(i+1).padStart(2,"0")}`), type: 'financial' });
+    }
+  }
+
+  // Volume Impact Columns
+  const activeVolumeKeys = phasedViewOptions.map(o => o.key).filter(k => phasedVolumeViews.value.includes(k));
+  for (const view of activeVolumeKeys) {
+    if (view === "month") {
+      for (const y of years)
+        for (let m = 1; m <= 12; m++)
+          cols.push({ label: `${MONTH_ABBRS[m-1]} ${y} (Vol.)`, periods: [`F${String(m).padStart(2,"0")}`], year: String(y), type: 'volume' });
+    } else if (view === "quarter") {
+      for (const y of years)
+        for (let q = 1; q <= 4; q++) {
+          const sm = (q-1)*3 + 1;
+          cols.push({ label: `Q${q} ${y} (Vol.)`, year: String(y), periods: [sm, sm+1, sm+2].map(m => `F${String(m).padStart(2,"0")}`), type: 'volume' });
+        }
+    } else if (view === "half-year") {
+      for (const y of years) {
+        cols.push({ label: `H1 ${y} (Vol.)`, year: String(y), periods: ["F01","F02","F03","F04","F05","F06"], type: 'volume' });
+        cols.push({ label: `H2 ${y} (Vol.)`, year: String(y), periods: ["F07","F08","F09","F10","F11","F12"], type: 'volume' });
+      }
+    } else if (view === "year") {
+      for (const y of years)
+        cols.push({ label: `${y} Total (Vol.)`, year: String(y), periods: Array.from({length:12},(_,i) => `F${String(i+1).padStart(2,"0")}`), type: 'volume' });
     }
   }
   return cols;
 });
 
-function getImpactForPeriod(row: Entry, period: string, year: string): number {
+function getImpactValueForPeriod(row: Entry, period: string, year: string, type: 'financial' | 'volume'): number {
+  const field = type === 'financial' ? 'impact' : 'volumeImpactValue';
   if (row.childImpacts?.length) {
     const ci = row.childImpacts.find(c => c.impactPeriod === period && c.impactYear === year);
-    return ci ? (parseFloat((ci.impact as string) || "0") || 0) : 0;
+    return ci ? (parseFloat((ci as any)[field] || "0") || 0) : 0;
   }
-  return (row.impactPeriod === period && row.impactYear === year) ? (parseFloat((row.impact as string) || "0") || 0) : 0;
+  return (row.impactPeriod === period && row.impactYear === year) ? (parseFloat((row as any)[field] || "0") || 0) : 0;
 }
 
 function getAggregatedImpact(row: Entry, col: PhasedCol): number {
-  return col.periods.reduce((sum, p) => sum + getImpactForPeriod(row, p, col.year), 0);
+  return col.periods.reduce((sum, p) => sum + getImpactValueForPeriod(row, p, col.year, col.type), 0);
 }
 
 function formatPhasedCell(val: number): string {
@@ -917,8 +992,10 @@ function formatPhasedCell(val: number): string {
 
 function formatPhasedCellChild(ci: NonNullable<Entry["childImpacts"]>[number], col: PhasedCol): string {
   if (!ci) return "-";
-  if (col.periods.includes(ci.impactPeriod) && ci.impactYear === col.year)
-    return parseFloat(ci.impact || "0").toLocaleString();
+  if (col.periods.includes(ci.impactPeriod) && ci.impactYear === col.year) {
+    const field = col.type === 'financial' ? 'impact' : 'volumeImpactValue';
+    return parseFloat((ci as any)[field] || "0").toLocaleString();
+  }
   return "-";
 }
 
@@ -1124,7 +1201,7 @@ function exportToCSV(rows: Entry[], filename = `entries_${new Date().toISOString
   if (cv.volumeCases)     headers.push("Volume (Cases)");
   if (cv.volumeImpactType) headers.push("Volume Impact Type");
   if (cv.volumeImpactValue) headers.push("Volume Impact Value");
-  if (phasedImpactViews.value.length > 0) {
+  if (hasPhasedViews.value) {
     phasedColumns.value.forEach(c => headers.push(c.label));
   } else if (cv.impactPeriods) {
     headers.push("Impact Period(s)");
@@ -1155,7 +1232,7 @@ function exportToCSV(rows: Entry[], filename = `entries_${new Date().toISOString
     if (cv.volumeCases)     r.push((e as any).volumeImpact ? String(parseFloat((e as any).volumeImpact)) : "");
     if (cv.volumeImpactType) r.push(escapeCSV((e as any).volumeImpactType || ""));
     if (cv.volumeImpactValue) r.push((e as any).volumeImpactValue ? String(parseFloat((e as any).volumeImpactValue)) : "");
-    if (phasedImpactViews.value.length > 0) {
+    if (hasPhasedViews.value) {
       phasedColumns.value.forEach(col => {
         const v = getAggregatedImpact(e, col);
         r.push(v !== 0 ? String(v) : "");
