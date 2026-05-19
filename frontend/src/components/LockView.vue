@@ -11,8 +11,8 @@
             <el-option
               v-for="period in periods"
               :key="period"
-              :value="period"
-              :label="period"
+              :value="period.value"
+              :label="period.label"
             />
           </el-select>
           <el-select v-model="form.year" placeholder="Year" class="year-select">
@@ -77,7 +77,10 @@ const visible = ref(props.modelValue);
 const loading = ref(false);
 
 const currentYear = new Date().getFullYear();
-const periods = ["F01", "F02", "F03", "F04", "F05", "F06", "F07", "F08", "F09", "F10", "F11", "F12"];
+const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const periods = monthNames.map((name, index) => ({
+  value: `F${String(index + 1).padStart(2, "0")}`, label: name
+}));
 const years = Array.from({ length: 10 }, (_, i) => (currentYear - 5 + i).toString());
 const ibpSteps = ["Portfolio Review", "Supply Review", "Demand Review", "A&P (Pre-Exec)", "Overheads (Pre-Exec)"];
 
@@ -104,7 +107,7 @@ watch(visible, (val) => {
 
 function handleClose() {
   visible.value = false;
-  form.value = { period: "", year: currentYear.toString(), ibpStep: "" };
+  form.value = { period: "", year: currentYear.toString(), ibpStep: "" }; // Reset form on close
 }
 
 async function handleCreateSnapshot() {

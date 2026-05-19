@@ -786,34 +786,36 @@ onMounted(async () => {
   const rawCountryData = (entryStore.currentUser as any)?.country;
   const userCountryData = ensureObject(rawCountryData); 
 
-  if (Object.keys(userCountryData).length > 0) {
-    countryOptions.value = Object.entries(userCountryData).map(([value, label]) => ({ value, label: label as string }));
-  } else {
-    const accessibleDivs = userDivisions.value;
-    if (accessibleDivs.length > 0) {
-      try {
-        const allResults = await Promise.all(accessibleDivs.map(d => lookupApi.getCountries(d)));
-        const merged = new Map<string, string>();
-        allResults.forEach(res => {
-          res.options.forEach(o => merged.set(String(o.value), o.label));
-        });
-        countryOptions.value = Array.from(merged.entries()).map(([value, label]) => ({ value, label }));
-      } catch (e) {
-        console.error("Error pre-fetching all countries:", e);
-      }
-    }
+  // Always fetch all countries for the user's divisions (or all divisions) to ensure 
+  // the dropdown contains both "New Zealand" and "Australia".
+  // We always fetch for all known divisions to ensure the full list is available.
+  const divsToFetch = divisionOptions.value.length > 0 ? divisionOptions.value : ["Alcohol", "Non-Alcohol"];
+
+  try {
+    const allResults = await Promise.all(divsToFetch.map(d => lookupApi.getCountries(d)));
+    const merged = new Map<string, string>();
+    allResults.forEach(res => {
+      res.options.forEach(o => merged.set(String(o.value), o.label));
+    });
+    countryOptions.value = Array.from(merged.entries()).map(([value, label]) => ({ value, label }));
+  } catch (e) {
+    console.error("Error pre-fetching all countries:", e);
   }
 
   if (!props.entry) {
     if (userIbpSteps.value.length === 1) {
       formData.value.ibpStep = userIbpSteps.value[0];
     }
-    if (userDivisions.value.length === 1) {
-      formData.value.division = userDivisions.value[0];
+    // Auto-select division if the user is restricted to exactly one division.
+    if (userDivisionsForAutoSelect.value.length === 1) {
+      formData.value.division = userDivisionsForAutoSelect.value[0];
     }
-    const availableCountries = availableCountryOptions.value;
-    if (availableCountries.length === 1) {
-      formData.value.country = { [availableCountries[0].value]: availableCountries[0].label };
+    
+    // Auto-select if the user has exactly one country in their profile, but allow selection of others.
+    const userAssignedCountries = Object.entries(userCountryData);
+    if (userAssignedCountries.length === 1) {
+      const [code, name] = userAssignedCountries[0];
+      formData.value.country = { [code]: name as string };
     }
   }
 });
@@ -943,27 +945,23 @@ const userIbpSteps = computed(() => {
   return ibpStepOptions.value;
 });
 
-const userDivisions = computed(() => {
-  const divs = (entryStore.currentUser as any)?.division;
-  if (divs) {
-    return Array.isArray(divs) ? divs : String(divs).split(',').map(s => s.trim());
-  }
-  return divisionOptions.value;
-});
-
 const userCountries = computed(() => {
   const cnts = ensureObject((entryStore.currentUser as any)?.country);
   return Object.values(cnts);
 });
 
-const availableCountryOptions = computed(() => {
-  const allowed = userCountries.value;
-  if (!allowed.length) return countryOptions.value;
-  return countryOptions.value.filter(opt => allowed.includes(opt.label));
-});
+const availableCountryOptions = computed(() => countryOptions.value);
 
+// This computed property is specifically for auto-selecting a division if the user is restricted to only one.
+// It returns an empty array if the user has no specific division restriction or multiple divisions.
+const userDivisionsForAutoSelect = computed(() => {
+  const divs = (entryStore.currentUser as any)?.division;
+  if (divs && Array.isArray(divs) && divs.length > 0) return divs;
+  return [];
+});
 const filteredIbpSteps = computed(() => userIbpSteps.value.filter(d => d.toLowerCase().includes(ibpStepSearch.value.toLowerCase())));
-const filteredDivs = computed(() => userDivisions.value.filter(d => d.toLowerCase().includes(divSearch.value.toLowerCase())));
+// The division dropdown should always show all available divisions, regardless of user's assigned divisions.
+const filteredDivs = computed(() => divisionOptions.value.filter(d => d.toLowerCase().includes(divSearch.value.toLowerCase())));
 const filteredCountries = computed(() => availableCountryOptions.value.filter(c => c.label.toLowerCase().includes(countrySearch.value.toLowerCase())));
 
 const filteredCreationPeriods = computed(() => PERIODS.filter(p => periodToMonth(p).toLowerCase().includes(creationPeriodSearch.value.toLowerCase()) || p.toLowerCase().includes(creationPeriodSearch.value.toLowerCase())));

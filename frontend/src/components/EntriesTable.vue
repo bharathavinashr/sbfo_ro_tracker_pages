@@ -174,10 +174,10 @@
               <el-checkbox v-model="colVisible.addToForecastBy">Add to Forecast By</el-checkbox>
               <el-checkbox v-model="colVisible.categorisation">Categorisation</el-checkbox>
               <el-checkbox v-model="colVisible.description">Short Description</el-checkbox>
-              <el-checkbox v-model="colVisible.financialImpactType">Impact Type</el-checkbox>
+              <el-checkbox v-model="colVisible.financialImpactType">Financial Impact Type</el-checkbox>
               <el-checkbox v-model="colVisible.currency">Financial Impact Currency</el-checkbox>
-              <el-checkbox v-model="colVisible.impact">Impact</el-checkbox>
-              <el-checkbox v-model="colVisible.volumeCases">Volume Impact</el-checkbox>
+              <el-checkbox v-model="colVisible.impact">Financial Impact Value</el-checkbox>
+              <!-- <el-checkbox v-model="colVisible.volumeCases">Volume Impact</el-checkbox> -->
               <el-checkbox v-model="colVisible.volumeImpactType">Volume Impact Type</el-checkbox>
               <el-checkbox v-model="colVisible.volumeImpactValue">Volume Impact Value</el-checkbox>
               <el-checkbox v-model="colVisible.impactPeriods">Impact Period(s)</el-checkbox>
@@ -349,7 +349,7 @@
                     <span v-if="!row.account && !row.subChannel && !row.channel">-</span>
                   </td>
                   <td v-if="colVisible.product">
-                    <div v-if="row.brand">{{ row.brand }}</div>
+                    <div v-if="row.brand">{{ formatBrandFamily(row.brand) }}</div>
                     <div v-if="row.brandFamily" class="cell-sub italic">{{ formatBrandFamily(row.brandFamily) }}</div>
                     <span v-if="!row.brand && !row.brandFamily">-</span>
                   </td>
@@ -418,11 +418,11 @@
                     <td v-if="colVisible.categorisation" class="cell-muted">{{ row.categorisation }}</td>
                     <td v-if="colVisible.description"    class="cell-muted">{{ row.shortDescription || '-' }}</td>
                     <td v-if="colVisible.customer"       class="cell-muted">
-                      <div v-if="row.account">{{ row.account }}</div>
-                      <div v-if="row.subChannel" class="cell-sub">{{ row.subChannel }}</div>
+                      <div v-if="row.account">{{ formatBrandFamily(row.account) }}</div>
+                      <div v-if="row.subChannel" class="cell-sub">{{ formatBrandFamily(row.subChannel) }}</div>
                     </td>
                     <td v-if="colVisible.product"        class="cell-muted">
-                      <div v-if="row.brand">{{ row.brand }}</div>
+                      <div v-if="row.brand">{{ formatBrandFamily(row.brand) }}</div>
                     </td>
                     <td v-if="colVisible.rAndO"          class="cell-muted">{{ row.rAndO }}</td>
                     <td v-if="colVisible.probability"    class="tc cell-muted">
@@ -506,13 +506,13 @@
               <td v-if="colVisible.categorisation">{{ row.categorisation }}</td>
               <td v-if="colVisible.description">{{ row.shortDescription || row.description || '-' }}</td>
               <td v-if="colVisible.customer">
-                <div v-if="row.account">{{ row.account }}</div>
-                <div v-if="row.subChannel" class="cell-sub">{{ row.subChannel }}</div>
-                <div v-if="row.channel"    class="cell-sub italic">{{ row.channel }}</div>
+                <div v-if="row.account">{{ formatBrandFamily(row.account) }}</div>
+                <div v-if="row.subChannel" class="cell-sub">{{ formatBrandFamily(row.subChannel) }}</div>
+                <div v-if="row.channel"    class="cell-sub italic">{{ formatBrandFamily(row.channel) }}</div>
                 <span v-if="!row.account && !row.subChannel && !row.channel">-</span>
               </td>
               <td v-if="colVisible.product">
-                <div v-if="row.brand">{{ row.brand }}</div>
+                <div v-if="row.brand">{{ formatBrandFamily(row.brand) }}</div>
                 <div v-if="row.brandFamily" class="cell-sub italic">{{ formatBrandFamily(row.brandFamily) }}</div>
                 <span v-if="!row.brand && !row.brandFamily">-</span>
               </td>
@@ -579,10 +579,10 @@
                 <td v-if="colVisible.categorisation" class="cell-muted">{{ row.categorisation }}</td>
                 <td v-if="colVisible.description"    class="cell-muted">{{ row.shortDescription || '-' }}</td>
                 <td v-if="colVisible.customer"       class="cell-muted">
-                  <div v-if="row.account">{{ row.account }}</div>
+                  <div v-if="row.account">{{ formatBrandFamily(row.account) }}</div>
                 </td>
                 <td v-if="colVisible.product"        class="cell-muted">
-                  <div v-if="row.brand">{{ row.brand }}</div>
+                  <div v-if="row.brand">{{ formatBrandFamily(row.brand) }}</div>
                 </td>
                 <td v-if="colVisible.rAndO"          class="cell-muted">{{ row.rAndO }}</td>
                 <td v-if="colVisible.probability"    class="tc cell-muted">
