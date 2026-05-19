@@ -23,23 +23,23 @@ class SnapshotCreate(BaseModel):
 
 @router.post("")
 def create_snapshot(data: SnapshotCreate, db: Session = Depends(get_db)):
-    # Check if a final version already exists for this period, year, and IBP step
-    if data.is_final:
-        existing_final = (
-            db.query(Snapshot)
-            .filter(
-                Snapshot.period == data.period,
-                Snapshot.year == data.year,
-                Snapshot.ibp_step == data.ibp_step,
-                Snapshot.is_final == True
-            )
-            .first()
+    # Check if a final version already exists for this period, year, and IBP step,
+    # regardless of whether the current snapshot being created is marked as final.
+    existing_final = (
+        db.query(Snapshot)
+        .filter(
+            Snapshot.period == data.period,
+            Snapshot.year == data.year,
+            Snapshot.ibp_step == data.ibp_step,
+            Snapshot.is_final == True
         )
-        if existing_final:
-            raise HTTPException(
-                status_code=400,
-                detail=f"A final version for {data.ibp_step} in {data.period} {data.year} already exists."
-            )
+        .first()
+    )
+    if existing_final:
+        raise HTTPException(
+            status_code=400,
+            detail=f"A final version for {data.ibp_step} in {data.period} {data.year} already exists. No new snapshots can be created for this period."
+        )
 
     # Generate unique snapshot ID and name
     snapshot_id = f"SNAP-{data.year}-{data.period}-{data.ibp_step.replace(' ', '_')}-{uuid.uuid4().hex[:8]}".upper()
