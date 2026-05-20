@@ -313,8 +313,13 @@
                         :model-value="selectedSnapshots.includes(snapshot.snapshot_id)"
                         @change="toggleSnapshotSelection(snapshot.snapshot_id)"
                       />
-                      <span class="snapshot-name">{{ snapshot.name }}</span>
-                      <el-tag v-if="snapshot.is_final" type="success" size="small" effect="dark" class="final-tag">Final</el-tag>
+                      <div class="snapshot-title-group">
+                        <span class="snapshot-name">{{ snapshot.name }}</span>
+                        <div class="snapshot-meta-tags">
+                          <el-tag v-if="snapshot.version !== undefined" size="small" class="version-tag">v{{ snapshot.version }}</el-tag>
+                          <el-tag v-if="snapshot.is_final" type="success" size="small" effect="dark" class="final-tag">Final</el-tag>
+                        </div>
+                      </div>
                     </div>
                     <el-dropdown trigger="click" @command="handleToggleFinal(snapshot)">
                       <el-button link :icon="MoreFilled" />
@@ -365,7 +370,9 @@ interface SnapshotGroup {
   entries_count: number;
   created_at: string;
   is_final: boolean;
+  version?: number;
 }
+
 
 interface ChildImpact {
   id: string;
@@ -998,8 +1005,21 @@ async function handleCompare() {
   font-size: 16px;
 }
 
-.final-tag {
-  margin-left: 8px;
+.snapshot-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.snapshot-meta-tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.version-tag {
+  background-color: #e0e0e0;
+  color: #333;
 }
 
 .el-dropdown-link {

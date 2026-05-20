@@ -123,7 +123,8 @@ async function handleCreateSnapshot() {
 
   loading.value = true;
   try {
-    const snapshotName = `${form.value.ibpStep} - ${form.value.period} ${form.value.year}`;
+    const monthLabel = periods.find(p => p.value === form.value.period)?.label || form.value.period;
+    const snapshotName = `${form.value.ibpStep} - ${monthLabel} ${form.value.year}`;
     const result = await snapshotApi.create({
       period: form.value.period,
       year: form.value.year,

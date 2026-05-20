@@ -13,6 +13,12 @@ from ..crud import get_latest_entries, get_child_impacts
 # router = APIRouter(prefix="/api/snapshots", tags=["snapshots"])
 router = APIRouter()
 
+MONTH_NAMES = {
+    "F01": "January", "F02": "February", "F03": "March", "F04": "April",
+    "F05": "May", "F06": "June", "F07": "July", "F08": "August",
+    "F09": "September", "F10": "October", "F11": "November", "F12": "December"
+}
+
 
 class SnapshotCreate(BaseModel):
     period: str
@@ -45,9 +51,22 @@ def create_snapshot(data: SnapshotCreate, db: Session = Depends(get_db)):
             detail=f"A final version for {data.ibp_step} in {data.period} {data.year} already exists. No new snapshots can be created for this period."
         )
 
+    # Determine the next version for this period, year, and IBP step
+    max_version = (
+        db.query(func.max(Snapshot.version))
+        .filter(
+            Snapshot.period == data.period,
+            Snapshot.year == data.year,
+            Snapshot.ibp_step == data.ibp_step
+        )
+        .scalar()
+    )
+    new_version = (max_version + 1) if max_version is not None else 0
+
     # Generate unique snapshot ID and name
     snapshot_id = f"SNAP-{data.year}-{data.period}-{data.ibp_step.replace(' ', '_')}-{uuid.uuid4().hex[:8]}".upper()
-    snapshot_name = f"{data.ibp_step} - {data.period} {data.year}"
+    month_name = MONTH_NAMES.get(data.period, data.period)
+    snapshot_name = f"{data.ibp_step} - {month_name} {data.year}"
     
     # Get all entries matching the filter criteria
     filters = {"ibp_step": data.ibp_step}
@@ -133,6 +152,7 @@ def create_snapshot(data: SnapshotCreate, db: Session = Depends(get_db)):
             ibp_step=data.ibp_step,
             entry_data=entry_data,
             is_final=data.is_final,
+            version=new_version,
         )
         snapshots.append(snapshot)
     
@@ -146,6 +166,7 @@ def create_snapshot(data: SnapshotCreate, db: Session = Depends(get_db)):
     return {
         "snapshot_id": snapshot_id,
         "name": snapshot_name,
+        "version": new_version,
         "entries_count": len(snapshots),
         "created_at": datetime.now().isoformat(),
     }
@@ -161,17 +182,19 @@ def get_all_snapshots(db: Session = Depends(get_db)):
             Snapshot.year,
             Snapshot.ibp_step,
             Snapshot.is_final,
+            Snapshot.version,
             func.count(Snapshot.id).label("entries_count"),
             func.min(Snapshot.created_at).label("created_at"),
         )
-        .group_by(Snapshot.snapshot_id, Snapshot.period, Snapshot.year, Snapshot.ibp_step, Snapshot.is_final)
+        .group_by(Snapshot.snapshot_id, Snapshot.period, Snapshot.year, Snapshot.ibp_step, Snapshot.is_final, Snapshot.version)
         .order_by(func.min(Snapshot.created_at).desc())
         .all()
     )
     
     result = []
     for snap in snapshots:
-        name = f"{snap.ibp_step} - {snap.period} {snap.year}"
+        month_name = MONTH_NAMES.get(snap.period, snap.period)
+        name = f"{snap.ibp_step} - {month_name} {snap.year}"
         result.append({
             "snapshot_id": snap.snapshot_id,
             "name": name,
@@ -180,6 +203,7 @@ def get_all_snapshots(db: Session = Depends(get_db)):
             "ibp_step": snap.ibp_step,
             "is_final": snap.is_final,
             "entries_count": snap.entries_count,
+            "version": snap.version,
             "created_at": snap.created_at.isoformat() if snap.created_at else None,
         })
     
@@ -230,7 +254,8 @@ def get_snapshot_by_id(snapshot_id: str, db: Session = Depends(get_db)):
     
     # Get snapshot metadata from first record
     first_record = snapshot_records[0]
-    snapshot_name = f"{first_record.ibp_step} - {first_record.period} {first_record.year}"
+    month_name = MONTH_NAMES.get(first_record.period, first_record.period)
+    snapshot_name = f"{first_record.ibp_step} - {month_name} {first_record.year}"
     
     # Get entry IDs from snapshot records
     entry_ids = [snap.entry_id for snap in snapshot_records]
@@ -331,6 +356,7 @@ def get_snapshot_by_id(snapshot_id: str, db: Session = Depends(get_db)):
             "period": first_record.period,
             "year": first_record.year,
             "ibp_step": first_record.ibp_step,
+            "version": first_record.version,
             "created_at": first_record.created_at.isoformat() if first_record.created_at else None,
             "entries": entries_data,
         }
