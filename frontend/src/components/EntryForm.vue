@@ -573,7 +573,7 @@
                   <el-input
                     :model-value="formData.impactValue"
                     :disabled="hasChildImpacts"
-                    placeholder="Enter financial impact value"
+                    :placeholder="financialImpactPlaceholder"
                     @input="formData.impactValue = cleanNumStr($event as string)"
                     @blur="formData.impactValue = formatNumStr(formData.impactValue)"
                     @focus="formData.impactValue = cleanNumStr(formData.impactValue)"
@@ -603,7 +603,7 @@
                   <el-input
                     :model-value="formData.secondaryValue"
                     :disabled="hasChildImpacts"
-                    placeholder="Enter volume"
+                    :placeholder="volumeImpactPlaceholder"
                     @input="formData.secondaryValue = cleanNumStr($event as string)"
                     @blur="formData.secondaryValue = formatNumStr(formData.secondaryValue)"
                     @focus="formData.secondaryValue = cleanNumStr(formData.secondaryValue)"
@@ -678,7 +678,7 @@
               <div class="sub-label">{{ getfinancialImpactTypeLabel(formData.financialImpactType) }} <span class="impact-required">*</span></div>
               <el-input
                 :model-value="child.impactValue"
-                placeholder="Enter value"
+                :placeholder="childFinancialImpactPlaceholder"
                 style="margin-top: 6px"
                 @input="child.impactValue = cleanNumStr($event as string)"
                 @blur="child.impactValue = formatNumStr(child.impactValue)"
@@ -690,8 +690,8 @@
                 Volume ({{ formData.volumeImpactType }})
               </div>
               <el-input
-                :model-value="child.secondaryValue"
-                placeholder="Enter value"
+                :model-value="child.volumeImpactValue"
+                :placeholder="childVolumeImpactPlaceholder"
                 style="margin-top: 6px"
                 @input="child.secondaryValue = cleanNumStr($event as string)"
                 @blur="child.secondaryValue = formatNumStr(child.secondaryValue)"
@@ -1591,6 +1591,27 @@ function getfinancialImpactTypeLabel(financialImpactType: string): string {
   return labels[financialImpactType] || "Financial Impact Value";
 }
 const currencyCode = computed(() => formData.value.primaryImpact === "NZD" ? "NZD" : formData.value.primaryImpact === "AUD" ? "AUD" : "");
+const financialImpactPlaceholder = computed(() => {
+  const impactType = formData.value.financialImpactType;
+  const currency = currencyCode.value;
+  return `Enter financial impact in ${impactType} (${currency})`;
+});
+
+const volumeImpactPlaceholder = computed(() => {
+  const volumeType = formData.value.volumeImpactType;
+  return `Enter volume impact in ${volumeType}`;
+});
+
+const childFinancialImpactPlaceholder = computed(() => {
+  const impactType = formData.value.financialImpactType;
+  const currency = currencyCode.value;
+  return `Enter financial impact in ${impactType} (${currency})`;
+});
+
+const childVolumeImpactPlaceholder = computed(() => {
+  const volumeType = formData.value.volumeImpactType;
+  return `Enter volume impact in ${volumeType}`;
+});
 
 const totalPrimaryImpact = computed(() => {
   return formData.value.childImpacts.reduce((acc, ci) => {

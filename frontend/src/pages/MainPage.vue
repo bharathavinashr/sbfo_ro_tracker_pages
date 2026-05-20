@@ -74,7 +74,7 @@
         <el-button
           @click="router.push('/snapshots')"
         >
-          Cycle Snapshots
+          Browse Snapshots
         </el-button>
 
         <!-- <el-button
