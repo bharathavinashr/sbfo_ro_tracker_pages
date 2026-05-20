@@ -80,6 +80,7 @@ const visible = ref(props.modelValue);
 const loading = ref(false);
 
 const currentYear = new Date().getFullYear();
+const currentMonth = new Date().getMonth() + 1; // getMonth() is 0-indexed
 const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const periods = monthNames.map((name, index) => ({
   value: `F${String(index + 1).padStart(2, "0")}`, label: name
@@ -88,7 +89,7 @@ const years = Array.from({ length: 10 }, (_, i) => (currentYear - 5 + i).toStrin
 const ibpSteps = ["Portfolio Review", "Supply Review", "Demand Review", "A&P (Pre-Exec)", "Overheads (Pre-Exec)"];
 
 const form = ref({
-  period: "",
+  period: `F${String(currentMonth).padStart(2, "0")}`, // Pre-fill with current month
   year: currentYear.toString(),
   ibpStep: "",
   isFinal: false,
@@ -112,7 +113,7 @@ watch(visible, (val) => {
 function handleClose() {
   visible.value = false;
   // Reset form on close
-  form.value = { period: "", year: currentYear.toString(), ibpStep: "", isFinal: false };
+  form.value = { period: `F${String(currentMonth).padStart(2, "0")}`, year: currentYear.toString(), ibpStep: "", isFinal: false };
 }
 
 async function handleCreateSnapshot() {
