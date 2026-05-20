@@ -116,8 +116,8 @@
 
           <el-table-column v-if="visibleColumns.description" label="Short Description" width="200">
             <template #default="{ row }">
-              <div>{{ row.description || '-' }}</div>
-              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.description && row.previousValues.description !== row.description" class="prev-value">{{ row.previousValues.description }}</div>
+              <div>{{ row.shortDescription || '-' }}</div>
+              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.shortDescription && row.previousValues.shortDescription !== row.shortDescription" class="prev-value">{{ row.previousValues.shortDescription }}</div>
             </template>
           </el-table-column>
 
