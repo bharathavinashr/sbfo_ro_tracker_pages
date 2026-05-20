@@ -30,7 +30,7 @@
         :entries="snapshotEntries"
         :is-read-only="true"
         :can-approve="false"
-        :default-split-by="['country', 'division']"
+        :default-split-by="[]"
         @add="() => {}"
         @edit="() => {}"
         @duplicate="() => {}"
