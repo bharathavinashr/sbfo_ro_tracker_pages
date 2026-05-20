@@ -742,7 +742,7 @@ const ownerOptions = computed(() =>
   entryStore.users.filter((u) => u.role === 0 || u.role === 1)
 );
 
-// Product-based lookup data (from API)
+// Product and Customer based lookup data (from API)
 const divisionOptions = ref<string[]>([]);
 const countryOptions  = ref<{value: string, label: string}[]>([]);
 const brandOptions = ref<{value: string, label: string}[]>([]);
@@ -826,7 +826,7 @@ onMounted(async () => {
 const ibpStepOptions     = computed(() => lookupStore.getCached("ibp_step"));
 const probabilityOptions = computed(() => lookupStore.getCached("probability"));
 
-const CATEG_ACTIVE_IBP_STEPS = ["Portfolio Review", "Demand Review", "Supply Review", "Overheads (Pre-Exec)"];
+const CATEG_ACTIVE_IBP_STEPS = ["Portfolio Review", "Demand Review", "Supply Review", "A&P (Pre-Exec)", "Overheads (Pre-Exec)"];
 const categActive = computed(() => CATEG_ACTIVE_IBP_STEPS.includes(formData.value.ibpStep));
 
 const countryDivisionActive = computed(() => Object.keys(formData.value.country).length > 0 && !!formData.value.division);
@@ -846,7 +846,7 @@ const baseCategorisations      = ["Baseline/Run Rates", "Brand Activations", "De
 
 const categOptions = computed(() => {
   if (formData.value.ibpStep === "Supply Review") return supplyCategorisations;
-  if (formData.value.ibpStep === "Overheads (Pre-Exec)") return overheadsCategorisations;
+  if (formData.value.ibpStep === "Overheads (Pre-Exec)" || formData.value.ibpStep === "A&P (Pre-Exec)") return overheadsCategorisations;
   if (
     formData.value.division === "Alcohol" &&
     (formData.value.ibpStep === "Portfolio Review" || formData.value.ibpStep === "Demand Review")
