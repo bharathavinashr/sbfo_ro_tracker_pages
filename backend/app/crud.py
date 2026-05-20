@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func, cast, String, Text
 from . import models, schemas
+from typing import Optional
 
 
 def get_latest_entries(db: Session, filters: dict = None, include_deleted: bool = False, ibp_step_in: list = None):
@@ -37,6 +38,25 @@ def get_latest_entries(db: Session, filters: dict = None, include_deleted: bool 
     # IBP Step Approver restriction: filter by allowed IBP Steps
     if ibp_step_in:
         query = query.filter(models.Entry.ibp_step.in_(ibp_step_in))
+    return query.order_by(models.Entry.last_modified.desc()).all()
+
+
+def get_all_entries_for_period_year(db: Session, period: str, year: str):
+    """
+    Returns the latest version of all entries for a given period and year,
+    regardless of IBP step, excluding deleted entries.
+    """
+    subq = (
+        db.query(
+            models.Entry.original_entry_id,
+            func.max(models.Entry.version).label("max_ver"),
+        )
+        .group_by(models.Entry.original_entry_id)
+        .subquery()
+    )
+    query = db.query(models.Entry).join(subq, (models.Entry.original_entry_id == subq.c.original_entry_id) & (models.Entry.version == subq.c.max_ver)).filter(
+        models.Entry.impact_period == period, models.Entry.impact_year == year, models.Entry.status != "Deleted"
+    )
     return query.order_by(models.Entry.last_modified.desc()).all()
 
 
@@ -156,6 +176,40 @@ def update_entry_status(db: Session, entry_id: int, new_status: str, modified_us
 
 def approve_entry(db: Session, entry_id: int, modified_user: str = None):
     return _new_version_with_status(db, entry_id, "Approved", modified_user)
+
+
+def get_final_snapshots_for_period_year(db: Session, period: str, year: str):
+    """
+    Retrieves all final snapshots for a given period and year.
+    """
+    return db.query(models.Snapshot).filter(
+        models.Snapshot.period == period,
+        models.Snapshot.year == year,
+        models.Snapshot.is_final == True
+    ).all()
+
+
+def get_snapshot_by_params(db: Session, period: str, year: str, ibp_step: str, is_final: Optional[bool] = None):
+    """
+    Retrieves a snapshot by period, year, and ibp_step.
+    Optionally filters by is_final status.
+    Returns the latest version if multiple exist.
+    """
+    query = db.query(models.Snapshot).filter(
+        models.Snapshot.period == period,
+        models.Snapshot.year == year,
+        models.Snapshot.ibp_step == ibp_step
+    )
+    if is_final is not None:
+        query = query.filter(models.Snapshot.is_final == is_final)
+    
+    # Order by version desc to get the latest if there are multiple
+    return query.order_by(models.Snapshot.version.desc()).first()
+
+
+def update_snapshot_is_final(db: Session, snapshot_id: str, is_final: bool):
+    db.query(models.Snapshot).filter(models.Snapshot.snapshot_id == snapshot_id).update({"is_final": is_final})
+    db.commit()
 
 
 def get_lookup_options(db: Session, category: str, parent_value=None):

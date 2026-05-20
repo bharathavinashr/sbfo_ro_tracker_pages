@@ -441,7 +441,7 @@ const selectedSnapshots = ref<string[]>([]);
 const comparedEntries = ref<ComparedEntry[]>([]);
 const showComparison = ref(false);
 
-const ibpSteps = ["Portfolio Review", "Supply Review", "Demand Review", "A&P (Pre-Exec)", "Overheads (Pre-Exec)"];
+const ibpSteps = ["All", "Portfolio Review", "Supply Review", "Demand Review", "A&P (Pre-Exec)", "Overheads (Pre-Exec)"];
 
 // Column visibility
 const visibleColumns = ref<Record<string, boolean>>({
