@@ -698,7 +698,7 @@ function changeStatusClass(status: ChangeStatus) {
   }
 }
 
-function getRowClass(row: ComparedEntry) {
+function getRowClass(row: ComparedEntry | ComparedChildImpact) {
   if (row.changeStatus === 'New') return 'row-new';
   if (row.changeStatus === 'Modified') return 'row-modified';
   if (row.changeStatus === 'Deleted') return 'row-deleted';
@@ -786,7 +786,7 @@ function compareEntries(baseEntry: Entry, compEntry: Entry): { modifiedFields: s
     const isDiff = isComplex 
       ? formatValue(bv) !== formatValue(cv)
       : (Array.isArray(bv) && Array.isArray(cv))
-        ? JSON.stringify([...(bv as string[])].sort()) !== JSON.stringify([...((cv as string[]) || [])].sort())
+        ? JSON.stringify([...(bv as any[])].sort()) !== JSON.stringify([...((cv as any[]) || [])].sort())
         : bv !== cv;
 
     if (isDiff) {
@@ -886,15 +886,15 @@ async function handleCompare() {
     const comparisonEntries: Entry[] = comparisonData.snapshot.entries || [];
 
     const baselineMap = new Map<string, Entry>();
-    baselineEntries.forEach(e => baselineMap.set(e.originalEntryId || e.id, e));
+    baselineEntries.forEach(e => baselineMap.set(String(e.originalEntryId || e.id), e));
 
     const comparisonMap = new Map<string, Entry>();
-    comparisonEntries.forEach(e => comparisonMap.set(e.originalEntryId || e.id, e));
+    comparisonEntries.forEach(e => comparisonMap.set(String(e.originalEntryId || e.id), e));
 
     const compared: ComparedEntry[] = [];
 
     comparisonEntries.forEach(compEntry => {
-      const key = compEntry.originalEntryId || compEntry.id;
+      const key = String(compEntry.originalEntryId || compEntry.id);
       const baseEntry = baselineMap.get(key);
       if (!baseEntry) {
         compared.push({ 
@@ -918,7 +918,7 @@ async function handleCompare() {
     });
 
     baselineEntries.forEach(baseEntry => {
-      const key = baseEntry.originalEntryId || baseEntry.id;
+      const key = String(baseEntry.originalEntryId || baseEntry.id);
       if (!comparisonMap.has(key)) {
         compared.push({ 
           ...baseEntry, 
