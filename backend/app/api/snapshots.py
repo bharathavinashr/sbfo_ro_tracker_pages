@@ -374,6 +374,8 @@ def get_snapshot_by_id(snapshot_id: str, db: Session = Depends(get_db)):
                 "volumeCases": ci.volume_cases,
                 "volumeImpactType": entry.volume_impact_type, # Child impacts inherit parent's volume type
                 "volumeImpactValue": ci.volume_impact_value,
+                "impact": ci.nsv_aud if (entry.primary_impact == "AUD" and ci.nsv_aud) else (ci.nsv_nzd if (entry.primary_impact == "NZD" and ci.nsv_nzd) else None),
+                "impactCurrency": entry.primary_impact if entry.primary_impact in ["AUD", "NZD"] else None,
             })
         
         impact_value, vol_impact_value = _calculate_entry_impacts(entry, child_impacts)
@@ -406,6 +408,7 @@ def get_snapshot_by_id(snapshot_id: str, db: Session = Depends(get_db)):
             "volumeCases": entry.volume_cases,
             "impact": impact_value,
             "primaryImpact": entry.primary_impact,
+            "impactCurrency": entry.primary_impact if entry.primary_impact in ["AUD", "NZD"] else None,
             "owner": entry.owner,
             "creator": entry.creator,
             "modifiedUser": entry.modified_user,

@@ -436,7 +436,7 @@
                     </td>
                     <td v-if="colVisible.lastModified"   class="cell-muted">{{ formatDate(row.lastModified) }}</td>
                     <td v-if="colVisible.financialImpactType"     class="cell-muted">{{ row.financialImpactType || '-' }}</td>
-                    <td v-if="colVisible.currency"       class="cell-muted">{{ row.impactCurrency || '-' }}</td>
+                    <td v-if="colVisible.currency"       class="cell-muted">{{ ci.impactCurrency || '-' }}</td>
                     <td v-if="colVisible.impact"         class="tr fw cell-muted">{{ ci.impact ? Number(ci.impact).toLocaleString() : '-' }}</td>
                     <td v-if="colVisible.volumeCases"    class="tr cell-muted">{{ ci.volumeCases ? Number(ci.volumeCases).toLocaleString() : '-' }}</td>
                     <td v-if="colVisible.volumeImpactType" class="cell-muted">{{ row.volumeImpactType || '-' }}</td>
@@ -596,7 +596,7 @@
                 </td>
                 <td v-if="colVisible.lastModified"   class="cell-muted">-</td>
                 <td v-if="colVisible.financialImpactType"     class="cell-muted">{{ row.financialImpactType || '-' }}</td>
-                <td v-if="colVisible.currency"       class="cell-muted">{{ row.impactCurrency || '-' }}</td>
+                <td v-if="colVisible.currency"       class="cell-muted">{{ ci.impactCurrency || '-' }}</td>
                 <td v-if="colVisible.impact"         class="tr fw cell-muted">{{ ci.impact ? Number(ci.impact).toLocaleString() : '-' }}</td>
                 <td v-if="colVisible.volumeCases"    class="tr cell-muted">{{ ci.volumeCases ? Number(ci.volumeCases).toLocaleString() : '-' }}</td>
                 <td v-if="colVisible.volumeImpactType" class="cell-muted">{{ row.volumeImpactType || '-' }}</td>

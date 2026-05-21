@@ -301,8 +301,8 @@
                       <div class="snapshot-title-group">
                         <span class="snapshot-name">{{ snapshot.name }}</span>
                         <div class="snapshot-meta-tags">
-                          <el-tag v-if="snapshot.version !== undefined" size="small" class="version-tag">v{{ snapshot.version }}</el-tag>
                           <el-tag v-if="snapshot.is_final" type="success" size="small" effect="dark" class="final-tag">Final</el-tag>
+                          <el-tag v-if="snapshot.version !== undefined" size="small" class="version-tag">v{{ snapshot.version }}</el-tag>
                         </div>
                       </div>
                     </div>
