@@ -690,7 +690,7 @@
                 Volume ({{ formData.volumeImpactType }})
               </div>
               <el-input
-                :model-value="child.volumeImpactValue"
+                :model-value="child.secondaryValue"
                 :placeholder="childVolumeImpactPlaceholder"
                 style="margin-top: 6px"
                 @input="child.secondaryValue = cleanNumStr($event as string)"
