@@ -8,7 +8,7 @@
         </h1>
         <p class="page-subtitle">
           {{ showComparison
-            ? 'Showing differences between selected snapshots'
+            ? ''
             : comparisonMode
               ? 'Select 2 snapshots to compare'
               : 'View and manage frozen snapshots of entry versions' }}
@@ -16,7 +16,6 @@
       </div>
     </div>
 
-    <!-- Comparison result view -->
     <template v-if="showComparison">
       <div class="comparison-meta">
         <div class="comparison-labels">
@@ -30,226 +29,213 @@
         </el-button>
       </div>
 
-      <!-- Summary badges -->
-      <div class="comparison-summary">
-        <el-tag type="success">{{ countByStatus('New') }} New</el-tag>
-        <el-tag type="primary">{{ countByStatus('Modified') }} Modified</el-tag>
-        <el-tag type="danger">{{ countByStatus('Deleted') }} Deleted</el-tag>
-        <el-tag type="info">{{ countByStatus('Unchanged') }} Unchanged</el-tag>
-
-        <!-- Column toggle -->
-        <el-popover placement="bottom-end" :width="240" trigger="click">
-          <template #reference>
-            <el-button class="ml-auto" size="small">
-              <el-icon><Grid /></el-icon>
-              Columns
-            </el-button>
-          </template>
-          <div class="column-toggle">
-            <p class="column-toggle-title">Toggle Columns</p>
-            <div v-for="col in columnDefs" :key="col.key" class="column-toggle-item">
-              <el-checkbox v-model="visibleColumns[col.key]">{{ col.label }}</el-checkbox>
-            </div>
+      <div class="comparison-table-wrapper">
+        <div class="comparison-summary">
+          <div class="comparison-summary-left">
+            <el-tag type="success" style="margin-right: 4px;">{{ countByStatus('New') }} New</el-tag>
+            <el-tag type="primary" style="margin-right: 4px;">{{ countByStatus('Modified') }} Modified</el-tag>
+            <el-tag type="danger" style="margin-right: 4px;">{{ countByStatus('Deleted') }} Deleted</el-tag>
+            <el-tag type="info">{{ countByStatus('Unchanged') }} Unchanged</el-tag>
           </div>
-        </el-popover>
-      </div>
 
-      <!-- Comparison table -->
-      <div class="table-wrapper">
-        <el-table
-          :data="comparedEntries"
-          border
-          stripe
-          size="small"
-          :row-class-name="getRowClass"
-          style="width: 100%"
-        >
-          <el-table-column v-if="visibleColumns.changeStatus" label="Change" width="110" fixed>
-            <template #default="{ row }">
-              <el-tag :type="statusTagType(row.changeStatus)" size="small">{{ row.changeStatus }}</el-tag>
+          <el-popover placement="bottom-end" :width="240" trigger="click" popper-class="column-popover">
+            <template #reference>
+              <el-button size="small" plain style="color: black;">
+                <svg style="width:14px;height:14px;margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="7" height="18"/>
+                  <rect x="14" y="3" width="7" height="18"/>
+                </svg>
+                Columns
+              </el-button>
             </template>
-          </el-table-column>
-
-          <el-table-column v-if="visibleColumns.modifiedFields" label="Modified Columns" width="200">
-            <template #default="{ row }">
-              <template v-if="row.changeStatus === 'Modified' && row.modifiedFields?.length">
-                <el-tag
-                  v-for="field in row.modifiedFields"
-                  :key="field"
-                  size="small"
-                  style="margin: 2px"
-                >{{ field }}</el-tag>
-              </template>
-              <span v-else-if="row.changeStatus === 'New'" class="text-green">New entry</span>
-              <span v-else-if="row.changeStatus === 'Deleted'" class="text-red">Deleted</span>
-              <span v-else class="text-muted">-</span>
-            </template>
-          </el-table-column>
-
-          <el-table-column v-if="visibleColumns.ibpStep" label="IBP Step" width="140">
-            <template #default="{ row }">
-              <div>{{ row.ibpStep || '-' }}</div>
-              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.ibpStep && row.previousValues.ibpStep !== row.ibpStep" class="prev-value">{{ row.previousValues.ibpStep }}</div>
-            </template>
-          </el-table-column>
-
-          <el-table-column v-if="visibleColumns.division" label="Division" width="110">
-            <template #default="{ row }">
-              <div>{{ row.division }}</div>
-              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.division && row.previousValues.division !== row.division" class="prev-value">{{ row.previousValues.division }}</div>
-            </template>
-          </el-table-column>
-
-          <el-table-column v-if="visibleColumns.country" label="Country" width="110">
-            <template #default="{ row }">
-              <div>{{ formatValue(row.country) }}</div>
-              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.country && formatValue(row.previousValues.country) !== formatValue(row.country)" class="prev-value">{{ formatValue(row.previousValues.country) }}</div>
-            </template>
-          </el-table-column>
-
-          <el-table-column v-if="visibleColumns.categorisation" label="Categorisation" width="160">
-            <template #default="{ row }">
-              <div>{{ row.categorisation || '-' }}</div>
-              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.categorisation && row.previousValues.categorisation !== row.categorisation" class="prev-value">{{ row.previousValues.categorisation }}</div>
-            </template>
-          </el-table-column>
-
-          <el-table-column v-if="visibleColumns.description" label="Short Description" width="200">
-            <template #default="{ row }">
-              <div>{{ row.shortDescription || '-' }}</div>
-              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.shortDescription && row.previousValues.shortDescription !== row.shortDescription" class="prev-value">{{ row.previousValues.shortDescription }}</div>
-            </template>
-          </el-table-column>
-
-          <el-table-column v-if="visibleColumns.customer" label="Customer(s)" width="160">
-            <template #default="{ row }">
-              <div v-if="row.account">{{ formatValue(row.account) }}</div>
-              <div v-if="row.subChannel" class="text-small text-muted">{{ formatValue(row.subChannel) }}</div>
-              <div v-if="row.channel" class="text-small text-muted text-italic">{{ formatValue(row.channel) }}</div>
-              <span v-if="!row.account && !row.subChannel && !row.channel">-</span>
-              <div v-if="row.changeStatus === 'Modified' && (row.previousValues?.channel || row.previousValues?.subChannel || row.previousValues?.account)" class="prev-value">
-                {{ [formatValue(row.previousValues.channel), formatValue(row.previousValues.subChannel), formatValue(row.previousValues.account)].filter(Boolean).join(', ') }}
+            <div class="column-selector-container">
+              <p class="column-selector-title">Toggle Columns</p>
+              <div class="column-selector-list">
+                <div v-for="col in columnDefs" :key="col.key" class="column-selector-item">
+                  <el-checkbox v-model="visibleColumns[col.key]">{{ col.label }}</el-checkbox>
+                </div>
               </div>
-            </template>
-          </el-table-column>
+            </div>
+          </el-popover>
+        </div>
 
-          <el-table-column v-if="visibleColumns.product" label="Product" width="160">
-            <template #default="{ row }">
-              <div v-if="row.brand">{{ formatValue(row.brand) }}</div>
-              <div v-if="row.brandFamily" class="text-small text-muted">{{ formatValue(row.brandFamily) }}</div>
-              <span v-if="!row.brand && !row.brandFamily">-</span>
-              <div v-if="row.changeStatus === 'Modified' && (row.previousValues?.brand || row.previousValues?.brandFamily)" class="prev-value">
-                {{ [formatValue(row.previousValues.brand), formatValue(row.previousValues.brandFamily)].filter(Boolean).join(', ') }}
-              </div>
-            </template>
-          </el-table-column>
+        <div class="table-scroll-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th v-if="visibleColumns.changeStatus" class="col-sm">Change</th>
+                <th v-if="visibleColumns.modifiedFields" class="col-xl">Modified Columns</th>
+                <th v-if="visibleColumns.ibpStep" class="col-md">IBP Step</th>
+                <th v-if="visibleColumns.division" class="col-sm">Division</th>
+                <th v-if="visibleColumns.country" class="col-sm">Country</th>
+                <th v-if="visibleColumns.categorisation" class="col-lg">Categorisation</th>
+                <th v-if="visibleColumns.description" class="col-xl">Short Description</th>
+                <th v-if="visibleColumns.customer" class="col-lg">Customer(s)</th>
+                <th v-if="visibleColumns.product" class="col-lg">Product</th>
+                <th v-if="visibleColumns.rAndO" class="col-md">Risk vs. Opp.</th>
+                <th v-if="visibleColumns.probability" class="col-sm tc">Probability</th>
+                <th v-if="visibleColumns.addToForecastBy" class="col-md">Add to Forecast By</th>
+                <th v-if="visibleColumns.creator" class="col-md">Creator</th>
+                <th v-if="visibleColumns.owner" class="col-md">Owner</th>
+                <th v-if="visibleColumns.status" class="col-md">Status</th>
+                <th v-if="visibleColumns.lastModified" class="col-lg">Last Modified</th>
+                <th v-if="visibleColumns.financialImpactType" class="col-md">Impact Type</th>
+                <th v-if="visibleColumns.currency" class="col-sm">Currency</th>
+                <th v-if="visibleColumns.impact" class="col-md tr">Impact</th>
+                <th v-if="visibleColumns.volumeCases" class="col-md tr">Volume (Cases)</th>
+                <th v-if="visibleColumns.volumeImpactType" class="col-lg">Volume Impact Type</th>
+                <th v-if="visibleColumns.volumeImpactValue" class="col-md tr">Volume Impact Value</th>
+                <th v-if="visibleColumns.impactPeriods" class="col-lg">Impact Period(s)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(row, index) in comparedEntries" :key="row.id || index" :class="getRowClass(row)">
+                <td v-if="visibleColumns.changeStatus">
+                  <span :class="['status-badge', changeStatusClass(row.changeStatus)]">{{ row.changeStatus }}</span>
+                </td>
 
-          <el-table-column v-if="visibleColumns.rAndO" label="Risk vs. Opp." width="130">
-            <template #default="{ row }">
-              <div>{{ row.rAndO }}</div>
-              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.rAndO && row.previousValues.rAndO !== row.rAndO" class="prev-value">{{ row.previousValues.rAndO }}</div>
-            </template>
-          </el-table-column>
+                <td v-if="visibleColumns.modifiedFields">
+                  <template v-if="row.changeStatus === 'Modified' && row.modifiedFields?.length">
+                    <div class="field-badges-wrap">
+                      <span v-for="field in row.modifiedFields" :key="field" class="field-badge">{{ field }}</span>
+                    </div>
+                  </template>
+                  <span v-else-if="row.changeStatus === 'New' && row.changeStatus" class="text-green">New entry</span>
+                  <span v-else-if="row.changeStatus === 'Deleted'" class="text-red">Deleted</span>
+                  <span v-else class="cell-muted">-</span>
+                </td>
 
-          <el-table-column v-if="visibleColumns.probability" label="Probability" width="110">
-            <template #default="{ row }">
-              <div :style="{ opacity: formatProbability(row.probability).opacity + '%' }">{{ formatProbability(row.probability).text }}</div>
-              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.probability && row.previousValues.probability !== row.probability" class="prev-value">{{ formatProbability(row.previousValues.probability).text }}</div>
-            </template>
-          </el-table-column>
+                <td v-if="visibleColumns.ibpStep">
+                  <div>{{ row.ibpStep || '-' }}</div>
+                  <div v-if="row.changeStatus === 'Modified' && row.previousValues?.ibpStep && row.previousValues.ibpStep !== row.ibpStep" class="prev-value">{{ row.previousValues.ibpStep }}</div>
+                </td>
 
-          <el-table-column v-if="visibleColumns.addToForecastBy" label="Add to Forecast By" width="160">
-            <template #default="{ row }">
-              <div>{{ row.addToForecastByPeriod && row.addToForecastByYear ? `${periodToMonthAbbr(row.addToForecastByPeriod)} ${row.addToForecastByYear}` : '-' }}</div>
-            </template>
-          </el-table-column>
+                <td v-if="visibleColumns.division">
+                  <div>{{ row.division }}</div>
+                  <div v-if="row.changeStatus === 'Modified' && row.previousValues?.division && row.previousValues.division !== row.division" class="prev-value">{{ row.previousValues.division }}</div>
+                </td>
 
-          <el-table-column v-if="visibleColumns.creator" label="Creator" width="130">
-            <template #default="{ row }">
-              <div>{{ row.creator || '-' }}</div>
-              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.creator && row.previousValues.creator !== row.creator" class="prev-value">{{ row.previousValues.creator }}</div>
-            </template>
-          </el-table-column>
+                <td v-if="visibleColumns.country">
+                  <div>{{ formatValue(row.country) }}</div>
+                  <div v-if="row.changeStatus === 'Modified' && row.previousValues?.country && formatValue(row.previousValues.country) !== formatValue(row.country)" class="prev-value">{{ formatValue(row.previousValues.country) }}</div>
+                </td>
 
-          <el-table-column v-if="visibleColumns.owner" label="Owner" width="130">
-            <template #default="{ row }">
-              <div>{{ row.owner }}</div>
-              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.owner && row.previousValues.owner !== row.owner" class="prev-value">{{ row.previousValues.owner }}</div>
-            </template>
-          </el-table-column>
+                <td v-if="visibleColumns.categorisation">
+                  <div>{{ row.categorisation || '-' }}</div>
+                  <div v-if="row.changeStatus === 'Modified' && row.previousValues?.categorisation && row.previousValues.categorisation !== row.categorisation" class="prev-value">{{ row.previousValues.categorisation }}</div>
+                </td>
 
-          <el-table-column v-if="visibleColumns.status" label="Entry Status" width="120">
-            <template #default="{ row }">
-              <div>{{ row.status || 'Open' }}</div>
-              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.status && row.previousValues.status !== row.status" class="prev-value">{{ row.previousValues.status }}</div>
-            </template>
-          </el-table-column>
+                <td v-if="visibleColumns.description">
+                  <div class="truncate-text">{{ row.shortDescription || '-' }}</div>
+                  <div v-if="row.changeStatus === 'Modified' && row.previousValues?.shortDescription && row.previousValues.shortDescription !== row.shortDescription" class="prev-value truncate-text">{{ row.previousValues.shortDescription }}</div>
+                </td>
 
-          <el-table-column v-if="visibleColumns.lastModified" label="Last Modified" width="140">
-            <template #default="{ row }">
-              {{ new Date(row.lastModified).toLocaleDateString() }}
-            </template>
-          </el-table-column>
+                <td v-if="visibleColumns.customer">
+                  <div v-if="row.account">{{ formatValue(row.account) }}</div>
+                  <div v-if="row.subChannel" class="cell-sub">{{ formatValue(row.subChannel) }}</div>
+                  <div v-if="row.channel" class="cell-sub italic">{{ formatValue(row.channel) }}</div>
+                  <span v-if="!row.account && !row.subChannel && !row.channel">-</span>
+                  <div v-if="row.changeStatus === 'Modified' && (row.previousValues?.channel || row.previousValues?.subChannel || row.previousValues?.account)" class="prev-value">
+                    {{ [formatValue(row.previousValues.channel), formatValue(row.previousValues.subChannel), formatValue(row.previousValues.account)].filter(Boolean).join(', ') }}
+                  </div>
+                </td>
 
-          <el-table-column v-if="visibleColumns.financialImpactType" label="Impact Type" width="130">
-            <template #default="{ row }">
-              <div>{{ row.financialImpactType || '-' }}</div>
-              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.financialImpactType && row.previousValues.financialImpactType !== row.financialImpactType" class="prev-value">{{ row.previousValues.financialImpactType }}</div>
-            </template>
-          </el-table-column>
+                <td v-if="visibleColumns.product">
+                  <div v-if="row.brand">{{ formatValue(row.brand) }}</div>
+                  <div v-if="row.brandFamily" class="cell-sub italic">{{ formatValue(row.brandFamily) }}</div>
+                  <span v-if="!row.brand && !row.brandFamily">-</span>
+                  <div v-if="row.changeStatus === 'Modified' && (row.previousValues?.brand || row.previousValues?.brandFamily)" class="prev-value">
+                    {{ [formatValue(row.previousValues.brand), formatValue(row.previousValues.brandFamily)].filter(Boolean).join(', ') }}
+                  </div>
+                </td>
 
-          <el-table-column v-if="visibleColumns.currency" label="Financial Impact Currency" width="110">
-            <template #default="{ row }">
-              <div>{{ row.impactCurrency || '-' }}</div>
-              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.impactCurrency && row.previousValues.impactCurrency !== row.impactCurrency" class="prev-value">{{ row.previousValues.impactCurrency }}</div>
-            </template>
-          </el-table-column>
+                <td v-if="visibleColumns.rAndO">
+                  <div>{{ row.rAndO }}</div>
+                  <div v-if="row.changeStatus === 'Modified' && row.previousValues?.rAndO && row.previousValues.rAndO !== row.rAndO" class="prev-value">{{ row.previousValues.rAndO }}</div>
+                </td>
 
-          <el-table-column v-if="visibleColumns.impact" label="Impact" width="120">
-            <template #default="{ row }">
-              <div>{{ row.impact || '-' }}</div>
-              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.impact && row.previousValues.impact !== row.impact" class="prev-value">{{ row.previousValues.impact }}</div>
-            </template>
-          </el-table-column>
+                <td v-if="visibleColumns.probability" class="tc">
+                  <span v-if="row.probability" :class="['prob-badge', `prob-${(row.probability||'').toLowerCase()}`]">
+                    {{ (row.probability||'').charAt(0).toUpperCase() }}
+                  </span>
+                  <span v-else class="cell-muted">-</span>
+                  
+                  <div v-if="row.changeStatus === 'Modified' && row.previousValues?.probability && row.previousValues.probability !== row.probability" class="prev-value tc" style="margin-top: 4px;">
+                    <span :class="['prob-badge', `prob-${(row.previousValues.probability||'').toLowerCase()}`, 'dim']" style="transform: scale(0.8)">
+                      {{ (row.previousValues.probability||'').charAt(0).toUpperCase() }}
+                    </span>
+                  </div>
+                </td>
 
-          <el-table-column v-if="visibleColumns.volumeCases" label="Volume (Cases)" width="140">
-            <template #default="{ row }">
-              <div>{{ row.volumeCases || '-' }}</div>
-              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.volumeCases && row.previousValues.volumeCases !== row.volumeCases" class="prev-value">{{ row.previousValues.volumeCases }}</div>
-            </template>
-          </el-table-column>
+                <td v-if="visibleColumns.addToForecastBy">
+                  <div>{{ row.addToForecastByPeriod && row.addToForecastByYear ? `${periodToMonthAbbr(row.addToForecastByPeriod)} ${row.addToForecastByYear}` : '-' }}</div>
+                </td>
 
-          <el-table-column v-if="visibleColumns.volumeImpactType" label="Volume Impact Type" width="160">
-            <template #default="{ row }">
-              <div>{{ row.volumeImpactType || '-' }}</div>
-              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.volumeImpactType && row.previousValues.volumeImpactType !== row.volumeImpactType" class="prev-value">{{ row.previousValues.volumeImpactType }}</div>
-            </template>
-          </el-table-column>
+                <td v-if="visibleColumns.creator">
+                  <div>{{ row.creator || '-' }}</div>
+                  <div v-if="row.changeStatus === 'Modified' && row.previousValues?.creator && row.previousValues.creator !== row.creator" class="prev-value">{{ row.previousValues.creator }}</div>
+                </td>
 
-          <el-table-column v-if="visibleColumns.volumeImpactValue" label="Volume Impact Value" width="160">
-            <template #default="{ row }">
-              <div class="tr">{{ row.volumeImpactValue ? Number(row.volumeImpactValue).toLocaleString() : '-' }}</div>
-              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.volumeImpactValue && row.previousValues.volumeImpactValue !== row.volumeImpactValue" class="prev-value tr">
-                {{ row.previousValues.volumeImpactValue ? Number(row.previousValues.volumeImpactValue).toLocaleString() : '-' }}
-              </div>
-            </template>
-          </el-table-column>
+                <td v-if="visibleColumns.owner">
+                  <div>{{ row.owner }}</div>
+                  <div v-if="row.changeStatus === 'Modified' && row.previousValues?.owner && row.previousValues.owner !== row.owner" class="prev-value">{{ row.previousValues.owner }}</div>
+                </td>
 
-          <el-table-column v-if="visibleColumns.impactPeriods" label="Impact Period(s)" width="180">
-            <template #default="{ row }">
-              <div>{{ formatImpactPeriods(row.childImpacts, row.impactPeriod, row.impactYear) }}</div>
-              <div v-if="row.changeStatus === 'Modified' && row.previousValues?.childImpacts" class="prev-value">
-                {{ formatImpactPeriods(row.previousValues.childImpacts, row.previousValues.impactPeriod, row.previousValues.impactYear) }}
-              </div>
-            </template>
-          </el-table-column>
-        </el-table>
+                <td v-if="visibleColumns.status">
+                  <div>{{ row.status || 'Open' }}</div>
+                  <div v-if="row.changeStatus === 'Modified' && row.previousValues?.status && row.previousValues.status !== row.status" class="prev-value">{{ row.previousValues.status }}</div>
+                </td>
+
+                <td v-if="visibleColumns.lastModified" class="cell-muted">
+                  {{ new Date(row.lastModified).toLocaleDateString() }}
+                </td>
+
+                <td v-if="visibleColumns.financialImpactType">
+                  <div>{{ row.financialImpactType || '-' }}</div>
+                  <div v-if="row.changeStatus === 'Modified' && row.previousValues?.financialImpactType && row.previousValues.financialImpactType !== row.financialImpactType" class="prev-value">{{ row.previousValues.financialImpactType }}</div>
+                </td>
+
+                <td v-if="visibleColumns.currency">
+                  <div>{{ row.impactCurrency || '-' }}</div>
+                  <div v-if="row.changeStatus === 'Modified' && row.previousValues?.impactCurrency && row.previousValues.impactCurrency !== row.impactCurrency" class="prev-value">{{ row.previousValues.impactCurrency }}</div>
+                </td>
+
+                <td v-if="visibleColumns.impact" class="tr fw">
+                  <div>{{ row.impact || '-' }}</div>
+                  <div v-if="row.changeStatus === 'Modified' && row.previousValues?.impact && row.previousValues.impact !== row.impact" class="prev-value tr">{{ row.previousValues.impact }}</div>
+                </td>
+
+                <td v-if="visibleColumns.volumeCases" class="tr">
+                  <div>{{ row.volumeCases || '-' }}</div>
+                  <div v-if="row.changeStatus === 'Modified' && row.previousValues?.volumeCases && row.previousValues.volumeCases !== row.volumeCases" class="prev-value tr">{{ row.previousValues.volumeCases }}</div>
+                </td>
+
+                <td v-if="visibleColumns.volumeImpactType">
+                  <div>{{ row.volumeImpactType || '-' }}</div>
+                  <div v-if="row.changeStatus === 'Modified' && row.previousValues?.volumeImpactType && row.previousValues.volumeImpactType !== row.volumeImpactType" class="prev-value">{{ row.volumeImpactType }}</div>
+                </td>
+
+                <td v-if="visibleColumns.volumeImpactValue" class="tr">
+                  <div>{{ row.volumeImpactValue ? Number(row.volumeImpactValue).toLocaleString() : '-' }}</div>
+                  <div v-if="row.changeStatus === 'Modified' && row.previousValues?.volumeImpactValue && row.previousValues.volumeImpactValue !== row.volumeImpactValue" class="prev-value tr">
+                    {{ row.previousValues.volumeImpactValue ? Number(row.previousValues.volumeImpactValue).toLocaleString() : '-' }}
+                  </div>
+                </td>
+
+                <td v-if="visibleColumns.impactPeriods">
+                  <div>{{ formatImpactPeriods(row.childImpacts, row.impactPeriod, row.impactYear) }}</div>
+                  <div v-if="row.changeStatus === 'Modified' && row.previousValues?.childImpacts" class="prev-value">
+                    {{ formatImpactPeriods(row.previousValues.childImpacts, row.previousValues.impactPeriod, row.previousValues.impactYear) }}
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </template>
 
-    <!-- Default snapshot list view -->
     <template v-else>
-      <!-- Compare mode banner -->
       <div v-if="comparisonMode" class="compare-banner">
         <div class="compare-banner-left">
           <el-icon><ScaleToOriginal /></el-icon>
@@ -271,7 +257,6 @@
         </div>
       </div>
 
-      <!-- Compare button (only shown when not in compare mode and 2+ snapshots exist) -->
       <div v-else-if="snapshots.length >= 2" class="compare-btn-row">
         <el-button @click="enterComparisonMode">
           <el-icon><ScaleToOriginal /></el-icon>
@@ -413,6 +398,7 @@ interface Entry {
   creator?: string;
   lastModified: string;
   status?: string;
+  shortDescription?: string;
   description?: string;
   detailedDescription?: string;
   financialImpactType?: string;
@@ -456,7 +442,7 @@ const visibleColumns = ref<Record<string, boolean>>({
   product:             false,
   rAndO:               true,
   probability:         true,
-  addToForecastBy: false,
+  addToForecastBy:     false,
   creator:             false,
   owner:               false,
   status:              true,
@@ -485,7 +471,7 @@ const columnDefs = [
   { key: 'addToForecastBy', label: 'Add to Forecast By' },
   { key: 'creator', label: 'Creator' },
   { key: 'owner', label: 'Owner' },
-  { key: 'status', label: 'Entry Status' },
+  { key: 'status', label: 'Status' },
   { key: 'lastModified', label: 'Last Modified' },
   { key: 'financialImpactType', label: 'Impact Type' },
   { key: 'currency', label: 'Financial Impact Currency' },
@@ -569,7 +555,6 @@ async function handleToggleFinal(snapshot: SnapshotGroup) {
     ElMessage.success(`Snapshot ${newVal ? 'marked as final' : 'unmarked as final'}`);
     await fetchSnapshots();
   } catch (error: any) {
-    // Handle FastAPI validation error arrays (422) vs standard error strings
     const detail = error?.response?.data?.detail;
     const message = Array.isArray(detail) 
       ? detail.map(d => `${d.loc[d.loc.length - 1]}: ${d.msg}`).join(', ')
@@ -611,16 +596,16 @@ function countByStatus(status: ChangeStatus) {
   return comparedEntries.value.filter(e => e.changeStatus === status).length;
 }
 
-function statusTagType(status: ChangeStatus) {
+function changeStatusClass(status: ChangeStatus) {
   switch (status) {
-    case 'New': return 'success';
-    case 'Modified': return 'primary';
-    case 'Deleted': return 'danger';
-    default: return 'info';
+    case 'New': return 'status-success';
+    case 'Modified': return 'status-primary';
+    case 'Deleted': return 'status-danger';
+    default: return 'status-info';
   }
 }
 
-function getRowClass({ row }: { row: ComparedEntry }) {
+function getRowClass(row: ComparedEntry) {
   if (row.changeStatus === 'New') return 'row-new';
   if (row.changeStatus === 'Modified') return 'row-modified';
   if (row.changeStatus === 'Deleted') return 'row-deleted';
@@ -675,13 +660,6 @@ function formatValue(v: any): string {
   return String(v);
 }
 
-function formatProbability(probability: string): { text: string; opacity: string } {
-  if (!probability) return { text: '-', opacity: '100' };
-  const text = probability === 'High' ? 'H' : probability === 'Medium' ? 'M' : probability === 'Low' ? 'L' : probability;
-  const opacity = probability === 'Medium' ? '60' : probability === 'Low' ? '20' : '100';
-  return { text, opacity };
-}
-
 function compareEntries(baseEntry: Entry, compEntry: Entry): { modifiedFields: string[]; previousValues: Record<string, any> } {
   const modifiedFields: string[] = [];
   const previousValues: Record<string, any> = {};
@@ -694,6 +672,7 @@ function compareEntries(baseEntry: Entry, compEntry: Entry): { modifiedFields: s
     impact: "Impact", impactUnit: "Impact Unit", impactPeriod: "Impact Period",
     impactYear: "Impact Year", secondaryImpact: "Secondary Impact",
     secondaryImpactUnit: "Secondary Impact Unit", status: "Status",
+    shortDescription: "Short Description",
     description: "Description", detailedDescription: "Detailed Description",
     owner: "Owner", addToForecastByPeriod: "Add to Forecast By Period",
     addToForecastByYear: "Add to Forecast By Year", financialImpactType: "Impact Type",
@@ -875,58 +854,97 @@ async function handleCompare() {
   color: var(--text-secondary);
 }
 
-/* Summary badges */
+/* ── Comparison Table Wrapper Treatment ───────────────────────────────── */
+.comparison-table-wrapper {
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  overflow: visible;
+  box-shadow: none;
+}
+
 .comparison-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-color);
+  background: linear-gradient(180deg, rgba(245,247,251,.8) 0%, rgba(241,245,252,.9) 100%);
+  border-radius: 10px 10px 0 0;
+}
+
+.comparison-summary-left {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 16px;
 }
 
-.ml-auto {
-  margin-left: auto;
-}
-
-/* Column toggle popover */
-.column-toggle {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  max-height: 360px;
-  overflow-y: auto;
-}
-
-.column-toggle-title {
-  font-weight: 600;
-  font-size: 13px;
-  margin: 0 0 8px;
-}
-
-.column-toggle-item {
-  padding: 2px 0;
-}
-
-/* Table */
-.table-wrapper {
+/* ── Table scroll wrapper ─────────────────────────────── */
+.table-scroll-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 0 0 10px 10px;
+}
+.table-scroll-wrap::-webkit-scrollbar { height: 8px; }
+.table-scroll-wrap::-webkit-scrollbar-track { background: transparent; }
+.table-scroll-wrap::-webkit-scrollbar-thumb { background: rgba(0,0,0,.22); border-radius: 4px; }
+.table-scroll-wrap::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,.42); }
+
+/* ── Custom HTML Data Table ───────────────────────────────────────── */
+.data-table {
+  width: 100%; 
+  border-collapse: collapse;
+  font-size: 13px; 
+  color: var(--text-primary);
+}
+.data-table th {
+  background: #f8f9fc; 
+  font-weight: 600; 
+  font-size: 12px;
+  padding: 9px 12px; 
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-secondary); 
+  text-align: left;
+}
+.data-table td {
+  padding: 8px 12px; 
+  border-bottom: 1px solid #f0f2f5;
+  vertical-align: middle; 
+  white-space: nowrap;
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tbody tr:hover td { background: #f9fafb; }
+
+/* Dynamic change grid colors */
+.row-new td { background-color: #f0fdf4 !important; }
+.row-modified td { background-color: #eff6ff !important; }
+.row-deleted td { background-color: #fff1f2 !important; opacity: 0.7; }
+
+/* Column width dimensions */
+.col-sm { min-width: 80px; }
+.col-md { min-width: 120px; }
+.col-lg { min-width: 150px; }
+.col-xl { min-width: 200px; max-width: 240px; }
+
+.truncate-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* Row colours (injected via row-class-name) */
-:deep(.row-new) {
-  background-color: #f0fdf4 !important;
-}
+/* Core alignment styles */
+.tc { text-align: center; }
+.tr { text-align: left; }
+.fw { font-weight: 600; }
 
-:deep(.row-modified) {
-  background-color: #eff6ff !important;
-}
+/* Utility layout blocks */
+.cell-muted { color: #9ca3af; }
+.cell-sub { font-size: 11px; color: #9ca3af; }
+.italic { font-style: italic; }
 
-:deep(.row-deleted) {
-  background-color: #fff1f2 !important;
-  opacity: 0.7;
-}
-
-/* Previous-value strikethrough */
+/* Modified values notation */
 .prev-value {
   font-size: 11px;
   color: #9ca3af;
@@ -934,7 +952,94 @@ async function handleCompare() {
   margin-top: 2px;
 }
 
-/* Snapshot list */
+/* Priority status markers */
+.prob-badge {
+  display: inline-flex; 
+  align-items: center; 
+  justify-content: center;
+  width: 28px; 
+  height: 28px; 
+  border-radius: 6px;
+  font-size: 12px; 
+  font-weight: 700; 
+  cursor: default;
+}
+.prob-high   { background: #0d9488; color: #fff; }
+.prob-medium { background: #cffafe; color: #0e7490; }
+.prob-low    { background: #e0f2fe; color: #0369a1; }
+.dim { opacity: .5; }
+
+/* Column modifier tag fields */
+.field-badges-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.field-badge {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* Status evaluation badges */
+.status-badge {
+  display: inline-block; 
+  padding: 2px 8px; 
+  border-radius: 4px;
+  font-size: 12px; 
+  font-weight: 500;
+}
+.status-success { background: #dcfce7; color: #166534; }
+.status-primary { background: #dbeafe; color: #1e40af; }
+.status-danger  { background: #fee2e2; color: #991b1b; }
+.status-info    { background: #f3f4f6; color: #374151; }
+
+/* ── Custom Popover Override Container ───────────────────────────────── */
+:deep(.column-popover) {
+  padding: 12px 0 12px 12px !important;
+}
+
+.column-selector-container { 
+  display: flex; 
+  flex-direction: column; 
+}
+.column-selector-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #303133;
+  margin: 0 0 12px 0;
+  padding-right: 12px;
+}
+.column-selector-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 250px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+.column-selector-list :deep(.el-checkbox) {
+  margin-right: 0;
+  margin-bottom: 8px;
+  font-weight: normal;
+}
+.column-selector-list :deep(.el-checkbox:last-child) {
+  margin-bottom: 0;
+}
+.column-selector-list::-webkit-scrollbar {
+  width: 6px;
+}
+.column-selector-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.column-selector-list::-webkit-scrollbar-thumb {
+  background-color: #909399;
+  border-radius: 10px;
+}
+
+/* ── Snapshot Grid View ───────────────────────────────────────────────── */
 .loading-state {
   display: flex;
   flex-direction: column;
@@ -1058,10 +1163,7 @@ async function handleCompare() {
   flex: 1;
 }
 
-/* Utility */
-.text-muted { color: var(--text-secondary); }
+/* Utility layout extensions */
 .text-green  { color: #16a34a; font-size: 13px; }
 .text-red    { color: #dc2626; font-size: 13px; }
-.text-small  { font-size: 12px; }
-.text-italic { font-style: italic; }
 </style>
