@@ -66,6 +66,21 @@ def _calculate_entry_impacts(entry, child_impacts):
     return impact_value, vol_impact_value
 
 def _generate_entry_data_for_snapshot(entry, child_impacts, impact_value, vol_impact_value):
+    # Serialize child impacts into a list of dictionaries
+    child_impacts_serialized = []
+    if child_impacts:
+        for ci in child_impacts:
+            child_impacts_serialized.append({
+                "id": ci.id,
+                "impact_year": ci.impact_year,
+                "impact_period": ci.impact_period,
+                "nsv_aud": ci.nsv_aud,
+                "nsv_nzd": ci.nsv_nzd,
+                "volume_litres": ci.volume_litres,
+                "volume_cases": ci.volume_cases,
+                "volume_impact_value": ci.volume_impact_value,
+            })
+
     return {
         "id": entry.id,
         "original_entry_id": entry.original_entry_id,
@@ -99,6 +114,7 @@ def _generate_entry_data_for_snapshot(entry, child_impacts, impact_value, vol_im
         "volume_impact_type": entry.volume_impact_type,
         "volume_impact_value": vol_impact_value,
         "impact": impact_value,
+        "child_impacts": child_impacts_serialized,  # Added this line to capture child impacts
     }
 
 

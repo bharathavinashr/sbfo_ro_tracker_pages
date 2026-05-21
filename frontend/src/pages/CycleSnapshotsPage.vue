@@ -63,6 +63,7 @@
           <table class="data-table">
             <thead>
               <tr>
+                <th class="col-expand"></th>
                 <th v-if="visibleColumns.changeStatus" class="col-sm">Change</th>
                 <th v-if="visibleColumns.modifiedFields" class="col-xl">Modified Columns</th>
                 <th v-if="visibleColumns.ibpStep" class="col-md">IBP Step</th>
@@ -79,9 +80,9 @@
                 <th v-if="visibleColumns.owner" class="col-md">Owner</th>
                 <th v-if="visibleColumns.status" class="col-md">Status</th>
                 <th v-if="visibleColumns.lastModified" class="col-lg">Last Modified</th>
-                <th v-if="visibleColumns.financialImpactType" class="col-md">Impact Type</th>
-                <th v-if="visibleColumns.currency" class="col-sm">Currency</th>
-                <th v-if="visibleColumns.impact" class="col-md tr">Impact</th>
+                <th v-if="visibleColumns.financialImpactType" class="col-md">Financial Impact Type</th>
+                <th v-if="visibleColumns.currency" class="col-sm">Financial Impact Currency</th>
+                <th v-if="visibleColumns.impact" class="col-md tr">Financial Impact Value</th>
                 <th v-if="visibleColumns.volumeCases" class="col-md tr">Volume (Cases)</th>
                 <th v-if="visibleColumns.volumeImpactType" class="col-lg">Volume Impact Type</th>
                 <th v-if="visibleColumns.volumeImpactValue" class="col-md tr">Volume Impact Value</th>
@@ -89,7 +90,15 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(row, index) in comparedEntries" :key="row.id || index" :class="getRowClass(row)">
+              <template v-for="(row, index) in comparedEntries" :key="row.id || index">
+                <tr :class="getRowClass(row)">
+                <td class="col-expand">
+                  <button v-if="row.comparedChildren?.length" class="expand-btn" @click="toggleExpand(row.originalEntryId || row.id)">
+                    <svg :class="['expand-icon', { rotated: expandedRows.has(row.originalEntryId || row.id) }]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                  </button>
+                </td>
                 <td v-if="visibleColumns.changeStatus">
                   <span :class="['status-badge', changeStatusClass(row.changeStatus)]">{{ row.changeStatus }}</span>
                 </td>
@@ -229,6 +238,76 @@
                   </div>
                 </td>
               </tr>
+
+              <!-- Child Impact Rows for Comparison -->
+              <template v-if="expandedRows.has(row.originalEntryId || row.id) && row.comparedChildren?.length">
+                <tr v-for="(ci, cIdx) in row.comparedChildren" :key="`${row.id}-c${cIdx}`" :class="['child-row', getRowClass(ci)]">
+                  <td class="col-expand"></td>
+                  <td v-if="visibleColumns.changeStatus">
+                    <span :class="['status-badge', changeStatusClass(ci.changeStatus), 'dim']">{{ ci.changeStatus }}</span>
+                  </td>
+                  <td v-if="visibleColumns.modifiedFields">
+                    <div v-if="ci.changeStatus === 'Modified'" class="field-badges-wrap">
+                      <span v-for="f in ci.modifiedFields" :key="f" class="field-badge">{{ f }}</span>
+                    </div>
+                    <span v-else-if="ci.changeStatus === 'New'" class="text-green dim">New period</span>
+                    <span v-else-if="ci.changeStatus === 'Deleted'" class="text-red dim">Removed</span>
+                    <span v-else class="cell-muted">-</span>
+                  </td>
+                  <td v-if="visibleColumns.ibpStep" class="cell-muted">{{ row.ibpStep || '-' }}</td>
+                  <td v-if="visibleColumns.division" class="cell-muted">{{ row.division }}</td>
+                  <td v-if="visibleColumns.country" class="cell-muted">{{ formatValue(row.country) }}</td>
+                  <td v-if="visibleColumns.categorisation" class="cell-muted">{{ row.categorisation || '-' }}</td>
+                  <td v-if="visibleColumns.description" class="cell-muted">{{ row.shortDescription || '-' }}</td>
+                  <td v-if="visibleColumns.customer" class="cell-muted">
+                    {{ [formatValue(row.channel), formatValue(row.subChannel), formatValue(row.account)].filter(Boolean).join(' / ') }}
+                  </td>
+                  <td v-if="visibleColumns.product" class="cell-muted">
+                    {{ [formatValue(row.brand), formatValue(row.brandFamily)].filter(Boolean).join(' / ') }}
+                  </td>
+                  <td v-if="visibleColumns.rAndO" class="cell-muted">{{ row.rAndO }}</td>
+                  <td v-if="visibleColumns.probability" class="tc cell-muted">
+                    <span v-if="row.probability" :class="['prob-badge', `prob-${(row.probability||'').toLowerCase()}`, 'dim']">
+                      {{ (row.probability||'').charAt(0).toUpperCase() }}
+                    </span>
+                  </td>
+                  <td v-if="visibleColumns.addToForecastBy" class="cell-muted">-</td>
+                  <td v-if="visibleColumns.creator" class="cell-muted">-</td>
+                  <td v-if="visibleColumns.owner" class="cell-muted">-</td>
+                  <td v-if="visibleColumns.status" class="cell-muted">{{ row.status || 'Open' }}</td>
+                  <td v-if="visibleColumns.lastModified" class="cell-muted">-</td>
+                  <td v-if="visibleColumns.financialImpactType" class="cell-muted">{{ row.financialImpactType || '-' }}</td>
+                  <td v-if="visibleColumns.currency" class="cell-muted">{{ row.impactCurrency || '-' }}</td>
+                  
+                  <td v-if="visibleColumns.impact" class="tr fw">
+                    <div>{{ ci.impact || '-' }}</div>
+                    <div v-if="ci.changeStatus === 'Modified' && ci.previousValues?.impact && ci.previousValues.impact !== ci.impact" class="prev-value tr">
+                      {{ ci.previousValues.impact }}
+                    </div>
+                  </td>
+
+                  <td v-if="visibleColumns.volumeCases" class="tr cell-muted">
+                    <div>{{ ci.volumeCases || '-' }}</div>
+                    <div v-if="ci.changeStatus === 'Modified' && ci.previousValues?.volumeCases && ci.previousValues.volumeCases !== ci.volumeCases" class="prev-value tr">
+                      {{ ci.previousValues.volumeCases }}
+                    </div>
+                  </td>
+
+                  <td v-if="visibleColumns.volumeImpactType" class="cell-muted">{{ row.volumeImpactType || '-' }}</td>
+
+                  <td v-if="visibleColumns.volumeImpactValue" class="tr">
+                    <div>{{ ci.volumeImpactValue ? Number(ci.volumeImpactValue).toLocaleString() : '-' }}</div>
+                    <div v-if="ci.changeStatus === 'Modified' && ci.previousValues?.volumeImpactValue && ci.previousValues.volumeImpactValue !== ci.volumeImpactValue" class="prev-value tr">
+                      {{ ci.previousValues.volumeImpactValue ? Number(ci.previousValues.volumeImpactValue).toLocaleString() : '-' }}
+                    </div>
+                  </td>
+
+                  <td v-if="visibleColumns.impactPeriods">
+                    {{ ci.impactPeriod && ci.impactYear ? `${periodToMonthAbbr(ci.impactPeriod)} ${ci.impactYear}` : '-' }}
+                  </td>
+                </tr> 
+              </template>
+              </template>
             </tbody>
           </table>
         </div>
@@ -360,29 +439,24 @@ interface SnapshotGroup {
 
 
 interface ChildImpact {
-  id: string;
-  impactYear: string;
-  impactPeriod: string;
-  impact: string;
-  impactUnit: string;
-  secondaryImpact?: string;
+  id: number;
+  impactYear: string; // 2023, 2024, etc.
+  impactPeriod: string; // F01, F02, etc.
+  nsvAud?: string;
+  nsvNzd?: string;
+  volumeLitres?: string;
+  volumeCases?: string;
+  volumeImpactValue?: string; // Calculated volume impact
+  impact?: string; // Calculated financial impact
   financialImpactType?: string;
   impactCurrency?: string;
-  impactValue?: string;
-  volumeCases?: string;
 }
 
 interface Entry {
-  id: string;
-  originalEntryId?: string;
+  id: number;
+  originalEntryId?: number;
   division: string;
   ibpStep?: string;
-  country: string;
-  channel: string;
-  subChannel: string;
-  account: string;
-  brand: string;
-  brandFamily: string | string[] | Record<string, string>;
   rAndO: string;
   probability: string;
   impactPeriod?: string;
@@ -390,32 +464,44 @@ interface Entry {
   addToForecastByPeriod?: string;
   addToForecastByYear?: string;
   categorisation: string;
-  impact: string;
-  impactUnit?: string;
-  secondaryImpact?: string;
-  noVolumeImpact?: boolean;
+  nsvAud?: string;
+  nsvNzd?: string;
+  volumeLitres?: string;
+  primaryImpact?: string;
+  financialImpactType?: string;
+  volumeCases?: string; // Raw volume cases
+  volumeImpactType?: string;
+  volumeImpactValue?: string; // Calculated volume impact
+  impact?: string; // Calculated financial impact
+  impactCurrency?: string;
   owner: string;
   creator?: string;
   lastModified: string;
   status?: string;
   shortDescription?: string;
   description?: string;
-  detailedDescription?: string;
-  financialImpactType?: string;
-  impactCurrency?: string;
-  impactValue?: string;
-  volumeCases?: string;
-  volumeImpactType?: string;
-  volumeImpactValue?: string;
+  country: Record<string, string>; // {company_code: country_name}
+  channel: Record<string, string>; // {channel_code: channel_name}
+  subChannel: Record<string, string>; // {subchannel_code: subchannel_name}
+  account: Record<string, string>; // {account_code: account_name}
+  brand: Record<string, string>;
+  brandFamily?: Record<string, string>;
   childImpacts?: ChildImpact[];
 }
 
 type ChangeStatus = 'New' | 'Modified' | 'Deleted' | 'Unchanged';
 
+interface ComparedChildImpact extends ChildImpact {
+  changeStatus: ChangeStatus;
+  modifiedFields?: string[];
+  previousValues?: Record<string, any>;
+}
+
 interface ComparedEntry extends Entry {
   changeStatus: ChangeStatus;
   modifiedFields?: string[];
   previousValues?: Record<string, any>;
+  comparedChildren?: ComparedChildImpact[];
 }
 
 const router = useRouter();
@@ -426,6 +512,13 @@ const comparisonMode = ref(false);
 const selectedSnapshots = ref<string[]>([]);
 const comparedEntries = ref<ComparedEntry[]>([]);
 const showComparison = ref(false);
+
+const expandedRows = ref<Set<string | number>>(new Set());
+function toggleExpand(id: string | number) {
+  const s = new Set(expandedRows.value);
+  s.has(id) ? s.delete(id) : s.add(id);
+  expandedRows.value = s;
+}
 
 const ibpSteps = ["All", "Portfolio Review", "Supply Review", "Demand Review", "A&P (Pre-Exec)", "Overheads (Pre-Exec)"];
 
@@ -473,10 +566,10 @@ const columnDefs = [
   { key: 'owner', label: 'Owner' },
   { key: 'status', label: 'Status' },
   { key: 'lastModified', label: 'Last Modified' },
-  { key: 'financialImpactType', label: 'Impact Type' },
+  { key: 'financialImpactType', label: 'Financial Impact Type' },
   { key: 'currency', label: 'Financial Impact Currency' },
-  { key: 'impact', label: 'Impact' },
-  { key: 'volumeCases', label: 'Volume (Cases)' },
+  { key: 'impact', label: 'Financial Impact Value' },
+  // { key: 'volumeCases', label: 'Volume (Cases)' },
   { key: 'volumeImpactType', label: 'Volume Impact Type' },
   { key: 'volumeImpactValue', label: 'Volume Impact Value' },
   { key: 'impactPeriods', label: 'Impact Period(s)' },
@@ -614,7 +707,7 @@ function getRowClass(row: ComparedEntry) {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function periodToMonthAbbr(period: string): string {
+function periodToMonthAbbr(period?: string): string {
   if (!period) return '-';
   const abbrs = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   const idx = parseInt(period.replace('F', '')) - 1;
@@ -660,52 +753,117 @@ function formatValue(v: any): string {
   return String(v);
 }
 
-function compareEntries(baseEntry: Entry, compEntry: Entry): { modifiedFields: string[]; previousValues: Record<string, any> } {
+function compareEntries(baseEntry: Entry, compEntry: Entry): { modifiedFields: string[]; previousValues: Record<string, any>; comparedChildren: ComparedChildImpact[] } {
   const modifiedFields: string[] = [];
   const previousValues: Record<string, any> = {};
+  const comparedChildren: ComparedChildImpact[] = [];
 
-  const fieldDisplayNames: Record<string, string> = {
+  const bci = baseEntry.childImpacts || [];
+  const cci = compEntry.childImpacts || [];
+
+  const fieldDisplayNames: Partial<Record<keyof Entry, string>> = {
     division: "Division", ibpStep: "IBP Step", country: "Country",
     channel: "Channel", subChannel: "Sub Channel", account: "Account",
     brand: "Brand", brandFamily: "Brand Family", rAndO: "Risk vs. Opp.",
     probability: "Probability", categorisation: "Categorisation",
-    impact: "Impact", impactUnit: "Impact Unit", impactPeriod: "Impact Period",
-    impactYear: "Impact Year", secondaryImpact: "Secondary Impact",
-    secondaryImpactUnit: "Secondary Impact Unit", status: "Status",
-    shortDescription: "Short Description",
-    description: "Description", detailedDescription: "Detailed Description",
-    owner: "Owner", addToForecastByPeriod: "Add to Forecast By Period",
-    addToForecastByYear: "Add to Forecast By Year", financialImpactType: "Impact Type",
-    impactCurrency: "Financial Impact Currency", impactValue: "Impact Value",
-    volumeCases: "Volume (Cases)", volumeImpactType: "Volume Impact Type",
-    volumeImpactValue: "Volume Impact Value", noVolumeImpact: "No Volume Impact"
+    impact: "Financial Impact Value", impactPeriod: "Impact Period",
+    impactYear: "Impact Year", status: "Status",
+    shortDescription: "Short Description", description: "Description",
+    owner: "Owner", addToForecastByPeriod: "Add to Forecast By",
+    addToForecastByYear: "Add to Forecast By", financialImpactType: "Financial Impact Type",
+    impactCurrency: "Financial Impact Currency",
+    volumeCases: "Volume (Cases)",
+    volumeImpactType: "Volume Impact Type",
+    volumeImpactValue: "Volume Impact Value",
   };
 
-  for (const field of Object.keys(fieldDisplayNames)) {
-    const bv = baseEntry[field as keyof Entry];
-    const cv = compEntry[field as keyof Entry];
+  for (const fieldKey of Object.keys(fieldDisplayNames)) {
+    const field = fieldKey as keyof Entry;
+    const bv = baseEntry[field];
+    const cv = compEntry[field];
 
     const isComplex = ['country', 'channel', 'subChannel', 'account', 'brand', 'brandFamily'].includes(field);
     const isDiff = isComplex 
       ? formatValue(bv) !== formatValue(cv)
       : (Array.isArray(bv) && Array.isArray(cv))
-        ? JSON.stringify([...bv].sort()) !== JSON.stringify([...cv as string[]].sort())
+        ? JSON.stringify([...(bv as string[])].sort()) !== JSON.stringify([...((cv as string[]) || [])].sort())
         : bv !== cv;
 
     if (isDiff) {
-      modifiedFields.push(fieldDisplayNames[field]);
+      // Skip parent timing fields if children exist, as they are redundant with "Impact Periods" badge
+      if ((field === 'impactPeriod' || field === 'impactYear') && (bci.length > 0 || cci.length > 0)) {
+        continue;
+      }
+
+      const label = fieldDisplayNames[field] as string;
+      if (!modifiedFields.includes(label)) {
+        modifiedFields.push(label);
+      }
       previousValues[field] = bv;
     }
   }
 
-  const bci = baseEntry.childImpacts || [];
-  const cci = compEntry.childImpacts || [];
-  if (JSON.stringify(bci) !== JSON.stringify(cci)) {
-    modifiedFields.push("Impact Periods");
-    previousValues.childImpacts = bci;
-  }
+  const baseChildMap = new Map<string, ChildImpact>();
+  bci.forEach(c => baseChildMap.set(`${c.impactPeriod}-${c.impactYear}`, c));
+  const compChildMap = new Map<string, ChildImpact>();
+  cci.forEach(c => compChildMap.set(`${c.impactPeriod}-${c.impactYear}`, c));
 
-  return { modifiedFields, previousValues };
+  const childModifiedLabels = new Set<string>();
+
+  // Check for New or Modified children
+  cci.forEach(compChild => {
+    const key = `${compChild.impactPeriod}-${compChild.impactYear}`;
+    const baseChild = baseChildMap.get(key);
+
+    if (!baseChild) {
+      // New child impact
+      comparedChildren.push({ ...compChild, changeStatus: 'New' });
+      childModifiedLabels.add("Impact Periods");
+    } else {
+      const childModified: string[] = [];
+      const childPrev: Record<string, any> = {};
+
+      // Compare financial impact
+      if (baseChild.impact !== compChild.impact) {
+        const label = 'Financial Impact Value';
+        childModified.push(label);
+        childPrev.impact = baseChild.impact;
+        childModifiedLabels.add(label);
+      }
+      // Compare volume impact
+      if (baseChild.volumeImpactValue !== compChild.volumeImpactValue) {
+        const label = 'Volume Impact Value';
+        childModified.push(label);
+        childPrev.volumeImpactValue = baseChild.volumeImpactValue;
+        childModifiedLabels.add(label);
+      }
+
+      comparedChildren.push({
+        ...compChild,
+        changeStatus: childModified.length > 0 ? 'Modified' : 'Unchanged', // Mark as modified if any field changed
+        modifiedFields: childModified,
+        previousValues: childPrev
+      });
+    }
+  });
+
+  // Check for Deleted children (present in base but not in comp)
+  bci.forEach(baseChild => {
+    const key = `${baseChild.impactPeriod}-${baseChild.impactYear}`;
+    if (!compChildMap.has(key)) {
+      comparedChildren.push({ ...baseChild, changeStatus: 'Deleted' });
+      childModifiedLabels.add("Impact Periods");
+    }
+  });
+
+  // Merge child-level modified fields into parent's modifiedFields
+  childModifiedLabels.forEach(label => {
+    if (!modifiedFields.includes(label)) {
+      modifiedFields.push(label);
+    }
+  });
+
+  return { modifiedFields, previousValues, comparedChildren };
 }
 
 async function handleCompare() {
@@ -739,14 +897,22 @@ async function handleCompare() {
       const key = compEntry.originalEntryId || compEntry.id;
       const baseEntry = baselineMap.get(key);
       if (!baseEntry) {
-        compared.push({ ...compEntry, changeStatus: 'New' });
+        compared.push({ 
+          ...compEntry, 
+          changeStatus: 'New', // Parent is new
+          comparedChildren: (compEntry.childImpacts || []).map(c => ({ ...c, changeStatus: 'New' }))
+        });
       } else {
-        const { modifiedFields, previousValues } = compareEntries(baseEntry, compEntry);
+        const { modifiedFields, previousValues, comparedChildren } = compareEntries(baseEntry, compEntry);
+        
+        let changeStatus: ChangeStatus = modifiedFields.length > 0 ? 'Modified' : 'Unchanged';
+        
         compared.push({
           ...compEntry,
-          changeStatus: modifiedFields.length > 0 ? 'Modified' : 'Unchanged',
+          changeStatus,
           modifiedFields,
           previousValues,
+          comparedChildren
         });
       }
     });
@@ -754,10 +920,15 @@ async function handleCompare() {
     baselineEntries.forEach(baseEntry => {
       const key = baseEntry.originalEntryId || baseEntry.id;
       if (!comparisonMap.has(key)) {
-        compared.push({ ...baseEntry, changeStatus: 'Deleted' });
+        compared.push({ 
+          ...baseEntry, 
+          changeStatus: 'Deleted', // Parent is deleted
+          comparedChildren: (baseEntry.childImpacts || []).map(c => ({ ...c, changeStatus: 'Deleted' }))
+        });
       }
     });
 
+    expandedRows.value = new Set();
     comparedEntries.value = compared;
     showComparison.value = true;
     comparisonMode.value = false;
@@ -921,6 +1092,21 @@ async function handleCompare() {
 .row-new td { background-color: #f0fdf4 !important; }
 .row-modified td { background-color: #eff6ff !important; }
 .row-deleted td { background-color: #fff1f2 !important; opacity: 0.7; }
+
+/* Child rows expansion */
+.col-expand { width: 36px; }
+.expand-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border: none; background: transparent;
+  border-radius: 4px; cursor: pointer; color: #6b7280; padding: 0;
+}
+.expand-btn:hover { background: #f3f4f6; }
+.expand-icon { width: 14px; height: 14px; transition: transform 0.2s; }
+.expand-icon.rotated { transform: rotate(90deg); }
+.child-row td { background: #fafafa; padding-left: 12px; }
+.child-row:hover td { background: #f3f4f6 !important; }
+.child-row.row-new td { background-color: #f0fdf4 !important; opacity: 0.8; }
+.child-row.row-deleted td { background-color: #fff1f2 !important; opacity: 0.6; }
 
 /* Column width dimensions */
 .col-sm { min-width: 80px; }

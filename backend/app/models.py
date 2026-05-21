@@ -78,7 +78,6 @@ class ChildImpact(Base):
     volume_litres = Column(String(50), nullable=True)
     volume_cases = Column(String(50), nullable=True)
     volume_impact_value = Column(String(50), nullable=True)
-    volume_impact_value = Column(String(50), nullable=True)
 
 
 class AppUser(Base):
