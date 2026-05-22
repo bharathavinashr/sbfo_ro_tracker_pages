@@ -804,11 +804,29 @@ onMounted(async () => {
 
   if (!props.entry) {
     if (userIbpSteps.value.length === 1) {
-      formData.value.ibpStep = userIbpSteps.value[0];
+      const step = userIbpSteps.value[0];
+      formData.value.ibpStep = step;
+
+      // Apply default financial impact for auto-selected step
+      if (step === "Portfolio Review" || step === "Demand Review") {
+        formData.value.financialImpactType = "NSV";
+      } else if (step === "Supply Review") {
+        formData.value.financialImpactType = "COGS";
+      } else if (step === "A&P (Pre-Exec)" || step === "Overheads (Pre-Exec)") {
+        formData.value.financialImpactType = "OI";
+      }
     }
     // Auto-select division if the user is restricted to exactly one division.
     if (userDivisionsForAutoSelect.value.length === 1) {
-      formData.value.division = userDivisionsForAutoSelect.value[0];
+      const div = userDivisionsForAutoSelect.value[0];
+      formData.value.division = div;
+      
+      // Ensure volume impact default is set even for auto-selected divisions
+      if (div && div.toLowerCase().includes("alcohol") && !div.toLowerCase().includes("non-alcohol")) {
+        formData.value.volumeImpactType = "9LE";
+      } else if (div && div.toLowerCase().includes("non-alcohol")) {
+        formData.value.volumeImpactType = "Cases";
+      }
     }
     
     // Auto-select if the user has exactly one country in their profile, but allow selection of others.
@@ -1681,6 +1699,14 @@ watch(() => formData.value.division, async (division) => {
     formData.value.account = {};
     selectionPriority.value = null;
     brandSelectionPriority.value = null;
+
+    // Use case-insensitive matching to ensure the default logic always fires
+    const div = (division || "").toLowerCase();
+    if (div.includes("alcohol") && !div.includes("non-alcohol")) {
+      formData.value.volumeImpactType = "9LE";
+    } else if (div.includes("non-alcohol")) {
+      formData.value.volumeImpactType = "Cases";
+    }
   }
 
   if (division && Object.keys(formData.value.country).length > 0) {
@@ -1940,10 +1966,20 @@ watch(subChannelOpen, (isOpen) => {
 });
 
 watch(() => formData.value.ibpStep, (val) => {
-  if (isInitialLoadRef.value) return;
+  if (isInitialLoadRef.value || isLoadingEntry.value) return; 
+
   if (!CATEG_ACTIVE_IBP_STEPS.includes(val)) formData.value.categorisation = "";
-  if (val === "Demand Review") formData.value.financialImpactType = "NSV";
-  else if (formData.value.financialImpactType === "NSV") formData.value.financialImpactType = "OI";
+
+  // Set default financialImpactType based on IBP Step
+  if (val === "Portfolio Review" || val === "Demand Review") {
+    formData.value.financialImpactType = "NSV";
+  } else if (val === "Supply Review") {
+    formData.value.financialImpactType = "COGS";
+  } else if (val === "A&P (Pre-Exec)" || val === "Overheads (Pre-Exec)") {
+    formData.value.financialImpactType = "OI";
+  } else if (!val) { // If IBP Step is cleared, revert to initial default
+    formData.value.financialImpactType = defaultForm().financialImpactType;
+  }
 });
 watch(() => formData.value.rAndO, (val) => {
   if (isInitialLoadRef.value) return;
@@ -2029,6 +2065,7 @@ watch(() => props.entry, async (entry) => {
     periodRangeStart.value   = { period: currentPeriod, year: String(currentYear) };
     periodRangeEnd.value     = { period: currentPeriod, year: String(currentYear) };
     isLoadingEntry.value = false;
+    isInitialLoadRef.value = false; // Ensure flag is cleared for new entries
   }
 }, { immediate: true });
 
