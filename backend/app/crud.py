@@ -31,7 +31,8 @@ def get_latest_entries(db: Session, filters: dict = None, include_deleted: bool 
             if field in ["channel", "sub_channel", "account", "brand", "brand_family", "country"]:
                 # For JSON storage, we check if any of the filter values match keys in the JSON object
                 filter_list = [value] if isinstance(value, str) else value
-                query = query.filter(func.jsonb_exists_any(cast(column, models.database.JSONB), filter_list))
+                # column is already JSONB type from models.Entry
+                query = query.filter(func.jsonb_exists_any(column, filter_list))
             else:
                 query = query.filter(column == value)
 

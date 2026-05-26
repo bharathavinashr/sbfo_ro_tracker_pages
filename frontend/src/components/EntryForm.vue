@@ -2258,6 +2258,8 @@ defineExpose({ validate, reset });
 /* ── Typography & Header ────────────────────────────────────────────────────────── */
 .entry-form-wrapper {
   display: flex;
+  font-family: 'Work Sans', Arial, sans-serif; /* Already Work Sans */
+  font-weight: 400;
   flex-direction: column;
   gap: 16px;
   background-color: #fff;
@@ -2272,15 +2274,17 @@ defineExpose({ validate, reset });
 }
 
 .form-title {
+  font-family: 'Jost', Arial, sans-serif; /* Already Jost */
   font-size: 22px;
-  font-weight: 700;
+  font-weight: 500;
   margin: 0;
   color: #1a1a1a;
 }
 
 .section-title {
+  font-family: 'Jost', Arial, sans-serif; /* Already Jost */
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 500;
   color: #1a1a1a;
   margin: 16px 0;
 }
@@ -2288,7 +2292,8 @@ defineExpose({ validate, reset });
 /* ── Custom Form Styles (Flat UI Look) ─────────────────────────────────────────────────────── */
 :deep(.el-form-item__label) {
   font-weight: 600;
-  font-size: 14px;
+  font-family: 'Work Sans', Arial, sans-serif; /* Added font-family */
+  font-weight: 500; /* Changed from 600 */
   color: #1a1a1a;
   padding-bottom: 4px;
   line-height: 1.2;
@@ -2452,6 +2457,8 @@ defineExpose({ validate, reset });
   color: #1a1a1a;
   margin-top: 8px;
   margin-bottom: 4px;
+  font-family: 'Jost', Arial, sans-serif; /* Added font-family */
+  font-weight: 500; /* Changed from 700 */
 }
 .input-with-dropdown {
   display: flex;

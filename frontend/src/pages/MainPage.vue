@@ -1,9 +1,12 @@
 <template>
   <div class="page-container">
+    <img :src="logoUrl" alt="Suntory Oceania" class="header-logo" />
     <!-- Header -->
     <div class="main-header">
       <div class="header-left">
-        <h1 class="page-title">Risk and Opportunities Tracker</h1>
+        <div class="title-with-logo">
+          <h1 class="page-title">Risk and Opportunities Tracker</h1>
+        </div>
         <p class="page-subtitle">
           Create and manage Risks and Opportunities with comprehensive filtering capabilities
         </p>
@@ -65,13 +68,16 @@
         </div>
 
         <el-button
-          :icon="Lock"
+          :icon="Camera"
+          class="black-icon-btn"
           @click="lockViewOpen = true"
         >
           Generate Snapshot
         </el-button>
 
         <el-button
+          :icon="Search"
+          class="black-icon-btn"
           @click="router.push('/snapshots')"
         >
           Browse Snapshots
@@ -129,13 +135,14 @@
 import { ref, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Plus, User, Lock } from "@element-plus/icons-vue";
+import { Plus, User, Camera, Search } from "@element-plus/icons-vue";
 import { useEntryStore } from "@/stores/entryStore";
 import { authApi, entryApi } from "@/services/api";
 import EntriesTable from "@/components/EntriesTable.vue";
 import EntryForm from "@/components/EntryForm.vue";
 import LockView from "@/components/LockView.vue";
 import type { Entry } from "@/types";
+import logoUrl from "@/assets/logo_suntory_oceania.81542d.svg";
 import { ROLE_MAP } from "@/types";
 
 const router = useRouter();
@@ -318,7 +325,7 @@ function goToHistory(entry: Entry) {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 2px;
   gap: 16px;
   flex-wrap: wrap;
   background: var(--bg-primary);
@@ -333,15 +340,30 @@ function goToHistory(entry: Entry) {
   min-width: 320px;
 }
 
+.title-with-logo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.header-logo {
+  height: 40px;
+  width: auto;
+}
+
 .page-title {
+  font-family: 'Jost', Arial, sans-serif; /* Already Jost */
   font-size: 28px;
-  font-weight: 700;
-  margin: 0 0 6px;
+  font-weight: 500;
+  margin: 0;
   color: var(--text-primary);
   line-height: 1.2;
 }
 
 .page-subtitle {
+  font-family: 'Work Sans', Arial, sans-serif; /* Already Work Sans */
+  font-weight: 400;
   font-size: 15px;
   color: var(--text-secondary);
   margin: 0;
@@ -402,6 +424,13 @@ function goToHistory(entry: Entry) {
 
 .header-right :deep(.el-button) {
   width: 200px;
+  color: #000;
+  border-color: var(--border-color);
+}
+
+/* Ensures the icon specifically is rendered as black */
+.black-icon-btn :deep(.el-icon) {
+  color: #000 !important;
 }
 
 @media (max-width: 768px) {

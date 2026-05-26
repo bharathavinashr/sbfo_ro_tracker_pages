@@ -2,7 +2,7 @@
   <div class="entries-table-wrapper">
 
     <div class="quick-filters-section">
-      <p class="section-label" style="font-size:16px; font-weight:700; margin-bottom:6px">Database Entries</p>
+      <p class="section-label" style="font-family: 'Jost', Arial, sans-serif; font-size:16px; font-weight: 500; margin-bottom:6px">Database Entries</p>
       <p class="section-label">Quick Filters</p>
       <div class="quick-filter-row">
         <button
@@ -35,14 +35,14 @@
       <div v-show="allFiltersOpen" class="all-filters-body">
         <el-row :gutter="16" class="filter-row">
           <el-col :span="6">
-            <label class="filter-label">Div.</label>
-            <el-select v-model="store.filters.division" clearable placeholder="All" @change="store.fetchEntries()">
+            <label class="filter-label">Division</label>
+            <el-select v-model="store.filters.division" clearable placeholder="All">
               <el-option v-for="d in divisionOptions" :key="d" :value="d" :label="d" />
             </el-select>
           </el-col>
           <el-col :span="6">
             <label class="filter-label">Country</label>
-            <el-select v-model="store.filters.country" clearable placeholder="All" @change="store.fetchEntries()">
+            <el-select v-model="store.filters.country" clearable placeholder="All">
               <el-option v-for="c in countryOptions" :key="c.value" :value="c.value" :label="c.label" />
             </el-select>
           </el-col>
@@ -77,20 +77,20 @@
         <el-row :gutter="16" class="filter-row">
           <el-col :span="8">
             <label class="filter-label">Channel</label>
-            <el-select v-model="store.filters.channel" multiple collapse-tags clearable placeholder="All">
-              <el-option v-for="c in channelOptions" :key="c" :value="c" :label="c" />
+            <el-select v-model="store.filters.channel" multiple collapse-tags clearable placeholder="All" @change="onChannelFilterChange">
+              <el-option v-for="c in channelOptions" :key="c.value" :value="c.value" :label="c.label" />
             </el-select>
           </el-col>
           <el-col :span="8">
             <label class="filter-label">Sub-Channel</label>
-            <el-select v-model="store.filters.sub_channel" multiple collapse-tags clearable placeholder="All" :disabled="!store.filters.channel?.length">
-              <el-option v-for="c in subChannelOptions" :key="c" :value="c" :label="c" />
+            <el-select v-model="store.filters.sub_channel" multiple collapse-tags clearable placeholder="All" :disabled="!store.filters.channel?.length" @change="onSubChannelFilterChange">
+              <el-option v-for="c in subChannelOptions" :key="c.value" :value="c.value" :label="c.label" />
             </el-select>
           </el-col>
           <el-col :span="8">
             <label class="filter-label">Account</label>
             <el-select v-model="store.filters.account" multiple collapse-tags clearable placeholder="All" :disabled="!store.filters.sub_channel?.length" @change="store.fetchEntries()">
-              <el-option v-for="a in accountOptions" :key="a" :value="a" :label="a" />
+              <el-option v-for="a in accountOptions" :key="a.value" :value="a.value" :label="a.label" />
             </el-select>
           </el-col>
         </el-row>
@@ -99,14 +99,14 @@
         <el-row :gutter="16" class="filter-row">
           <el-col :span="12">
             <label class="filter-label">Brand</label>
-            <el-select v-model="store.filters.brand" clearable placeholder="All">
-              <el-option v-for="b in brandOptions" :key="b" :value="b" :label="b" />
+            <el-select v-model="store.filters.brand" clearable placeholder="All" @change="onBrandFilterChange">
+              <el-option v-for="b in brandOptions" :key="b.value" :value="b.value" :label="b.label" />
             </el-select>
           </el-col>
           <el-col :span="12">
             <label class="filter-label">Brand Family</label>
             <el-select v-model="store.filters.brand_family" clearable placeholder="All" :disabled="!store.filters.brand" @change="store.fetchEntries()">
-              <el-option v-for="b in brandFamilyOptions" :key="b" :value="b" :label="b" />
+              <el-option v-for="b in brandFamilyOptions" :key="b.value" :value="b.value" :label="b.label" />
             </el-select>
           </el-col>
         </el-row>
@@ -156,8 +156,7 @@
 
         <el-popover placement="bottom-end" :width="240" trigger="click" popper-class="column-popover">
           <template #reference>
-            <el-button size="small" plain style="color: black;">
-              <svg style="width:14px;height:14px;margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="18"/></svg>
+            <el-button size="small" plain :icon="Grid" class="black-icon-text">
               Columns
             </el-button>
           </template>
@@ -177,7 +176,6 @@
               <el-checkbox v-model="colVisible.financialImpactType">Financial Impact Type</el-checkbox>
               <el-checkbox v-model="colVisible.currency">Financial Impact Currency</el-checkbox>
               <el-checkbox v-model="colVisible.impact">Financial Impact Value</el-checkbox>
-              <!-- <el-checkbox v-model="colVisible.volumeCases">Volume Impact</el-checkbox> -->
               <el-checkbox v-model="colVisible.volumeImpactType">Volume Impact Type</el-checkbox>
               <el-checkbox v-model="colVisible.volumeImpactValue">Volume Impact Value</el-checkbox>
               <el-checkbox v-model="colVisible.impactPeriods">Impact Period(s)</el-checkbox>
@@ -197,13 +195,12 @@
             class="phased-view-trigger"
             :class="{ 'phased-view-active': phasedImpactViews.length > 0 }"
             @click.stop="phasedMenuOpen = !phasedMenuOpen">
-            <svg style="width:14px;height:14px;margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
-            <span class="phased-view-text">
-              {{ phasedImpactViews.length === 0 ? 'View Financial Impact by' : `${phasedImpactViews.length} selected` }}
-            </span>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <el-icon><Money /></el-icon>
+              <span class="phased-view-text">
+                {{ phasedImpactViews.length === 0 ? 'View Financial Impact by' : `${phasedImpactViews.length} selected` }}
+              </span>
+            </div>
             <svg class="chevron-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="6 9 12 15 18 9"/>
             </svg>
@@ -233,13 +230,12 @@
             class="phased-view-trigger"
             :class="{ 'phased-view-active': phasedVolumeViews.length > 0 }"
             @click.stop="phasedVolumeMenuOpen = !phasedVolumeMenuOpen">
-            <svg style="width:14px;height:14px;margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
-            <span class="phased-view-text">
-              {{ phasedVolumeViews.length === 0 ? 'View Volume Impact by' : `${phasedVolumeViews.length} selected` }}
-            </span>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <el-icon><MilkTea /></el-icon>
+              <span class="phased-view-text">
+                {{ phasedVolumeViews.length === 0 ? 'View Volume Impact by' : `${phasedVolumeViews.length} selected` }}
+              </span>
+            </div>
             <svg class="chevron-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="6 9 12 15 18 9"/>
             </svg>
@@ -264,16 +260,11 @@
           </div>
         </div>
 
-        <el-button v-if="!isReadOnly && store.canCreate" size="small" plain @click="$emit('add')" style="color: black;">
-          <svg style="width:14px;height:14px;margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
+        <el-button v-if="!isReadOnly && store.canCreate" size="small" plain :icon="Plus" class="black-icon-text" @click="$emit('add')">
           Add New Entry
         </el-button>
 
-        <el-button v-if="!isReadOnly" size="small" plain @click="exportToCSV(filteredEntries)" style="color: black;">
-          <svg style="width:14px;height:14px;margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <el-button v-if="!isReadOnly" size="small" plain :icon="Download" class="black-icon-text" @click="exportToCSV(filteredEntries)">
           Export CSV
         </el-button>
       </div>
@@ -282,7 +273,7 @@
     <template v-if="splitBy.length">
       <div v-for="group in groupedEntries" :key="group.key" class="split-group">
         <div class="split-group-header">
-          <div class="split-group-breadcrumb">
+          <div class="split-group-breadcrumb" style="font-family: 'Work Sans', Arial, sans-serif;">
             <template v-for="(item, idx) in group.breadcrumb" :key="idx">
               <span v-if="idx > 0" class="split-sep">›</span>
               <span class="split-chip">
@@ -293,34 +284,34 @@
           </div>
           <div class="split-group-actions">
             <span class="split-count">{{ group.entries.length }} {{ group.entries.length === 1 ? 'entry' : 'entries' }}</span>
-            <el-button size="small" plain @click="exportToCSV(group.entries, `${group.key}.csv`)">
-              <svg style="width:12px;height:12px;margin-right:3px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <el-button size="small" plain :icon="Download" class="black-icon-text" @click="exportToCSV(group.entries, `${group.key}.csv`)">
               Export CSV
             </el-button>
           </div>
         </div>
         <div class="table-scroll-wrap">
           <table class="data-table">
-            <thead><tr>
+            <thead>
+              <tr>
               <th class="col-expand"></th>
-              <th v-if="colVisible.ibpStep"        class="col-md">IBP Step</th>
-              <th v-if="colVisible.division"       class="col-sm">Division</th>
-              <th v-if="colVisible.country"        class="col-sm">Country</th>
+              <th v-if="colVisible.ibpStep" class="col-md">IBP Step</th>
+              <th v-if="colVisible.division" class="col-sm">Division</th>
+              <th v-if="colVisible.country" class="col-sm">Country</th>
               <th v-if="colVisible.categorisation" class="col-lg">Categorisation</th>
-              <th v-if="colVisible.description"    class="col-xl">Short Description</th>
-              <th v-if="colVisible.customer"       class="col-lg">Customer(s)</th>
-              <th v-if="colVisible.product"        class="col-lg">Product</th>
-              <th v-if="colVisible.rAndO"          class="col-md">Risk vs. Opp.</th>
-              <th v-if="colVisible.probability"    class="col-sm tc">Probability</th>
+              <th v-if="colVisible.description" class="col-xl">Short Description</th>
+              <th v-if="colVisible.customer" class="col-lg">Customer(s)</th>
+              <th v-if="colVisible.product" class="col-lg">Product</th>
+              <th v-if="colVisible.rAndO" class="col-md">Risk vs. Opp.</th>
+              <th v-if="colVisible.probability" class="col-sm tc">Probability</th>
               <th v-if="colVisible.addToForecastBy" class="col-md">Add to Forecast By</th>
-              <th v-if="colVisible.creator"        class="col-md">Creator</th>
-              <th v-if="colVisible.owner"          class="col-md">Owner</th>
-              <th v-if="colVisible.status"         class="col-md">Status</th>
-              <th v-if="colVisible.lastModified"   class="col-lg">Last Modified</th>
-              <th v-if="colVisible.financialImpactType"     class="col-md">Financial Impact Type</th>
-              <th v-if="colVisible.currency"       class="col-sm">Financial Impact Currency</th>
-              <th v-if="colVisible.impact"         class="col-md tr">Financial Impact Value</th>
-              <th v-if="colVisible.volumeCases"    class="col-md tr">Volume Impact</th>
+              <th v-if="colVisible.creator" class="col-md">Creator</th>
+              <th v-if="colVisible.owner" class="col-md">Owner</th>
+              <th v-if="colVisible.status" class="col-md">Status</th>
+              <th v-if="colVisible.lastModified" class="col-lg">Last Modified</th>
+              <th v-if="colVisible.financialImpactType" class="col-md">Financial Impact Type</th>
+              <th v-if="colVisible.currency" class="col-sm">Financial Impact Currency</th>
+              <th v-if="colVisible.impact" class="col-md tr">Financial Impact Value</th>
+              <th v-if="colVisible.volumeCases" class="col-md tr">Volume Impact</th>
               <th v-if="colVisible.volumeImpactType" class="col-sm">Volume Impact Type</th>
               <th v-if="colVisible.volumeImpactValue" class="col-md tr">Volume Impact Value</th>
               <template v-if="hasPhasedViews">
@@ -376,8 +367,7 @@
                   <td v-if="colVisible.financialImpactType">{{ row.financialImpactType || '-' }}</td>
                   <td v-if="colVisible.currency">{{ row.impactCurrency || '-' }}</td>
                   <td v-if="colVisible.impact" class="tr fw">{{ row.impact ? Number(row.impact).toLocaleString() : '-' }}</td>
-                  <td v-if="colVisible.volumeCases" class="tr"> <!-- This column is for the parent's aggregated volume impact -->
-                    {{ (row as any).volumeCases ? Number((row as any).volumeCases).toLocaleString() : '-' }}
+                  <td v-if="colVisible.volumeCases" class="tr"> {{ (row as any).volumeCases ? Number((row as any).volumeCases).toLocaleString() : '-' }}
                     <div v-if="(row as any).volumeImpactValue" class="cell-sub">({{ (row as any).volumeImpactType }})</div>
                   </td>
                   <td v-if="colVisible.volumeImpactType">{{ (row as any).volumeImpactType || '-' }}</td>
@@ -461,26 +451,27 @@
 
     <div v-else class="table-scroll-wrap" v-loading="isReadOnly ? false : store.loading">
       <table class="data-table">
-        <thead><tr>
+        <thead>
+          <tr>
           <th class="col-expand"></th>
-          <th v-if="colVisible.ibpStep"        class="col-md">IBP Step</th>
-          <th v-if="colVisible.division"       class="col-sm">Division</th>
-          <th v-if="colVisible.country"        class="col-sm">Country</th>
+          <th v-if="colVisible.ibpStep" class="col-md">IBP Step</th>
+          <th v-if="colVisible.division" class="col-sm">Division</th>
+          <th v-if="colVisible.country" class="col-sm">Country</th>
           <th v-if="colVisible.categorisation" class="col-lg">Categorisation</th>
-          <th v-if="colVisible.description"    class="col-xl">Short Description</th>
-          <th v-if="colVisible.customer"       class="col-lg">Customer(s)</th>
-          <th v-if="colVisible.product"        class="col-lg">Product</th>
-          <th v-if="colVisible.rAndO"          class="col-md">Risk vs. Opp.</th>
-          <th v-if="colVisible.probability"    class="col-sm tc">Probability</th>
+          <th v-if="colVisible.description" class="col-xl">Short Description</th>
+          <th v-if="colVisible.customer" class="col-lg">Customer(s)</th>
+          <th v-if="colVisible.product" class="col-lg">Product</th>
+          <th v-if="colVisible.rAndO" class="col-md">Risk vs. Opp.</th>
+          <th v-if="colVisible.probability" class="col-sm tc">Probability</th>
           <th v-if="colVisible.addToForecastBy" class="col-md">Add to Forecast By</th>
-          <th v-if="colVisible.creator"        class="col-md">Creator</th>
-          <th v-if="colVisible.owner"          class="col-md">Owner</th>
-          <th v-if="colVisible.status"         class="col-md">Status</th>
-          <th v-if="colVisible.lastModified"   class="col-lg">Last Modified</th>
-          <th v-if="colVisible.financialImpactType"     class="col-md">Financial Impact Type</th>
-          <th v-if="colVisible.currency"       class="col-sm">Financial Impact Currency</th>
-          <th v-if="colVisible.impact"         class="col-md tr">Financial Impact Value</th>
-          <th v-if="colVisible.volumeCases"    class="col-md tr">Volume (Cases)</th>
+          <th v-if="colVisible.creator" class="col-md">Creator</th>
+          <th v-if="colVisible.owner" class="col-md">Owner</th>
+          <th v-if="colVisible.status" class="col-md">Status</th>
+          <th v-if="colVisible.lastModified" class="col-lg">Last Modified</th>
+          <th v-if="colVisible.financialImpactType" class="col-md">Financial Impact Type</th>
+          <th v-if="colVisible.currency" class="col-sm">Financial Impact Currency</th>
+          <th v-if="colVisible.impact" class="col-md tr">Financial Impact Value</th>
+          <th v-if="colVisible.volumeCases" class="col-md tr">Volume (Cases)</th>
           <th v-if="colVisible.volumeImpactType" class="col-sm">Volume Impact Type</th>
           <th v-if="colVisible.volumeImpactValue" class="col-md tr">Volume Impact Value</th>
           <template v-if="hasPhasedViews">
@@ -622,6 +613,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
 import { ElMessage, ClickOutside as vClickOutside } from "element-plus";
+import { Money, MilkTea, Plus, Grid, Download } from "@element-plus/icons-vue";
 import { useEntryStore } from "@/stores/entryStore";
 import { useLookupStore } from "@/stores/lookupStore";
 import { entryApi, lookupApi } from "@/services/api";
@@ -650,9 +642,52 @@ const emit = defineEmits<{
 const store        = useEntryStore();
 const lookupStore = useLookupStore();
 
-onMounted(() => {
-  lookupStore.preload();
+onMounted(async () => {
+  await lookupStore.preload();
   if (store.users.length === 0) store.fetchUsers();
+
+  // Fetch all countries across all divisions to make the filter independent
+  const divs = divisionOptions.value.length ? divisionOptions.value : ["Alcohol", "Non-Alcohol"];
+  try {
+    const allResults = await Promise.all(divs.map(d => lookupApi.getCountries(d)));
+    const merged = new Map<string, string>();
+    allResults.forEach(res => {
+      res.options.forEach(o => merged.set(String(o.value), o.label));
+    });
+    countryOptions.value = Array.from(merged.entries()).map(([value, label]) => ({ value, label }));
+  } catch (error) {
+    console.error("Error loading countries for filters:", error);
+  }
+
+  // Fetch all channels across all divisions to make the filter independent
+  try {
+    const allChanResults = await Promise.all(divs.map(d => lookupApi.getChannels(d)));
+    const mergedChans = new Map<string, string>();
+    allChanResults.forEach(res => {
+      res.options.forEach(o => mergedChans.set(String(o.value), o.label));
+    });
+    channelOptions.value = Array.from(mergedChans.entries()).map(([value, label]) => ({ value, label }));
+  } catch (error) {
+    console.error("Error loading channels for filters:", error);
+  }
+
+  // Fetch all brands across all divisions to make the filter independent
+  try {
+    const allBrandResults = await Promise.all(divs.map(d => lookupApi.getBrands(d)));
+    const mergedBrands = new Map<string, string>();
+    allBrandResults.forEach(res => {
+      res.options.forEach(o => mergedBrands.set(String(o.value), o.label));
+    });
+    brandOptions.value = Array.from(mergedBrands.entries()).map(([value, label]) => ({ value, label }));
+  } catch (error) {
+    console.error("Error loading brands for filters:", error);
+  }
+
+  if (store.filters.division || store.filters.country) {
+    await updateDynamicLookups();
+  }
+
+  store.fetchEntries();
 });
 
 // ─── Quick filters ────────────────────────────────────────────────────────────
@@ -676,7 +711,11 @@ const allFiltersOpen = ref(false);
 // ─── Lookup options ───────────────────────────────────────────────────────────
 const divisionOptions   = computed(() => lookupStore.getCached("division"));
 const countryOptions    = ref<{value: string, label: string}[]>([]);
-const channelOptions    = computed(() => lookupStore.getCached("channel"));
+const channelOptions    = ref<{value: string, label: string}[]>([]);
+const subChannelOptions = ref<{value: string, label: string}[]>([]);
+const accountOptions    = ref<{value: string, label: string}[]>([]);
+const brandOptions      = ref<{value: string, label: string}[]>([]);
+const brandFamilyOptions = ref<{value: string, label: string}[]>([]);
 const categOptions      = computed(() => lookupStore.getCached("categorisation"));
 const statusOptions     = computed(() => lookupStore.getCached("status"));
 const ibpStepOptions    = computed(() => {
@@ -687,61 +726,228 @@ const ibpStepOptions    = computed(() => {
   }
   return lookupStore.getCached("ibp_step");
 });
-const brandOptions      = computed(() => lookupStore.getCached("brand"));
 
 // Dynamic Country Loading for Filters
 watch(() => store.filters.division, async (division) => {
-  if (division) {
-    try {
-      const data = await lookupApi.getCountries(division);
-      countryOptions.value = data.options;  // Store as {value, label} pairs
-    } catch (error) {
-      console.error("Error loading countries for filter:", error);
-      countryOptions.value = [];
-    }
+  store.filters.channel = [];
+  store.filters.brand = "";
+  store.filters.categorisation = "";
+  await updateDynamicLookups();
+  store.fetchEntries();
+}, { immediate: false });
+
+watch(() => store.filters.country, async () => {
+  // Reset dependent filters to ensure data consistency when geography changes
+  store.filters.channel = [];
+  store.filters.brand = "";
+  await updateDynamicLookups();
+  store.fetchEntries();
+});
+
+async function updateDynamicLookups() {
+  const division = store.filters.division;
+  const countryCode = store.filters.country;
+  const countryName = countryOptions.value.find(c => c.value === countryCode)?.label;
+
+  // Always refresh Brand Families if a brand is selected, independent of division selection
+  if (store.filters.brand) {
+    await updateBrandFamilyOptions();
   } else {
-    countryOptions.value = [];
-    store.filters.country = "";
+    brandFamilyOptions.value = [];
+  }
+
+  // Refresh dependent dropdowns if filters are already selected
+  if (store.filters.channel?.length) await onChannelFilterChange();
+  else subChannelOptions.value = [];
+
+  if (store.filters.sub_channel?.length) await onSubChannelFilterChange();
+  else accountOptions.value = [];
+
+}
+
+async function onChannelFilterChange() {
+  const selectedDiv = store.filters.division;
+  const countryName = countryOptions.value.find(c => c.value === store.filters.country)?.label;
+  const channelCodes = store.filters.channel;
+
+  if (channelCodes.length > 0) {
+    const divs = selectedDiv ? [selectedDiv] : (divisionOptions.value || ["Alcohol", "Non-Alcohol"]);
+    const subMap = new Map<string, {value: string, label: string}>();
+    try {
+      const promises = divs.flatMap(d => channelCodes.map(ch => lookupApi.getSubchannels(d, ch, countryName)));
+      const results = await Promise.all(promises);
+      results.forEach(res => res.options.forEach(opt => subMap.set(String(opt.value), opt)));
+      subChannelOptions.value = Array.from(subMap.values());
+    } catch (e) {
+      console.error("Error fetching sub-channels:", e);
+    }
   }
   store.fetchEntries();
-}, { immediate: true });
+}
 
-const subChannelOptions = computed(() =>
-  store.filters.channel?.length
-    ? lookupStore.getCached("sub_channel", store.filters.channel)
-    : lookupStore.getCached("sub_channel")
-);
-const accountOptions = computed(() =>
-  store.filters.sub_channel?.length
-    ? lookupStore.getCached("account", store.filters.sub_channel)
-    : lookupStore.getCached("account")
-);
-const brandFamilyOptions = computed(() =>
-  store.filters.brand
-    ? lookupStore.getCached("brand_family", store.filters.brand)
-    : lookupStore.getCached("brand_family")
-);
+async function onSubChannelFilterChange() {
+  const selectedDiv = store.filters.division;
+  const countryName = countryOptions.value.find(c => c.value === store.filters.country)?.label;
+  const subChannelCodes = store.filters.sub_channel;
 
-watch(() => store.filters.channel, (val) => {
-  store.filters.sub_channel = [];
-  store.filters.account = [];
-  if (val?.length) lookupStore.loadChildren("sub_channel", val);
+  if (subChannelCodes.length > 0) {
+    const divs = selectedDiv ? [selectedDiv] : (divisionOptions.value || ["Alcohol", "Non-Alcohol"]);
+    const accMap = new Map<string, {value: string, label: string}>();
+    try {
+      const promises = divs.flatMap(d => subChannelCodes.map(sc => lookupApi.getAccounts(d, sc, countryName)));
+      const results = await Promise.all(promises);
+      results.forEach(res => res.options.forEach(opt => accMap.set(String(opt.value), opt)));
+      accountOptions.value = Array.from(accMap.values());
+    } catch (e) {
+      console.error("Error fetching accounts:", e);
+    }
+  }
   store.fetchEntries();
-});
-watch(() => store.filters.sub_channel, (val) => {
-  store.filters.account = [];
-  if (val?.length) lookupStore.loadChildren("account", val);
-  store.fetchEntries();
-});
-watch(() => store.filters.brand, (val) => {
+}
+
+async function updateBrandFamilyOptions() {
+  const selectedDiv = store.filters.division;
+  const countryName = countryOptions.value.find(c => c.value === store.filters.country)?.label;
+  const brandCode = store.filters.brand;
+
+  if (brandCode) {
+    const divs = selectedDiv ? [selectedDiv] : (divisionOptions.value || ["Alcohol", "Non-Alcohol"]);
+    const bfMap = new Map<string, {value: string, label: string}>();
+    try {
+      const promises = divs.map(d => lookupApi.getBrandFamiliesByBrand(d, brandCode, countryName));
+      const results = await Promise.all(promises);
+      results.forEach(res => res.options.forEach(opt => bfMap.set(String(opt.value), opt)));
+      brandFamilyOptions.value = Array.from(bfMap.values());
+    } catch (e) {
+      console.error("Error fetching brand families:", e);
+    }
+  }
+}
+
+async function onBrandFilterChange() {
   store.filters.brand_family = "";
-  if (val) lookupStore.loadChildren("brand_family", val);
+  await updateBrandFamilyOptions();
   store.fetchEntries();
-});
+}
 
 // ─── Filtered entries (client-side quick filters) ─────────────────────────────
 const filteredEntries = computed(() => {
   let r = props.entries;
+
+  // Apply Main Filters (Safety Layer)
+  if (store.filters.division) {
+    r = r.filter(e => e.division === store.filters.division);
+  }
+
+  if (store.filters.country) {
+    const filterCode = store.filters.country;
+    r = r.filter(e => {
+      if (!e.country) return false;
+      let c = e.country;
+      if (typeof c === 'string') {
+        try { c = JSON.parse(c); } catch { return false; }
+      }
+      if (c && typeof c === 'object') {
+        // Check if the selected code exists as a key in the {code: name} map
+        return Object.keys(c).includes(filterCode);
+      }
+      return String(c) === filterCode;
+    });
+  }
+
+  if (store.filters.channel && store.filters.channel.length > 0) {
+    const filterChannels = store.filters.channel;
+    r = r.filter(e => {
+      if (!e.channel) return false;
+      let entryChannels = e.channel;
+      if (typeof entryChannels === 'string') {
+        try { entryChannels = JSON.parse(entryChannels); } catch { return false; }
+      }
+      if (entryChannels && typeof entryChannels === 'object') {
+        // Check if any of the selected filter channels exist as keys in the entry's channel object
+        return filterChannels.some(fc => Object.keys(entryChannels as Record<string, string>).includes(fc));
+      }
+      return false;
+    });
+  }
+
+  if (store.filters.sub_channel && store.filters.sub_channel.length > 0) {
+    const filterSubChannels = store.filters.sub_channel;
+    r = r.filter(e => {
+      if (!e.subChannel) return false;
+      let entrySubChannels = e.subChannel;
+      if (typeof entrySubChannels === 'string') {
+        try { entrySubChannels = JSON.parse(entrySubChannels); } catch { return false; }
+      }
+      if (entrySubChannels && typeof entrySubChannels === 'object') {
+        return filterSubChannels.some(fs => Object.keys(entrySubChannels as Record<string, string>).includes(fs));
+      }
+      return false;
+    });
+  }
+
+  if (store.filters.account && store.filters.account.length > 0) {
+    const filterAccounts = store.filters.account;
+    r = r.filter(e => {
+      if (!e.account) return false;
+      let entryAccounts = e.account;
+      if (typeof entryAccounts === 'string') {
+        try { entryAccounts = JSON.parse(entryAccounts); } catch { return false; }
+      }
+      if (entryAccounts && typeof entryAccounts === 'object') {
+        return filterAccounts.some(fa => Object.keys(entryAccounts as Record<string, string>).includes(fa));
+      }
+      return false;
+    });
+  }
+
+  if (store.filters.brand) {
+    const filterBrand = store.filters.brand;
+    r = r.filter(e => {
+      if (!e.brand) return false;
+      let entryBrands = e.brand;
+      if (typeof entryBrands === 'string') {
+        try { entryBrands = JSON.parse(entryBrands); } catch { return false; }
+      }
+      if (entryBrands && typeof entryBrands === 'object') {
+        return Object.keys(entryBrands as Record<string, string>).includes(filterBrand);
+      }
+      return false;
+    });
+  }
+
+  if (store.filters.brand_family) {
+    const filterBrandFamily = store.filters.brand_family;
+    r = r.filter(e => {
+      if (!e.brandFamily) return false;
+      let entryFamilies = e.brandFamily;
+      if (typeof entryFamilies === 'string') {
+        try { entryFamilies = JSON.parse(entryFamilies); } catch { return false; }
+      }
+      if (entryFamilies && typeof entryFamilies === 'object') {
+        return Object.keys(entryFamilies as Record<string, string>).includes(filterBrandFamily);
+      }
+      return false;
+    });
+  }
+
+  if (store.filters.categorisation) {
+    r = r.filter(e => e.categorisation === store.filters.categorisation);
+  }
+
+  if (store.filters.status) {
+    r = r.filter(e => e.status === store.filters.status);
+  }
+
+  if (store.filters.owner) {
+    const s = store.filters.owner.toLowerCase();
+    r = r.filter(e => e.owner?.toLowerCase().includes(s));
+  }
+
+  if (store.filters.ibp_step) {
+    r = r.filter(e => e.ibpStep === store.filters.ibp_step);
+  }
+
   if (quickFilters.value.openOnly)
     r = r.filter(e => e.status === "Open");
   if (quickFilters.value.highPriority)
@@ -1302,10 +1508,38 @@ function clearFilters() {
 .all-filters-body { padding:4px 24px 16px; }
 .filter-row { margin-bottom:12px; }
 .filter-label { display:block; font-size:12px; font-weight:500; color:var(--text-secondary); margin-bottom:4px; }
-.filter-group-label { font-size:12px; font-weight:600; color:#8b5cf6; margin:4px 0 10px; }
+
+/* --- Custom Filter Input Styles (Matching EntryForm) --- */
+:deep(.all-filters-body .el-input__wrapper),
+:deep(.all-filters-body .el-select__wrapper) {
+  background-color: #f4f5f7 !important;
+  border: 1px solid transparent !important;
+  box-shadow: 0 0 0 1px transparent inset !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease;
+}
+
+:deep(.all-filters-body .el-input__wrapper:hover),
+:deep(.all-filters-body .el-select__wrapper:hover) {
+  background-color: #ededf0 !important;
+}
+
+:deep(.all-filters-body .el-input__wrapper.is-focus),
+:deep(.all-filters-body .el-select__wrapper.is-focused) {
+  background-color: #fff !important;
+  border: 1px solid #1a1a1a !important;
+}
+
+:deep(.all-filters-body .el-input__inner),
+:deep(.all-filters-body .el-select__placeholder) {
+  color: #000 !important;
+}
+
+.filter-group-label { font-size:12px; font-weight:600; color:#000; margin:4px 0 10px; }
 :deep(.all-filters-body .el-select),
 :deep(.all-filters-body .el-input) { width:100%; }
 .filter-actions { margin-top:4px; display:flex; justify-content:flex-end; }
+
 
 /* ── Toolbar ──────────────────────────────────────────── */
 .table-toolbar {
@@ -1318,59 +1552,83 @@ function clearFilters() {
 .split-view-control { display:flex; align-items:center; gap:8px; }
 .split-view-label { font-size:13px; color:var(--text-secondary); white-space:nowrap; }
 
+/* ── SHARED UNIFORM STYLES FOR ALL TOOLBAR BUTTONS/DROPDOWNS ── */
+.toolbar-right .el-button,
+.phased-view-trigger,
+.group-by-trigger {
+  height: 32px !important;
+  background-color: #ffffff !important;
+  border: 1px solid var(--border-color, #dcdfe6) !important;
+  border-radius: 6px !important;
+  color: #000 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  padding: 0 12px !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  transition: all 0.2s ease !important;
+  margin: 0 !important;
+  cursor: pointer;
+}
+
+.phased-view-trigger,
+.group-by-trigger {
+  justify-content: space-between !important;
+  gap: 8px !important;
+}
+
+/* Ensure individual widths aren't destroyed entirely but maintained at their minimums */
+.phased-view-trigger { min-width: 160px; }
+.group-by-trigger { min-width: 140px; }
+
+/* Unified hover states */
+.toolbar-right .el-button:hover,
+.phased-view-trigger:hover,
+.group-by-trigger:hover {
+  background-color: #f9fafb !important;
+  border-color: #c0c4cc !important;
+}
+
+/* Overriding Active States for Phased View Dropdowns to remain white */
+.phased-view-active {
+  background-color: #ffffff !important;
+  border-color: var(--border-color, #dcdfe6) !important;
+}
+.phased-view-active .phased-view-text,
+.phased-view-active :deep(.el-icon) {
+  color: #000 !important;
+}
+
+/* Button specific overrides */
+.black-icon-text {
+  color: #000 !important;
+  border-color: var(--border-color);
+}
+.black-icon-text :deep(.el-icon) {
+  color: #000 !important;
+}
+
 .phased-view-text {
   color: #000;
   font-weight: 500;
 }
 
-.phased-view-active {
-  background-color: #000 !important;
-  border-color: #000 !important;
-}
+/* ── Phased view / Group By dropdowns ─────────────────── */
+.phased-view-control, .group-by-wrap { position:relative; }
+.phased-view-trigger svg, .chevron-sm { width:14px; height:14px; flex-shrink:0; color:var(--text-secondary); }
 
-.phased-view-active .phased-view-text {
-  color: #fff !important;
-}
-
-.phased-view-active svg {
-  stroke: #fff !important;
-}
-
-/* ── Phased view dropdown (now multi-select) ──────────── */
-.phased-view-control { position:relative; }
-.phased-view-trigger {
-  display:flex; align-items:center; gap:6px;
-  padding:5px 10px 5px 12px;
-  border:1px solid var(--border-color); border-radius:6px;
-  background:var(--bg-primary); font-size:13px; cursor:pointer;
-  justify-content:space-between; min-width:160px;
-}
-.phased-view-trigger svg { width:14px; height:14px; flex-shrink:0; }
-.phased-view-dropdown {
-  position:absolute; top:calc(100% + 4px); right:0; z-index:9999;
-  background:var(--el-bg-color-overlay); border:1px solid var(--el-border-color-light);
-  border-radius:6px; box-shadow:var(--el-box-shadow-light);
-  min-width:200px; padding:6px 0;
-}
-
-/* ── Group-by dropdown (multi-checkbox) ──────────────── */
-.group-by-wrap { position:relative; }
-.group-by-trigger {
-  display:flex; align-items:center; gap:6px;
-  padding:5px 10px 5px 12px;
-  border:1px solid var(--border-color); border-radius:6px;
-  background:var(--bg-primary); font-size:13px; cursor:pointer;
-  min-width:140px; justify-content:space-between;
-}
-.group-by-trigger .has-value { color:var(--text-primary); }
-.group-by-trigger .placeholder { color:var(--el-text-color-placeholder); }
-.chevron-sm { width:14px; height:14px; color:var(--text-secondary); flex-shrink:0; }
+.phased-view-dropdown,
 .group-by-dropdown {
-  position:absolute; top:calc(100% + 4px); left:0; z-index:9999;
+  position:absolute; top:calc(100% + 4px); z-index:9999;
   background:var(--el-bg-color-overlay); border:1px solid var(--el-border-color-light);
   border-radius:6px; box-shadow:var(--el-box-shadow-light);
   min-width:200px; padding:6px 0;
 }
+
+.phased-view-dropdown { right:0; }
+.group-by-dropdown { left:0; }
+
 .gbd-item {
   display:flex; align-items:center; gap:8px;
   padding:6px 12px; font-size:13px; cursor:pointer;
@@ -1388,7 +1646,8 @@ function clearFilters() {
 
 .column-selector-container { display: flex; flex-direction: column; }
 .column-selector-title {
-  font-weight: 600;
+  font-family: 'Jost', Arial, sans-serif;
+  font-weight: 500;
   font-size: 14px;
   color: #303133;
   margin: 0 0 12px 0;
@@ -1433,7 +1692,7 @@ function clearFilters() {
   font-size:13px; color:var(--text-primary);
 }
 .data-table th {
-  background:#f8f9fc; font-weight:600; font-size:12px;
+  background:#f8f9fc; font-family: 'Work Sans', Arial, sans-serif; font-weight:400; font-size:12px;
   padding:9px 12px; white-space:nowrap;
   border-bottom:1px solid var(--border-color);
   color:var(--text-secondary); text-align:left;

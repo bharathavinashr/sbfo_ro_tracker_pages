@@ -403,7 +403,7 @@
                     <strong>{{ snapshot.entries_count }}</strong> {{ snapshot.entries_count === 1 ? 'entry' : 'entries' }} frozen
                   </p>
                   <div class="card-actions">
-                    <el-button type="primary" @click="handleViewSnapshot(snapshot.snapshot_id)">
+                    <el-button class="view-snapshot-btn" @click="handleViewSnapshot(snapshot.snapshot_id)">
                       View Snapshot
                     </el-button>
                     <el-button type="danger" :icon="Delete" @click="handleDeleteSnapshot(snapshot.snapshot_id, snapshot.name)" />
@@ -956,13 +956,16 @@ async function handleCompare() {
 }
 
 .page-title {
+  font-family: 'Jost', Arial, sans-serif;
   font-size: 32px;
-  font-weight: 700;
+  font-weight: 500;
   margin: 0;
   color: var(--text-primary);
 }
 
 .page-subtitle {
+  font-family: 'Work Sans', Arial, sans-serif;
+  font-weight: 400;
   font-size: 15px;
   color: var(--text-secondary);
   margin: 4px 0 0;
@@ -1255,8 +1258,9 @@ async function handleCompare() {
 }
 
 .section-header h2 {
+  font-family: 'Jost', Arial, sans-serif;
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 500;
   margin: 0;
 }
 
@@ -1345,8 +1349,18 @@ async function handleCompare() {
   margin-top: 8px;
 }
 
-.card-actions .el-button:first-child {
+.view-snapshot-btn {
   flex: 1;
+  background-color: #000 !important;
+  border-color: #000 !important;
+  color: #fff !important;
+}
+
+.view-snapshot-btn:hover,
+.view-snapshot-btn:focus {
+  background-color: #333 !important;
+  border-color: #333 !important;
+  color: #fff !important;
 }
 
 /* Utility layout extensions */
