@@ -1,6 +1,9 @@
 <template>
-  <div class="page-container">
-    <img :src="logoUrl" alt="Suntory Oceania" class="header-logo" />
+  <div>
+    <header class="logo-header">
+      <img :src="logoUrl" alt="Suntory Oceania" class="header-logo" />
+    </header>
+    <div class="page-container">
     <!-- Header -->
     <div class="main-header">
       <div class="header-left">
@@ -128,6 +131,7 @@
     <!-- Generate Snapshot Dialog -->
     <LockView v-model="lockViewOpen" />
 
+    </div>
   </div>
 </template>
 
@@ -319,6 +323,13 @@ function goToHistory(entry: Entry) {
   max-width: 1600px;
   margin: 0 auto;
   padding: 24px;
+  background-color: #D9F2F2;
+}
+
+.logo-header {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 16px 24px;
 }
 
 .main-header {

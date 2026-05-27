@@ -1,6 +1,9 @@
 <template>
-  <div class="page-container">
-    <img :src="logoUrl" alt="Suntory Oceania" class="header-logo" />
+  <div>
+    <header class="logo-header">
+      <img :src="logoUrl" alt="Suntory Oceania" class="header-logo" />
+    </header>
+    <div class="page-container">
     <div class="page-header">
       <el-button :icon="ArrowLeft" @click="router.push('/snapshots')">
         Back to Snapshots
@@ -39,6 +42,7 @@
         @history="handleHistory"
         @approve="() => {}"
       />
+    </div>
     </div>
   </div>
 </template>
@@ -125,12 +129,18 @@ function handleHistory(entry: Entry) {
   max-width: 1800px;
   margin: 0 auto;
   padding: 24px;
+  background-color: #D9F2F2;
+}
+
+.logo-header {
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 16px 24px;
 }
 
 .header-logo {
   height: 40px;
   width: auto;
-  padding-bottom: 16px;
 }
 
 .page-header {

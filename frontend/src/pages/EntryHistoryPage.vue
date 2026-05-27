@@ -1,6 +1,9 @@
 <template>
-  <div class="page-container">
-    <img :src="logoUrl" alt="Suntory Oceania" class="header-logo" />
+  <div>
+    <header class="logo-header">
+      <img :src="logoUrl" alt="Suntory Oceania" class="header-logo" />
+    </header>
+    <div class="page-container">
     <div class="page-nav">
       <el-button :icon="ArrowLeft" plain @click="router.push('/')">Back to Entries</el-button>
     </div>
@@ -146,6 +149,7 @@
         </template>
       </el-table-column>
     </el-table>
+    </div>
   </div>
 </template>
 
@@ -230,6 +234,13 @@ function formatPrimaryImpact(row: Entry) {
   max-width: 1400px;
   margin: 0 auto;
   padding: 24px;
+  background-color: #D9F2F2;
+}
+
+.logo-header {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px 24px;
 }
 
 .page-nav {
@@ -288,6 +299,5 @@ function formatPrimaryImpact(row: Entry) {
 .header-logo {
   height: 40px;
   width: auto;
-  padding-bottom: 16px;
 }
 </style>
