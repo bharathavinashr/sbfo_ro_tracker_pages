@@ -25,7 +25,7 @@
                 <el-input
                   v-model="creationPeriodSearch"
                   :placeholder="formData.creationDatePeriod ? periodToMonth(formData.creationDatePeriod) : 'Select period'"
-                  :class="{ 'has-selected-value': !!formData.creationDatePeriod && !creationPeriodSearch }"
+                  :class="{ 'has-selected-value': !!formData.creationDatePeriod && !creationPeriodSearch, 'force-focus': creationPeriodOpen }"
                   @focus="creationPeriodOpen = true"
                   @blur="onCreationPeriodBlur"
                   @input="creationPeriodOpen = true"
@@ -44,7 +44,7 @@
                 <el-input
                   v-model="creationYearSearch"
                   :placeholder="formData.creationDateYear || 'Select year'"
-                  :class="{ 'has-selected-value': !!formData.creationDateYear && !creationYearSearch }"
+                  :class="{ 'has-selected-value': !!formData.creationDateYear && !creationYearSearch, 'force-focus': creationYearOpen }"
                   @focus="creationYearOpen = true"
                   @blur="onCreationYearBlur"
                   @input="creationYearOpen = true"
@@ -74,7 +74,7 @@
                 <el-input
                   v-model="ownerSearch"
                   :placeholder="formData.owner || 'Select owner'"
-                  :class="{ 'has-selected-value': !!formData.owner && !ownerSearch }"
+                  :class="{ 'has-selected-value': !!formData.owner && !ownerSearch, 'force-focus': ownerOpen }"
                   @focus="ownerOpen = true"
                   @blur="onOwnerBlur"
                   @input="ownerOpen = true"
@@ -99,7 +99,7 @@
                 <el-input
                   v-model="atfbPeriodSearch"
                   :placeholder="formData.addToForecastByPeriod || 'Select period'"
-                  :class="{ 'has-selected-value': !!formData.addToForecastByPeriod && !atfbPeriodSearch }"
+                  :class="{ 'has-selected-value': !!formData.addToForecastByPeriod && !atfbPeriodSearch, 'force-focus': atfbPeriodOpen }"
                   @focus="atfbPeriodOpen = true"
                   @blur="onAtfbPeriodBlur"
                   @input="atfbPeriodOpen = true"
@@ -118,7 +118,7 @@
                 <el-input
                   v-model="atfbYearSearch"
                   :placeholder="formData.addToForecastByYear || 'Select year'"
-                  :class="{ 'has-selected-value': !!formData.addToForecastByYear && !atfbYearSearch }"
+                  :class="{ 'has-selected-value': !!formData.addToForecastByYear && !atfbYearSearch, 'force-focus': atfbYearOpen }"
                   @focus="atfbYearOpen = true"
                   @blur="onAtfbYearBlur"
                   @input="atfbYearOpen = true"
@@ -144,7 +144,7 @@
               <el-input
                 v-model="ibpStepSearch"
                 :placeholder="formData.ibpStep || 'Select IBP Step'"
-                :class="{ 'has-selected-value': !!formData.ibpStep && !ibpStepSearch }"
+                :class="{ 'has-selected-value': !!formData.ibpStep && !ibpStepSearch, 'force-focus': deptOpen }"
                 @focus="deptOpen = true"
                 @blur="onDeptBlur"
                 @input="deptOpen = true"
@@ -166,7 +166,7 @@
               <el-input
                 v-model="divSearch"
                 :placeholder="formData.division || 'Select division'"
-                :class="{ 'has-selected-value': !!formData.division && !divSearch }"
+                :class="{ 'has-selected-value': !!formData.division && !divSearch, 'force-focus': divOpen }"
                 @focus="divOpen = true"
                 @blur="onDivBlur"
                 @input="divOpen = true"
@@ -191,7 +191,7 @@
               <el-input
                 v-model="countrySearch"
                 :placeholder="Object.keys(formData.country).length ? Object.values(formData.country)[0] : 'Select country'"
-                :class="{ 'has-selected-value': Object.keys(formData.country).length > 0 && !countrySearch }"
+                :class="{ 'has-selected-value': Object.keys(formData.country).length > 0 && !countrySearch, 'force-focus': countryOpen }"
                 @focus="countryOpen = true"
                 @blur="onCountryBlur"
                 @input="countryOpen = true"
@@ -218,7 +218,7 @@
                 v-model="categSearch"
                 :placeholder="formData.categorisation || (categActive ? 'Select categorisation' : 'Select categorisation')"
                 :disabled="!categActive"
-                :class="{ 'has-selected-value': !!formData.categorisation && !categSearch }"
+                :class="{ 'has-selected-value': !!formData.categorisation && !categSearch, 'force-focus': categOpen }"
                 @focus="categOpen = true"
                 @blur="onCategBlur"
                 @input="categOpen = true"
@@ -266,14 +266,22 @@
 
       <el-row :gutter="24">
         <el-col :span="12">
-          <el-form-item label="Channel" prop="channel" ref="channelRef">
-            <div class="combo-wrap" ref="channelRef" v-click-outside="handleChannelClickOutside" :class="{ 'is-disabled': !countryDivisionActive }" :title="!countryDivisionActive ? channelDisabledMessage : ''" :style="{ opacity: countryDivisionActive ? 1 : 0.6, cursor: countryDivisionActive ? 'pointer' : 'not-allowed' }">
-              <div class="combo-trigger" @click="countryDivisionActive && (channelOpen = !channelOpen)" :style="{ opacity: countryDivisionActive ? 1 : 0.6, cursor: countryDivisionActive ? 'pointer' : 'not-allowed' }">
-                <span :class="Object.keys(formData.channel).length ? 'has-value' : 'placeholder'">
-                  {{ Object.keys(formData.channel).length ? Object.values(formData.channel).join(', ') : 'Select one or more channels' }}
-                </span>
-                <el-icon class="combo-arrow"><ArrowDown /></el-icon>
-              </div>
+          <el-form-item label="Channel" prop="channel">
+            <div class="combo-wrap" ref="channelRef" v-click-outside="handleChannelClickOutside" :title="!countryDivisionActive ? channelDisabledMessage : ''">
+              <el-input
+                readonly
+                :placeholder="Object.keys(formData.channel).length ? Object.values(formData.channel).join(', ') : 'Select one or more channels'"
+                class="multi-dropdown-trigger"
+                :class="{ 
+                  'has-selected-value': Object.keys(formData.channel).length > 0, 
+                  'pointer-input': countryDivisionActive,
+                  'force-focus': channelOpen 
+                }"
+                :disabled="!countryDivisionActive"
+                @click="countryDivisionActive && (channelOpen = !channelOpen)"
+              >
+                <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
+              </el-input>
               <div v-if="channelOpen && countryDivisionActive" class="combo-dropdown brand-family-dropdown">
                 <el-input v-model="channelSearch" placeholder="Type to search..." class="bf-search" />
                 <div class="combo-item combo-check-item bf-select-all" @mousedown.prevent="toggleAllChannels">
@@ -288,14 +296,22 @@
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="Brand" prop="brand" ref="brandRef">
-            <div class="combo-wrap" ref="brandRef" v-click-outside="handleBrandClickOutside" :class="{ 'is-disabled': !countryDivisionActive }" :title="!countryDivisionActive ? channelSubChannelAccountBrandMessage : ''">
-              <div class="combo-trigger" @click="countryDivisionActive && (brandOpen = !brandOpen)" :style="{ opacity: countryDivisionActive ? 1 : 0.6, cursor: countryDivisionActive ? 'pointer' : 'not-allowed' }">
-                <span :class="Object.keys(formData.brand).length ? 'has-value' : 'placeholder'">
-                  {{ Object.keys(formData.brand).length ? Object.values(formData.brand).join(', ') : 'Select one or more brands' }}
-                </span>
-                <el-icon class="combo-arrow"><ArrowDown /></el-icon>
-              </div>
+          <el-form-item label="Brand" prop="brand">
+            <div class="combo-wrap" ref="brandRef" v-click-outside="handleBrandClickOutside" :title="!countryDivisionActive ? channelSubChannelAccountBrandMessage : ''">
+              <el-input
+                readonly
+                :placeholder="Object.keys(formData.brand).length ? Object.values(formData.brand).join(', ') : 'Select one or more brands'"
+                class="multi-dropdown-trigger"
+                :class="{ 
+                  'has-selected-value': Object.keys(formData.brand).length > 0, 
+                  'pointer-input': countryDivisionActive,
+                  'force-focus': brandOpen 
+                }"
+                :disabled="!countryDivisionActive"
+                @click="countryDivisionActive && (brandOpen = !brandOpen)"
+              >
+                <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
+              </el-input>
               <div v-if="brandOpen && countryDivisionActive" class="combo-dropdown brand-family-dropdown">
                 <el-input v-model="brandSearch" placeholder="Type to search..." class="bf-search" />
                 <div class="combo-item combo-check-item bf-select-all" @mousedown.prevent="toggleAllBrands">
@@ -312,14 +328,22 @@
 
       <el-row :gutter="24">
         <el-col :span="12">
-          <el-form-item label="Sub Channel" prop="subChannel" ref="subChannelRef">
-            <div class="combo-wrap" ref="subChannelRef" v-click-outside="handleSubChannelClickOutside" :class="{ 'is-disabled': !countryDivisionActive }" :title="!countryDivisionActive ? channelSubChannelAccountBrandMessage : ''" :style="{ opacity: countryDivisionActive ? 1 : 0.6, cursor: countryDivisionActive ? 'pointer' : 'not-allowed' }">
-              <div class="combo-trigger" @click="countryDivisionActive && (subChannelOpen = !subChannelOpen)" :style="{ opacity: countryDivisionActive ? 1 : 0.6, cursor: countryDivisionActive ? 'pointer' : 'not-allowed' }">
-                <span :class="Object.keys(formData.subChannel).length ? 'has-value' : 'placeholder'">
-                  {{ Object.keys(formData.subChannel).length ? Object.values(formData.subChannel).join(', ') : 'Select one or more sub-channels' }}
-                </span>
-                <el-icon class="combo-arrow"><ArrowDown /></el-icon>
-              </div>
+          <el-form-item label="Sub Channel" prop="subChannel">
+            <div class="combo-wrap" ref="subChannelRef" v-click-outside="handleSubChannelClickOutside" :title="!countryDivisionActive ? channelSubChannelAccountBrandMessage : ''">
+              <el-input
+                readonly
+                :placeholder="Object.keys(formData.subChannel).length ? Object.values(formData.subChannel).join(', ') : 'Select one or more sub-channels'"
+                class="multi-dropdown-trigger"
+                :class="{ 
+                  'has-selected-value': Object.keys(formData.subChannel).length > 0, 
+                  'pointer-input': countryDivisionActive,
+                  'force-focus': subChannelOpen 
+                }"
+                :disabled="!countryDivisionActive"
+                @click="countryDivisionActive && (subChannelOpen = !subChannelOpen)"
+              >
+                <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
+              </el-input>
               <div v-if="subChannelOpen && countryDivisionActive" class="combo-dropdown brand-family-dropdown">
                 <el-input v-model="subChannelSearch" placeholder="Type to search..." class="bf-search" />
                 <div class="combo-item combo-check-item bf-select-all" @mousedown.prevent="toggleAllSubChannels">
@@ -334,14 +358,22 @@
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="Brand Family" prop="brandFamily" ref="brandFamilyRef">
-            <div class="combo-wrap" ref="brandFamilyRef" v-click-outside="handleBrandFamilyClickOutside" :class="{ 'is-disabled': !countryDivisionActive }" :title="!countryDivisionActive ? channelSubChannelAccountBrandMessage : ''">
-              <div class="combo-trigger" @click="countryDivisionActive && (brandFamilyOpen = !brandFamilyOpen)" :style="{ opacity: countryDivisionActive ? 1 : 0.6, cursor: countryDivisionActive ? 'pointer' : 'not-allowed' }">
-                <span :class="Object.keys(formData.brandFamily).length ? 'has-value' : 'placeholder'">
-                  {{ Object.keys(formData.brandFamily).length ? Object.values(formData.brandFamily).join(', ') : 'Select one or more brand families' }}
-                </span>
-                <el-icon class="combo-arrow"><ArrowDown /></el-icon>
-              </div>
+          <el-form-item label="Brand Family" prop="brandFamily">
+            <div class="combo-wrap" ref="brandFamilyRef" v-click-outside="handleBrandFamilyClickOutside" :title="!countryDivisionActive ? channelSubChannelAccountBrandMessage : ''">
+              <el-input
+                readonly
+                :placeholder="Object.keys(formData.brandFamily).length ? Object.values(formData.brandFamily).join(', ') : 'Select one or more brand families'"
+                class="multi-dropdown-trigger"
+                :class="{ 
+                  'has-selected-value': Object.keys(formData.brandFamily).length > 0, 
+                  'pointer-input': countryDivisionActive,
+                  'force-focus': brandFamilyOpen 
+                }"
+                :disabled="!countryDivisionActive"
+                @click="countryDivisionActive && (brandFamilyOpen = !brandFamilyOpen)"
+              >
+                <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
+              </el-input>
               <div v-if="brandFamilyOpen && countryDivisionActive" class="combo-dropdown brand-family-dropdown">
                 <el-input v-model="brandFamilySearch" placeholder="Type to search or add custom..." class="bf-search" @keydown.enter.prevent="addCustomBrandFamily" />
                 <div v-if="brandFamilySearch.trim() && !brandFamilyOptions.some(f => f.label.toLowerCase() === brandFamilySearch.toLowerCase())" class="combo-custom" @mousedown.prevent="addCustomBrandFamily">+ Add custom: "{{ brandFamilySearch }}"</div>
@@ -368,14 +400,22 @@
 
       <el-row :gutter="24">
         <el-col :span="12">
-          <el-form-item label="Account" prop="account" ref="accountRef">
-            <div class="combo-wrap" ref="accountRef" v-click-outside="handleAccountClickOutside" :class="{ 'is-disabled': !countryDivisionActive }" :title="!countryDivisionActive ? channelSubChannelAccountBrandMessage : ''" :style="{ opacity: countryDivisionActive ? 1 : 0.6, cursor: countryDivisionActive ? 'pointer' : 'not-allowed' }">
-              <div class="combo-trigger" @click="countryDivisionActive && (accountOpen = !accountOpen)" :style="{ opacity: countryDivisionActive ? 1 : 0.6, cursor: countryDivisionActive ? 'pointer' : 'not-allowed' }">
-                <span :class="Object.keys(formData.account).length ? 'has-value' : 'placeholder'">
-                  {{ Object.keys(formData.account).length ? Object.values(formData.account).join(', ') : 'Select one or more accounts' }}
-                </span>
-                <el-icon class="combo-arrow"><ArrowDown /></el-icon>
-              </div>
+          <el-form-item label="Account" prop="account">
+            <div class="combo-wrap" ref="accountRef" v-click-outside="handleAccountClickOutside" :title="!countryDivisionActive ? channelSubChannelAccountBrandMessage : ''">
+              <el-input
+                readonly
+                :placeholder="Object.keys(formData.account).length ? Object.values(formData.account).join(', ') : 'Select one or more accounts'"
+                class="multi-dropdown-trigger"
+                :class="{ 
+                  'has-selected-value': Object.keys(formData.account).length > 0, 
+                  'pointer-input': countryDivisionActive,
+                  'force-focus': accountOpen 
+                }"
+                :disabled="!countryDivisionActive"
+                @click="countryDivisionActive && (accountOpen = !accountOpen)"
+              >
+                <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
+              </el-input>
               <div v-if="accountOpen && countryDivisionActive" class="combo-dropdown brand-family-dropdown">
                 <el-input v-model="accountSearch" placeholder="Type to search..." class="bf-search" />
                 <div class="combo-item combo-check-item bf-select-all" @mousedown.prevent="toggleAllAccounts">
@@ -437,7 +477,7 @@
                         <el-input
                           v-model="prStartPeriodSearch"
                           :placeholder="periodRangeStart.period ? periodToMonth(periodRangeStart.period) : 'Select period'"
-                          :class="{ 'has-selected-value': !!periodRangeStart.period && !prStartPeriodSearch }"
+                          :class="{ 'has-selected-value': !!periodRangeStart.period && !prStartPeriodSearch, 'force-focus': prStartPeriodOpen }"
                           @focus="prStartPeriodOpen = true"
                           @blur="onPrStartPeriodBlur"
                           @input="prStartPeriodOpen = true"
@@ -455,7 +495,7 @@
                         <el-input
                           v-model="prStartYearSearch"
                           :placeholder="periodRangeStart.year || 'Select year'"
-                          :class="{ 'has-selected-value': !!periodRangeStart.year && !prStartYearSearch }"
+                          :class="{ 'has-selected-value': !!periodRangeStart.year && !prStartYearSearch, 'force-focus': prStartYearOpen }"
                           @focus="prStartYearOpen = true"
                           @blur="onPrStartYearBlur"
                           @input="prStartYearOpen = true"
@@ -476,7 +516,7 @@
                         <el-input
                           v-model="prEndPeriodSearch"
                           :placeholder="periodRangeEnd.period ? periodToMonth(periodRangeEnd.period) : 'Select period'"
-                          :class="{ 'has-selected-value': !!periodRangeEnd.period && !prEndPeriodSearch }"
+                          :class="{ 'has-selected-value': !!periodRangeEnd.period && !prEndPeriodSearch, 'force-focus': prEndPeriodOpen }"
                           @focus="prEndPeriodOpen = true"
                           @blur="onPrEndPeriodBlur"
                           @input="prEndPeriodOpen = true"
@@ -494,7 +534,7 @@
                         <el-input
                           v-model="prEndYearSearch"
                           :placeholder="periodRangeEnd.year || 'Select year'"
-                          :class="{ 'has-selected-value': !!periodRangeEnd.year && !prEndYearSearch }"
+                          :class="{ 'has-selected-value': !!periodRangeEnd.year && !prEndYearSearch, 'force-focus': prEndYearOpen }"
                           @focus="prEndYearOpen = true"
                           @blur="onPrEndYearBlur"
                           @input="prEndYearOpen = true"
@@ -523,7 +563,7 @@
                       <el-input
                         v-model="impactPeriodSearch"
                         :placeholder="formData.impactPeriod ? periodToMonth(formData.impactPeriod) : 'Select period'"
-                        :class="{ 'has-selected-value': !!formData.impactPeriod && !impactPeriodSearch }"
+                        :class="{ 'has-selected-value': !!formData.impactPeriod && !impactPeriodSearch, 'force-focus': impactPeriodOpen }"
                         :disabled="hasChildImpacts"
                         @focus="impactPeriodOpen = true"
                         @blur="onImpactPeriodBlur"
@@ -542,7 +582,7 @@
                       <el-input
                         v-model="impactYearSearch"
                         :placeholder="formData.impactYear || 'Select year'"
-                        :class="{ 'has-selected-value': !!formData.impactYear && !impactYearSearch }"
+                        :class="{ 'has-selected-value': !!formData.impactYear && !impactYearSearch, 'force-focus': impactYearOpen }"
                         :disabled="hasChildImpacts"
                         @focus="impactYearOpen = true"
                         @blur="onImpactYearBlur"
@@ -640,7 +680,7 @@
                 <el-input
                   v-model="child._periodSearch"
                   :placeholder="child.impactPeriod ? periodToMonth(child.impactPeriod) : 'Select period'"
-                  :class="{ 'has-selected-value': !!child.impactPeriod && !child._periodSearch }"
+                  :class="{ 'has-selected-value': !!child.impactPeriod && !child._periodSearch, 'force-focus': child._periodOpen }"
                   @focus="child._periodOpen = true"
                   @blur="onChildPeriodBlur(child)"
                   @input="child._periodOpen = true"
@@ -660,7 +700,7 @@
                 <el-input
                   v-model="child._yearSearch"
                   :placeholder="child.impactYear || 'Select year'"
-                  :class="{ 'has-selected-value': !!child.impactYear && !child._yearSearch }"
+                  :class="{ 'has-selected-value': !!child.impactYear && !child._yearSearch, 'force-focus': child._yearOpen }"
                   @focus="child._yearOpen = true"
                   @blur="onChildYearBlur(child)"
                   @input="child._yearOpen = true"
@@ -2258,7 +2298,7 @@ defineExpose({ validate, reset });
 /* ── Typography & Header ────────────────────────────────────────────────────────── */
 .entry-form-wrapper {
   display: flex;
-  font-family: 'Work Sans', Arial, sans-serif; /* Already Work Sans */
+  font-family: 'Work Sans', Arial, sans-serif;
   font-weight: 400;
   flex-direction: column;
   gap: 16px;
@@ -2274,7 +2314,7 @@ defineExpose({ validate, reset });
 }
 
 .form-title {
-  font-family: 'Jost', Arial, sans-serif; /* Already Jost */
+  font-family: 'Jost', Arial, sans-serif;
   font-size: 22px;
   font-weight: 500;
   margin: 0;
@@ -2282,7 +2322,7 @@ defineExpose({ validate, reset });
 }
 
 .section-title {
-  font-family: 'Jost', Arial, sans-serif; /* Already Jost */
+  font-family: 'Jost', Arial, sans-serif;
   font-size: 15px;
   font-weight: 500;
   color: #1a1a1a;
@@ -2291,9 +2331,8 @@ defineExpose({ validate, reset });
 
 /* ── Custom Form Styles (Flat UI Look) ─────────────────────────────────────────────────────── */
 :deep(.el-form-item__label) {
-  font-weight: 600;
-  font-family: 'Work Sans', Arial, sans-serif; /* Added font-family */
-  font-weight: 500; /* Changed from 600 */
+  font-weight: 500;
+  font-family: 'Work Sans', Arial, sans-serif;
   color: #1a1a1a;
   padding-bottom: 4px;
   line-height: 1.2;
@@ -2310,21 +2349,43 @@ defineExpose({ validate, reset });
   border-radius: 6px;
   transition: all 0.2s ease;
 }
+
 :deep(.el-input__wrapper:hover),
 :deep(.el-textarea__inner:hover),
 :deep(.el-select .el-input__wrapper:hover) {
   background-color: #ededf0;
 }
+
+/* Targeted Multi-Dropdown Styling
+  Increases the shade of the dropdown grey color to ensure Channel, 
+  Sub Channel, Account, Brand, and Brand Family perfectly match each other 
+*/
+:deep(.multi-dropdown-trigger .el-input__wrapper) {
+  background-color: #e6e8eb !important; /* Noticeably deeper grey */
+}
+:deep(.multi-dropdown-trigger .el-input__wrapper:hover) {
+  background-color: #dcdfe4 !important; /* Deeper hover */
+}
+:deep(.multi-dropdown-trigger.force-focus .el-input__wrapper) {
+  background-color: #fff !important;
+  border: 1px solid #1a1a1a !important;
+}
+:deep(.multi-dropdown-trigger.is-disabled .el-input__wrapper) {
+  background-color: #f0f2f5 !important;
+}
+
+
+/* Force Focus styling applied universally when regular dropdowns are open */
 :deep(.el-input__wrapper.is-focus),
 :deep(.el-textarea__inner:focus),
-:deep(.el-select .el-input__wrapper.is-focus) {
-  background-color: #fff;
-  border: 1px solid #1a1a1a;
+:deep(.el-select .el-input__wrapper.is-focus),
+:deep(.force-focus:not(.multi-dropdown-trigger) .el-input__wrapper) {
+  background-color: #fff !important;
+  border: 1px solid #1a1a1a !important;
 }
 
 :deep(.el-form-item.is-error .el-input__wrapper),
-:deep(.el-form-item.is-error .el-textarea__inner),
-:deep(.el-form-item.is-error .combo-trigger) {
+:deep(.el-form-item.is-error .el-textarea__inner) {
   box-shadow: 0 0 0 1px #f56c6c inset !important;
   background-color: #fff !important;
 }
@@ -2348,14 +2409,38 @@ defineExpose({ validate, reset });
   color: #000 !important;
 }
 
+/* Uniform Placeholder Styling */
+:deep(.el-input__inner::placeholder) {
+  color: #a8a8a8;
+  opacity: 1;
+}
+
+/* Unify Placeholder Styling for populated combo boxes to match actual text color */
+.has-selected-value :deep(input::placeholder) {
+  color: #000 !important;
+  opacity: 1;
+}
+
+/* Pointer interactions for multi-select dropdown triggers */
+.pointer-input :deep(.el-input__wrapper),
+.pointer-input :deep(.el-input__inner) {
+  cursor: pointer !important;
+}
+
+/* Disabled State overrides */
+:deep(.el-input.is-disabled:not(.multi-dropdown-trigger) .el-input__wrapper) {
+  background-color: #f9f9f9 !important;
+  border-color: transparent !important;
+}
+:deep(.el-input.is-disabled .el-input__inner) {
+  color: #a8a8a8 !important;
+}
+:deep(.el-input.is-disabled input::placeholder) {
+  color: #a8a8a8 !important;
+}
 /* Exception for Creator (keep it muted since it's disabled) */
 :deep(.el-form-item[prop="creator"] .el-input.is-disabled .el-input__inner) {
   color: #a8a8a8 !important;
-}
-
-:deep(.el-input.is-disabled .el-input__wrapper) {
-  background-color: #f9f9f9;
-  color: #a8a8a8;
 }
 
 .char-count {
@@ -2452,13 +2537,11 @@ defineExpose({ validate, reset });
 /* ── Input + Dropdown Styling ───────────────────────────────────────── */
 .impact-section-subtitle {
   font-size: 14px;
-  font-weight: 700;
-  /* font-style: italic; */
+  font-weight: 500;
   color: #1a1a1a;
   margin-top: 8px;
   margin-bottom: 4px;
-  font-family: 'Jost', Arial, sans-serif; /* Added font-family */
-  font-weight: 500; /* Changed from 700 */
+  font-family: 'Jost', Arial, sans-serif;
 }
 .input-with-dropdown {
   display: flex;
@@ -2514,28 +2597,6 @@ defineExpose({ validate, reset });
 .combo-arrow { color: #8c8c8c; font-size: 12px; }
 
 /* Brand Family Multi Select */
-.combo-trigger {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 36px;
-  padding: 0 14px;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  background: #f4f5f7;
-  cursor: pointer;
-  font-size: 13px;
-  transition: background 0.2s;
-}
-.combo-trigger:hover { background: #ededf0; }
-.combo-trigger .has-value { color: #000; font-weight: 500; }
-.combo-trigger .placeholder { color: #a8a8a8; }
-
-.has-selected-value :deep(input::placeholder) {
-  color: #000 !important;
-  opacity: 1;
-}
-
 .brand-family-dropdown { padding: 12px 0; }
 .bf-search { padding: 0 12px; margin-bottom: 8px; }
 .combo-check-item { display: flex; align-items: center; gap: 10px; }
