@@ -1,5 +1,6 @@
 <template>
   <div class="page-container">
+    <img :src="logoUrl" alt="Suntory Oceania" class="header-logo" />
     <div class="page-header">
       <el-button :icon="ArrowLeft" @click="router.push('/')">Back to Main</el-button>
       <div>
@@ -23,10 +24,10 @@
           <span class="arrow">→</span>
           <span><strong>Comparison:</strong> {{ laterSnapshot?.name }} ({{ formatDate(laterSnapshot?.created_at ?? '') }})</span>
         </div>
-        <el-button @click="clearComparison">
+        <!-- <el-button @click="clearComparison">
           <el-icon><Close /></el-icon>
           Close Comparison
-        </el-button>
+        </el-button> -->
       </div>
 
       <div class="comparison-table-wrapper">
@@ -424,6 +425,7 @@ import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { ArrowLeft, Calendar, Loading, Delete, Close, Grid, ScaleToOriginal, MoreFilled } from "@element-plus/icons-vue";
 import { snapshotApi } from "@/services/api";
+import logoUrl from "@/assets/logo_suntory_oceania.81542d.svg";
 
 interface SnapshotGroup {
   snapshot_id: string;
@@ -949,8 +951,8 @@ async function handleCompare() {
 }
 
 .page-header {
-  display: flex;
-  flex-direction: column;
+  /* display: flex; */
+  /* flex-direction: column; */
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -969,6 +971,12 @@ async function handleCompare() {
   font-size: 15px;
   color: var(--text-secondary);
   margin: 4px 0 0;
+}
+
+.header-logo {
+  height: 40px;
+  width: auto;
+  padding-bottom: 16px;
 }
 
 /* Compare button row */

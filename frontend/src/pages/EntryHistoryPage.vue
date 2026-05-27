@@ -1,5 +1,6 @@
 <template>
   <div class="page-container">
+    <img :src="logoUrl" alt="Suntory Oceania" class="header-logo" />
     <div class="page-nav">
       <el-button :icon="ArrowLeft" plain @click="router.push('/')">Back to Entries</el-button>
     </div>
@@ -153,6 +154,7 @@ import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { ArrowLeft, Loading } from "@element-plus/icons-vue";
 import { entryApi } from "@/services/api";
+import logoUrl from "@/assets/logo_suntory_oceania.81542d.svg";
 import type { Entry } from "@/types";
 import { formatDate, formatMoney, formatVol } from "@/utils/formatters";
 
@@ -281,5 +283,11 @@ function formatPrimaryImpact(row: Entry) {
 
 :deep(.row-latest) td {
   background-color: #f0fdf4 !important;
+}
+
+.header-logo {
+  height: 40px;
+  width: auto;
+  padding-bottom: 16px;
 }
 </style>

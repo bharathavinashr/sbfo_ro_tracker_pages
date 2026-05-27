@@ -1,5 +1,6 @@
 <template>
   <div class="page-container">
+    <img :src="logoUrl" alt="Suntory Oceania" class="header-logo" />
     <div class="page-header">
       <el-button :icon="ArrowLeft" @click="router.push('/snapshots')">
         Back to Snapshots
@@ -48,6 +49,7 @@ import { useRouter, useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
 import { ArrowLeft, Loading } from "@element-plus/icons-vue";
 import { snapshotApi } from "@/services/api";
+import logoUrl from "@/assets/logo_suntory_oceania.81542d.svg";
 import EntriesTable from "@/components/EntriesTable.vue";
 import type { Entry } from "@/types";
 
@@ -123,6 +125,12 @@ function handleHistory(entry: Entry) {
   max-width: 1800px;
   margin: 0 auto;
   padding: 24px;
+}
+
+.header-logo {
+  height: 40px;
+  width: auto;
+  padding-bottom: 16px;
 }
 
 .page-header {
