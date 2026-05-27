@@ -150,5 +150,5 @@ class Snapshot(Base):
     ibp_step = Column(String(255), nullable=False)
     entry_data = Column(JSONB, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
-    version = Column(Integer, nullable=False, default=0)
+    version = Column(Integer, nullable=False, default=1)
     is_final = Column(Boolean, nullable=False, default=False)

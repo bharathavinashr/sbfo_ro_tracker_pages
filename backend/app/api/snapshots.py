@@ -148,7 +148,7 @@ def create_snapshot(data: SnapshotCreate, db: Session = Depends(get_db)):
         )
         .scalar()
     )
-    new_version = (max_version + 1) if max_version is not None else 0
+    new_version = (max_version + 1) if max_version is not None else 1
 
     # Generate unique snapshot ID and name
     snapshot_id = f"SNAP-{data.year}-{data.period}-{data.ibp_step.replace(' ', '_')}-{uuid.uuid4().hex[:8]}".upper()
@@ -240,7 +240,7 @@ def _reconcile_all_ibp_snapshot(db: Session, period: str, year: str):
         )
         .scalar()
     )
-    new_version = (max_version + 1) if max_version is not None else 0
+    new_version = (max_version + 1) if max_version is not None else 1
 
     # Generate unique snapshot ID and name for the "All IBP Steps" snapshot
     snapshot_id = f"SNAP-{year}-{period}-{ALL_IBP_STEP_NAME.replace(' ', '_')}-{uuid.uuid4().hex[:8]}".upper()
