@@ -264,7 +264,7 @@
           Add New Entry
         </el-button>
 
-        <el-button v-if="!isReadOnly" size="small" plain :icon="Download" class="black-icon-text" @click="exportToCSV(filteredEntries)">
+        <el-button size="small" plain :icon="Download" class="black-icon-text" @click="exportToCSV(filteredEntries)">
           Export CSV
         </el-button>
       </div>
