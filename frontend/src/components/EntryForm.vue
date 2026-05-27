@@ -2361,7 +2361,7 @@ defineExpose({ validate, reset });
   Sub Channel, Account, Brand, and Brand Family perfectly match each other 
 */
 :deep(.multi-dropdown-trigger .el-input__wrapper) {
-  background-color: #e6e8eb !important; /* Noticeably deeper grey */
+  background-color: #f4f5f7 !important; /* Noticeably deeper grey */
 }
 :deep(.multi-dropdown-trigger .el-input__wrapper:hover) {
   background-color: #dcdfe4 !important; /* Deeper hover */
@@ -2371,7 +2371,7 @@ defineExpose({ validate, reset });
   border: 1px solid #1a1a1a !important;
 }
 :deep(.multi-dropdown-trigger.is-disabled .el-input__wrapper) {
-  background-color: #f0f2f5 !important;
+  background-color: #f4f5f7 !important;
 }
 
 
