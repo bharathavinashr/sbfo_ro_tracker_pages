@@ -323,7 +323,7 @@ function goToHistory(entry: Entry) {
   max-width: 1600px;
   margin: 0 auto;
   padding: 24px;
-  background-color: #D9F2F2;
+  /* background-color: #D9F2F2; */
 }
 
 .logo-header {
@@ -368,7 +368,7 @@ function goToHistory(entry: Entry) {
   font-size: 28px;
   font-weight: 500;
   margin: 0;
-  color: var(--text-primary);
+  color: var(--text-title-heading);
   line-height: 1.2;
 }
 

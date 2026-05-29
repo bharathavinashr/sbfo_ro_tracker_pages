@@ -341,8 +341,11 @@
       </div>
 
       <div v-else-if="snapshots.length >= 2" class="compare-btn-row">
-        <el-button @click="enterComparisonMode">
-          <el-icon><ScaleToOriginal /></el-icon>
+        <el-button
+          :icon="ScaleToOriginal"
+          class="black-icon-btn"
+          @click="enterComparisonMode"
+        >
           Compare Snapshots
         </el-button>
       </div>
@@ -952,7 +955,7 @@ async function handleCompare() {
   max-width: 1800px;
   margin: 0 auto;
   padding: 24px;
-  background-color: #D9F2F2;
+  /* background-color: #D9F2F2; */
 }
 
 .logo-header {
@@ -969,11 +972,12 @@ async function handleCompare() {
 }
 
 .page-title {
-  font-family: 'Jost', Arial, sans-serif;
-  font-size: 32px;
+  font-family: 'Jost', Arial, sans-serif; /* Already Jost */
+  font-size: 28px;
   font-weight: 500;
   margin: 0;
-  color: var(--text-primary);
+  color: var(--text-title-heading);
+  line-height: 1.2;
 }
 
 .page-subtitle {
@@ -994,6 +998,18 @@ async function handleCompare() {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 8px;
+  color: #000 !important;
+}
+
+.compare-btn-row :deep(.el-button) {
+  width: 200px;
+  color: #000;
+  border-color: var(--border-color);
+}
+
+/* Ensures the icon specifically is rendered as black */
+.black-icon-btn :deep(.el-icon) {
+  color: #000 !important;
 }
 
 /* Compare mode banner */

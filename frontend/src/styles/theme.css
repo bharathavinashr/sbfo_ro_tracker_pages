@@ -4,6 +4,12 @@
   --font-size: 16px;
   --background: #ffffff;
   --foreground: oklch(0.145 0 0);
+  --text-primary:oklch(0.145 0 0);
+  --text-title-heading: #00325D;
+  --text-secondary: oklch(0.145 0 0);
+  --text-muted: #909399;
+  --bg-primary: var(--background);
+  --bg-secondary: var(--muted);
   --card: #ffffff;
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -45,6 +51,11 @@
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
+  --text-primary: var(--foreground);
+  --text-secondary: var(--muted-foreground);
+  --text-muted: oklch(0.708 0 0);
+  --bg-primary: var(--background);
+  --bg-secondary: var(--muted);
   --card: oklch(0.145 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.145 0 0);

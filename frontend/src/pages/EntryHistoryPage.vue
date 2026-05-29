@@ -234,13 +234,22 @@ function formatPrimaryImpact(row: Entry) {
   max-width: 1400px;
   margin: 0 auto;
   padding: 24px;
-  background-color: #D9F2F2;
+  /* background-color: #D9F2F2; */
 }
 
 .logo-header {
   max-width: 1400px;
   margin: 0 auto;
   padding: 16px 24px;
+}
+
+.page-title {
+  font-family: 'Jost', Arial, sans-serif; /* Already Jost */
+  font-size: 28px;
+  font-weight: 500;
+  margin: 0;
+  color: var(--text-title-heading);
+  line-height: 1.2;
 }
 
 .page-nav {

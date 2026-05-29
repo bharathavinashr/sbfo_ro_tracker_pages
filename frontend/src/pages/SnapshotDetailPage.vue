@@ -129,7 +129,7 @@ function handleHistory(entry: Entry) {
   max-width: 1800px;
   margin: 0 auto;
   padding: 24px;
-  background-color: #D9F2F2;
+  /* background-color: #D9F2F2; */
 }
 
 .logo-header {
@@ -178,10 +178,12 @@ function handleHistory(entry: Entry) {
 }
 
 .page-title {
-  font-size: 32px;
-  font-weight: 700;
+  font-family: 'Jost', Arial, sans-serif; /* Already Jost */
+  font-size: 28px;
+  font-weight: 500;
   margin: 0;
-  color: var(--text-primary);
+  color: var(--text-title-heading);
+  line-height: 1.2;
 }
 
 .snapshot-meta {
