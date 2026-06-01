@@ -600,7 +600,7 @@ function formatImpactPeriods(childImpacts?: Array<{ impactPeriod: string; impact
   }
   if (continuous) {
     const f = sorted[0], l = sorted[sorted.length - 1];
-    return `${periodToMonthAbbr(f.impactPeriod)} ${f.impactYear} - ${periodToMonthAbbr(l.impactPeriod)} ${l.year || l.impactYear}`;
+    return `${periodToMonthAbbr(f.impactPeriod)} ${f.impactYear} - ${periodToMonthAbbr(l.impactPeriod)} ${l.impactYear}`;
   }
   return sorted.map(c => `${periodToMonthAbbr(c.impactPeriod)} ${c.impactYear}`).join(', ');
 }

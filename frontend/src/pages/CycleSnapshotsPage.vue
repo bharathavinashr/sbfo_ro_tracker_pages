@@ -437,7 +437,7 @@
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { ArrowLeft, Calendar, Loading, Delete, Close, Grid, ScaleToOriginal, MoreFilled } from "@element-plus/icons-vue";
+import { ArrowLeft, Calendar, Loading, Delete, Close, Grid, ScaleToOriginal, MoreFilled, Search } from "@element-plus/icons-vue";
 import { snapshotApi } from "@/services/api";
 import logoUrl from "@/assets/logo_suntory_oceania.81542d.svg";
 
