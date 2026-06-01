@@ -396,7 +396,7 @@ function goToHistory(entry: Entry) {
   padding: 6px 10px;
   border: 1px solid var(--border-color);
   border-radius: var(--radius);
-  background: var(--bg-secondary);
+  /* background: var(--bg-secondary); */
 }
 
 .role-icon {

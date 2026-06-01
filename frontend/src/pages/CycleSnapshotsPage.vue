@@ -348,6 +348,13 @@
         >
           Compare Snapshots
         </el-button>
+        <el-button
+          :icon="Search"
+          class="black-icon-btn"
+          @click="router.push('/snapshot-history')"
+        >
+          Browse Snapshot History
+        </el-button>
       </div>
 
       <div v-if="loading" class="loading-state">
@@ -587,7 +594,7 @@ const columnDefs = [
 const groupedSnapshots = computed(() => {
   const grouped: Record<string, SnapshotGroup[]> = {};
   ibpSteps.forEach(step => {
-    grouped[step] = snapshots.value.filter(s => s.ibp_step === step);
+    grouped[step] = snapshots.value.filter(s => s.ibp_step === step).slice(0, 6);
   });
   return grouped;
 });
@@ -998,6 +1005,7 @@ async function handleCompare() {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 8px;
+  gap: 12px;
   color: #000 !important;
 }
 
