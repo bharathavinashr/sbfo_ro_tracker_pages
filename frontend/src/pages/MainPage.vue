@@ -40,7 +40,7 @@
               </el-option>
             </el-select>
             <!-- DBX + System Admin: test-user impersonation dropdown -->
-            <template v-else-if="authMode === 'DBX' && dbxAdminUser?.role === 0">
+            <template v-else-if="authMode === 'DBX' && dbxAdminUser && Number(dbxAdminUser.role) === 0">
               <span class="role-email">{{ dbxAdminUser.email }}</span>
               <el-select
                 v-model="store.currentUser"
@@ -87,7 +87,7 @@
         </el-button>
 
         <el-button
-          v-if="store.currentUser?.role === 0 || dbxAdminUser?.role === 0"
+          v-if="Number(store.currentUser?.role) === 0 || Number(dbxAdminUser?.role) === 0"
           :icon="Setting"
           class="black-icon-btn"
           @click="router.push('/users')"
@@ -182,7 +182,7 @@ onMounted(async () => {
       const me = await authApi.getMe();
       store.currentUser = me;
       // System Admin in DBX mode: load test users (non-@suntory.com) for impersonation
-      if (me.role === 0) {
+      if (Number(me.role) === 0) {
         dbxAdminUser.value = me;
         await store.fetchUsers();
       }
