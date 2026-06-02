@@ -87,7 +87,7 @@
         </el-button>
 
         <el-button
-          v-if="store.currentUser?.role === 0"
+          v-if="dbxAdminUser?.role === 0 || (authMode === 'LOCAL' && store.currentUser?.role === 0)"
           :icon="Setting"
           class="black-icon-btn"
           @click="router.push('/users')"
