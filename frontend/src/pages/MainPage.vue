@@ -86,6 +86,15 @@
           Browse Snapshots
         </el-button>
 
+        <el-button
+          v-if="store.currentUser?.role === 0"
+          :icon="Setting"
+          class="black-icon-btn"
+          @click="router.push('/users')"
+        >
+          Manage Users
+        </el-button>
+
         <!-- <el-button
           v-if="store.canCreate"
           type="primary"
@@ -139,7 +148,7 @@
 import { ref, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Plus, User, Camera, Search } from "@element-plus/icons-vue";
+import { Plus, User, Camera, Search, Setting } from "@element-plus/icons-vue";
 import { useEntryStore } from "@/stores/entryStore";
 import { authApi, entryApi } from "@/services/api";
 import EntriesTable from "@/components/EntriesTable.vue";

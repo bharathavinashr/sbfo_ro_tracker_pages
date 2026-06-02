@@ -4,6 +4,7 @@ import EntryHistoryPage from "@/pages/EntryHistoryPage.vue";
 import CycleSnapshotsPage from "@/pages/CycleSnapshotsPage.vue";
 import SnapshotDetailPage from "@/pages/SnapshotDetailPage.vue";
 import SnapshotHistoryPage from "@/pages/SnapshotHistoryPage.vue";
+import UserManagementPage from "@/pages/UserManagementPage.vue";
 
 const routes = [
   { path: "/", component: MainPage },
@@ -11,6 +12,7 @@ const routes = [
   { path: "/snapshots", component: CycleSnapshotsPage },
   { path: "/snapshots/:snapshotId", component: SnapshotDetailPage },
   { path: "/snapshot-history", component: SnapshotHistoryPage },
+  { path: "/users", component: UserManagementPage },
 ];
 
 export const router = createRouter({

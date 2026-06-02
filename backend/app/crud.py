@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func, cast, String, Text
+from sqlalchemy import func, cast, String, Text, text
 from . import models, schemas
 from typing import Optional
 
@@ -360,10 +360,45 @@ def get_brand_families_by_brand_code(db: Session, division: str, brand_code: str
 def get_all_users(db: Session):
     return (
         db.query(models.AppUser)
-        .filter(models.AppUser.is_active == True)
         .order_by(models.AppUser.email)
         .all()
     )
+
+
+def get_user_by_id(db: Session, user_id: int):
+    return db.query(models.AppUser).filter(models.AppUser.id == user_id).first()
+
+
+def create_user(db: Session, data: schemas.UserCreate):
+    # Sync sequence to avoid duplicate key errors from out-of-sync serial
+    db.execute(
+        text("SELECT setval(pg_get_serial_sequence('sbfo_ro.app_users', 'id'), COALESCE(MAX(id), 0) + 1, false) FROM sbfo_ro.app_users")
+    )
+    user = models.AppUser(**data.model_dump())
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def update_user(db: Session, user_id: int, data: schemas.UserUpdate):
+    user = db.query(models.AppUser).filter(models.AppUser.id == user_id).first()
+    if not user:
+        return None
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(user, field, value)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def delete_user(db: Session, user_id: int):
+    user = db.query(models.AppUser).filter(models.AppUser.id == user_id).first()
+    if not user:
+        return False
+    db.delete(user)
+    db.commit()
+    return True
 
 
 def get_countries_by_division(db: Session, division: str):

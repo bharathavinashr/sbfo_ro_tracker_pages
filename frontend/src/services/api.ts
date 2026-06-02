@@ -41,6 +41,15 @@ export const entryApi = {
 export const userApi = {
   getAll: (): Promise<AppUser[]> =>
     api.get<{ users: AppUser[] }>("/api/users").then((r) => r.data.users),
+
+  create: (data: Omit<AppUser, 'id'>): Promise<AppUser> =>
+    api.post<AppUser>("/api/users", data).then((r) => r.data),
+
+  update: (id: number, data: Partial<Omit<AppUser, 'id'>>): Promise<AppUser> =>
+    api.put<AppUser>(`/api/users/${id}`, data).then((r) => r.data),
+
+  delete: (id: number): Promise<void> =>
+    api.delete(`/api/users/${id}`).then(() => undefined),
 };
 
 export const authApi = {

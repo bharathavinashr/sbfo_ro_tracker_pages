@@ -80,9 +80,35 @@ class UserOut(BaseModel):
     id: int
     email: str
     display_name: Optional[str] = None
-    role: int  # 0=System Admin, 1=User, 2=IBP Step Approver, 3=Finance Approver, 4=Viewer
-    ibp_steps: Optional[List[str]] = None  # None = all; list = restricted IBP steps (role 2 only)
+    role: int
+    role_name: Optional[str] = None
+    ibp_steps: Optional[List[str]] = None
+    is_active: bool = True
+    country: Optional[Any] = None
+    division: Optional[Any] = None
     model_config = {"from_attributes": True}
+
+
+class UserCreate(BaseModel):
+    email: str
+    display_name: Optional[str] = None
+    role: int
+    role_name: Optional[str] = None
+    ibp_steps: Optional[List[str]] = None
+    is_active: bool = True
+    country: Optional[Any] = None
+    division: Optional[Any] = None
+
+
+class UserUpdate(BaseModel):
+    email: Optional[str] = None
+    display_name: Optional[str] = None
+    role: Optional[int] = None
+    role_name: Optional[str] = None
+    ibp_steps: Optional[List[str]] = None
+    is_active: Optional[bool] = None
+    country: Optional[Any] = None
+    division: Optional[Any] = None
 
 
 class LookupOptionOut(BaseModel):
