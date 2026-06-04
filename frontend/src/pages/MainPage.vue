@@ -53,10 +53,7 @@
                 @clear="store.currentUser = dbxAdminUser"
               >
                 <el-option
-                  v-for="u in store.users.filter(u => 
-                    !u.email?.toLowerCase().trim().endsWith('@suntory.com') && 
-                    !u.email?.toLowerCase().trim().endsWith('@beamsuntory.com')
-                  )"
+                  v-for="u in impersonationUsers"
                   :key="u.id"
                   :value="u"
                   :label="u.email"
@@ -148,7 +145,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Plus, User, Camera, Search, Setting } from "@element-plus/icons-vue";
@@ -163,6 +160,20 @@ import { ROLE_MAP } from "@/types";
 
 const router = useRouter();
 const store = useEntryStore();
+
+const impersonationUsers = computed(() => {
+  return store.users.filter(u => {
+    // Safely format the email for checking
+    const email = u.email?.toLowerCase().trim() || "";
+    
+    // Define our conditions
+    const isNotSuntory = !email.endsWith("@suntory.com");
+    const isNotBeamSuntory = !email.endsWith("@beamsuntory.com");
+
+    // Only return users who meet ALL conditions
+    return isNotSuntory && isNotBeamSuntory;
+  });
+});
 
 const formOpen = ref(false);
 const editingEntry = ref<Entry | null>(null);
