@@ -168,12 +168,10 @@ const impersonationUsers = computed(() => {
     // Safely format the email for checking
     const email = u.email?.toLowerCase().trim() || "";
     
-    // Define our conditions
-    const isNotSuntory = !email.endsWith("@suntory.com");
-    const isNotBeamSuntory = !email.endsWith("@beamsuntory.com");
+    const isNotInternal = !['@suntory.com', '@beamsuntory.com'].some(domain => email.endsWith(domain));
 
     // Only return users who meet ALL conditions
-    return isNotSuntory && isNotBeamSuntory;
+    return isNotInternal;
   });
 });
 
