@@ -53,7 +53,7 @@
                 @clear="store.currentUser = dbxAdminUser"
               >
                 <el-option
-                  v-for="u in store.users.filter(u => !u.email.endsWith('@suntory.com') && !u.email.endsWith('@beamsuntory.com '))"
+                  v-for="u in store.users.filter(u => !u.email.endsWith('@suntory.com') && !u.email.endsWith('@beamsuntory.com'))"
                   :key="u.id"
                   :value="u"
                   :label="u.email"
