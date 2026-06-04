@@ -21,6 +21,7 @@
             <span class="role-label">User Type</span>
             <!-- LOCAL: manual user selector -->
             <el-select
+              key="local-dropdown"
               v-if="authMode === 'LOCAL'"
               v-model="store.currentUser"
               class="role-picker"
@@ -43,6 +44,7 @@
             <template v-else-if="authMode === 'DBX' && dbxAdminUser && Number(dbxAdminUser.role) === 0">
               <span class="role-email">{{ dbxAdminUser.email }}</span>
               <el-select
+                key="dbx-dropdown"
                 v-model="store.currentUser"
                 class="role-picker"
                 size="default"
