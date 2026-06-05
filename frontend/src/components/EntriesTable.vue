@@ -1470,7 +1470,7 @@ function clearFilters() {
 <style scoped>
 /* ── Wrapper ──────────────────────────────────────────── */
 .entries-table-wrapper {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.5);
   border-radius: 10px;
   border: 1px solid #ddd;
   overflow: visible;

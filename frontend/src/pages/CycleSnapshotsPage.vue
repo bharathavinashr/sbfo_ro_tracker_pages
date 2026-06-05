@@ -1,5 +1,8 @@
 <template>
-  <div>
+  <div
+    class="main-page-wrapper"
+     
+  >
     <header class="logo-header">
       <img :src="logoUrl" alt="Suntory Oceania" class="header-logo" />
     </header>
@@ -437,9 +440,10 @@
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { ArrowLeft, Calendar, Loading, Delete, Close, Grid, ScaleToOriginal, MoreFilled, Search } from "@element-plus/icons-vue";
+import { ArrowLeft, Calendar, Loading, Delete, Close, ScaleToOriginal, MoreFilled, Search } from "@element-plus/icons-vue";
+import logoUrl from "@/assets/SuntoryOceania-Logo-RGB-Reversed.png";
 import { snapshotApi } from "@/services/api";
-import logoUrl from "@/assets/logo_suntory_oceania.81542d.svg";
+import backgroundImage from "@/assets/SuntoryOceania-Patterns-RGB-Blue-Water_Ripples.png";
 
 interface SnapshotGroup {
   snapshot_id: string;
@@ -958,6 +962,14 @@ async function handleCompare() {
 </script>
 
 <style scoped>
+.main-page-wrapper {
+  min-height: 100vh;
+  background-size: cover;
+  background-attachment: fixed;
+  background-repeat: repeat;
+  background-position: center;
+}
+
 .page-container {
   max-width: 1800px;
   margin: 0 auto;
@@ -969,6 +981,7 @@ async function handleCompare() {
   max-width: 1800px;
   margin: 0 auto;
   padding: 16px 24px;
+  background: #00325D;
 }
 
 .page-header {

@@ -1,5 +1,8 @@
 <template>
-  <div>
+  <div
+    class="main-page-wrapper"
+     
+  >
     <header class="logo-header">
       <img :src="logoUrl" alt="Suntory Oceania" class="header-logo" />
     </header>
@@ -52,8 +55,9 @@ import { ref, onMounted, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
 import { ArrowLeft, Loading } from "@element-plus/icons-vue";
-import { snapshotApi } from "@/services/api";
-import logoUrl from "@/assets/logo_suntory_oceania.81542d.svg";
+import { snapshotApi } from "@/services/api"; 
+import logoUrl from "@/assets/SuntoryOceania-Logo-RGB-Reversed.png";
+import backgroundImage from "@/assets/SuntoryOceania-Patterns-RGB-Blue-Water_Ripples.png";
 import EntriesTable from "@/components/EntriesTable.vue";
 import type { Entry } from "@/types";
 
@@ -125,6 +129,14 @@ function handleHistory(entry: Entry) {
 </script>
 
 <style scoped>
+.main-page-wrapper {
+  min-height: 100vh;
+  background-size: cover;
+  background-attachment: fixed;
+  background-repeat: repeat;
+  background-position: center;
+}
+
 .page-container {
   max-width: 1800px;
   margin: 0 auto;
@@ -136,6 +148,7 @@ function handleHistory(entry: Entry) {
   max-width: 1800px;
   margin: 0 auto;
   padding: 16px 24px;
+  background: #00325D;
 }
 
 .header-logo {

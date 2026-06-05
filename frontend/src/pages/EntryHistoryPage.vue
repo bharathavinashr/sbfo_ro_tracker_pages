@@ -1,5 +1,8 @@
 <template>
-  <div>
+  <div
+    class="main-page-wrapper"
+     
+  >
     <header class="logo-header">
       <img :src="logoUrl" alt="Suntory Oceania" class="header-logo" />
     </header>
@@ -157,8 +160,9 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { ArrowLeft, Loading } from "@element-plus/icons-vue";
-import { entryApi } from "@/services/api";
-import logoUrl from "@/assets/logo_suntory_oceania.81542d.svg";
+import { entryApi } from "@/services/api"; 
+import logoUrl from "@/assets/SuntoryOceania-Logo-RGB-Reversed.png";
+import backgroundImage from "@/assets/SuntoryOceania-Patterns-RGB-Blue-Water_Ripples.png";
 import type { Entry } from "@/types";
 import { formatDate, formatMoney, formatVol } from "@/utils/formatters";
 
@@ -230,6 +234,14 @@ function formatPrimaryImpact(row: Entry) {
 </script>
 
 <style scoped>
+.main-page-wrapper {
+  min-height: 100vh;
+  background-size: cover;
+  background-attachment: fixed;
+  background-repeat: repeat;
+  background-position: center;
+}
+
 .page-container {
   max-width: 1400px;
   margin: 0 auto;
@@ -241,6 +253,7 @@ function formatPrimaryImpact(row: Entry) {
   max-width: 1400px;
   margin: 0 auto;
   padding: 16px 24px;
+  background: #00325D;
 }
 
 .page-title {

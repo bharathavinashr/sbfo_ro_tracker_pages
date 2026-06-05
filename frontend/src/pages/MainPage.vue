@@ -1,5 +1,7 @@
 <template>
-  <div>
+  <div 
+    class="main-page-wrapper"
+  >
     <header class="logo-header">
       <img :src="logoUrl" alt="Suntory Oceania" class="header-logo" />
     </header>
@@ -157,7 +159,8 @@ import EntriesTable from "@/components/EntriesTable.vue";
 import EntryForm from "@/components/EntryForm.vue";
 import LockView from "@/components/LockView.vue";
 import type { Entry } from "@/types";
-import logoUrl from "@/assets/logo_suntory_oceania.81542d.svg";
+import logoUrl from "@/assets/SuntoryOceania-Logo-RGB-Reversed.png";
+import backgroundImage from "@/assets/SuntoryOceania-Patterns-RGB-Blue-Water_Ripples.png";
 import { ROLE_MAP } from "@/types";
 
 const router = useRouter();
@@ -342,6 +345,14 @@ function goToHistory(entry: Entry) {
 </script>
 
 <style scoped>
+.main-page-wrapper {
+  min-height: 100vh;
+  background-size: cover;
+  background-attachment: fixed;
+  background-repeat: repeat;
+  background-position: center;
+}
+
 .page-container {
   max-width: 1600px;
   margin: 0 auto;
@@ -353,6 +364,7 @@ function goToHistory(entry: Entry) {
   max-width: 1600px;
   margin: 0 auto;
   padding: 16px 24px;
+  background: #00325D;
 }
 
 .main-header {
@@ -362,7 +374,7 @@ function goToHistory(entry: Entry) {
   margin-bottom: 2px;
   gap: 16px;
   flex-wrap: wrap;
-  background: var(--bg-primary);
+  background: rgba(255, 255, 255, 0.5);
   /* border: 1px solid var(--border-color); */
   border-radius: calc(var(--radius) + 4px);
   box-shadow: var(--shadow-sm);

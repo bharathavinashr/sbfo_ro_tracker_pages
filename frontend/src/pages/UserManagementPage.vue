@@ -1,5 +1,7 @@
 <template>
-  <div>
+  <div
+    class="main-page-wrapper"
+  >
     <header class="logo-header">
       <img :src="logoUrl" alt="Suntory Oceania" class="header-logo" />
     </header>
@@ -137,7 +139,8 @@ import { Plus, Edit, Delete, ArrowLeft } from '@element-plus/icons-vue';
 import type { FormInstance, FormRules } from 'element-plus';
 import { userApi } from '@/services/api';
 import type { AppUser } from '@/types';
-import logoUrl from '@/assets/logo_suntory_oceania.81542d.svg';
+import logoUrl from "@/assets/SuntoryOceania-Logo-RGB-Reversed.png";
+import backgroundImage from "@/assets/SuntoryOceania-Patterns-RGB-Blue-Water_Ripples.png";
 
 const router = useRouter();
 
@@ -328,6 +331,14 @@ onMounted(fetchUsers);
 </script>
 
 <style scoped>
+.main-page-wrapper {
+  min-height: 100vh;
+  background-size: cover;
+  background-attachment: fixed;
+  background-repeat: repeat;
+  background-position: center;
+}
+
 .page-container {
   max-width: 1400px;
   margin: 0 auto;
@@ -335,9 +346,15 @@ onMounted(fetchUsers);
 }
 
 .logo-header {
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 16px 24px;
+  background: #00325D;
+}
+
+.header-logo {
+  height: 40px;
+  width: auto;
 }
 
 .main-header {
@@ -347,7 +364,7 @@ onMounted(fetchUsers);
   margin-bottom: 16px;
   gap: 16px;
   flex-wrap: wrap;
-  background: var(--bg-primary);
+  /* background: var(--bg-primary); */
   border-radius: calc(var(--radius) + 4px);
   box-shadow: var(--shadow-sm);
   padding: 20px;
