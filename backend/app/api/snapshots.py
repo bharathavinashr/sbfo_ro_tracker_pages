@@ -13,12 +13,6 @@ from ..crud import get_latest_entries, get_child_impacts, get_final_snapshots_fo
 # router = APIRouter(prefix="/api/snapshots", tags=["snapshots"])
 router = APIRouter()
 
-MONTH_NAMES = {
-    "F01": "January", "F02": "February", "F03": "March", "F04": "April",
-    "F05": "May", "F06": "June", "F07": "July", "F08": "August",
-    "F09": "September", "F10": "October", "F11": "November", "F12": "December"
-}
-
 # Define known IBP steps and the special "All IBP Steps" name
 ALL_IBP_STEP_NAME = "All"
 KNOWN_IBP_STEPS = ["Portfolio Review", "Supply Review", "Demand Review", "A&P (Pre-Exec)", "Overheads (Pre-Exec)"]
@@ -152,8 +146,7 @@ def create_snapshot(data: SnapshotCreate, db: Session = Depends(get_db)):
 
     # Generate unique snapshot ID and name
     snapshot_id = f"SNAP-{data.year}-{data.period}-{data.ibp_step.replace(' ', '_')}-{uuid.uuid4().hex[:8]}".upper()
-    month_name = MONTH_NAMES.get(data.period, data.period)
-    snapshot_name = f"{data.ibp_step} - {month_name} {data.year}"
+    snapshot_name = f"{data.ibp_step} - {data.period} {data.year}"
     
     # Get all entries matching the filter criteria
     filters = {"ibp_step": data.ibp_step}
@@ -244,8 +237,7 @@ def _reconcile_all_ibp_snapshot(db: Session, period: str, year: str):
 
     # Generate unique snapshot ID and name for the "All IBP Steps" snapshot
     snapshot_id = f"SNAP-{year}-{period}-{ALL_IBP_STEP_NAME.replace(' ', '_')}-{uuid.uuid4().hex[:8]}".upper()
-    month_name = MONTH_NAMES.get(period, period)
-    snapshot_name = f"{ALL_IBP_STEP_NAME} - {month_name} {year}"
+    snapshot_name = f"{ALL_IBP_STEP_NAME} - {period} {year}"
 
     snapshots_to_add = []
     for snap_record in individual_final_snapshots:
@@ -300,8 +292,7 @@ def get_all_snapshots(db: Session = Depends(get_db)):
     
     result = []
     for snap in snapshots:
-        month_name = MONTH_NAMES.get(snap.period, snap.period)
-        name = f"{snap.ibp_step} - {month_name} {snap.year}"
+        name = f"{snap.ibp_step} - {snap.period} {snap.year}"
         result.append({
             "snapshot_id": snap.snapshot_id,
             "name": name,
@@ -364,8 +355,7 @@ def get_snapshot_by_id(snapshot_id: str, db: Session = Depends(get_db)):
     
     # Get snapshot metadata from first record
     first_record = snapshot_records[0]
-    month_name = MONTH_NAMES.get(first_record.period, first_record.period)
-    snapshot_name = f"{first_record.ibp_step} - {month_name} {first_record.year}"
+    snapshot_name = f"{first_record.ibp_step} - {first_record.period} {first_record.year}"
     
     # Get entry IDs from snapshot records
     entry_ids = [snap.entry_id for snap in snapshot_records]

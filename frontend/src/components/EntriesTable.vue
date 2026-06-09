@@ -366,14 +366,14 @@
                   <td v-if="colVisible.lastModified" class="cell-muted">{{ formatDate(row.lastModified) }}</td>
                   <td v-if="colVisible.financialImpactType">{{ row.financialImpactType || '-' }}</td>
                   <td v-if="colVisible.currency">{{ row.impactCurrency || '-' }}</td>
-                  <td v-if="colVisible.impact" class="tr fw">{{ row.impact ? Number(row.impact).toLocaleString() : '-' }}</td>
-                  <td v-if="colVisible.volumeCases" class="tr"> {{ (row as any).volumeCases ? Number((row as any).volumeCases).toLocaleString() : '-' }}
+                  <td v-if="colVisible.impact" :class="['tr', 'fw', { 'text-red': row.rAndO === 'Risk' }]">{{ row.impact ? Number(row.impact).toLocaleString() : '-' }}</td>
+                  <td v-if="colVisible.volumeCases" :class="['tr', { 'text-red': row.rAndO === 'Risk' }]"> {{ (row as any).volumeCases ? Number((row as any).volumeCases).toLocaleString() : '-' }}
                     <div v-if="(row as any).volumeImpactValue" class="cell-sub">({{ (row as any).volumeImpactType }})</div>
                   </td>
                   <td v-if="colVisible.volumeImpactType">{{ (row as any).volumeImpactType || '-' }}</td>
-                  <td v-if="colVisible.volumeImpactValue" class="tr">{{ (row as any).volumeImpactValue ? Number((row as any).volumeImpactValue).toLocaleString() : '-' }}</td>
+                  <td v-if="colVisible.volumeImpactValue" :class="['tr', { 'text-red': row.rAndO === 'Risk' }]">{{ (row as any).volumeImpactValue ? Number((row as any).volumeImpactValue).toLocaleString() : '-' }}</td>
                   <template v-if="hasPhasedViews">
-                    <td v-for="col in phasedColumns" :key="col.label" class="tc phased-cell">
+                    <td v-for="col in phasedColumns" :key="col.label" :class="['tc', 'phased-cell', { 'text-red': row.rAndO === 'Risk' }]">
                       {{ formatPhasedCell(getAggregatedImpact(row, col)) }}
                     </td>
                   </template>
@@ -427,12 +427,12 @@
                     <td v-if="colVisible.lastModified"   class="cell-muted">{{ formatDate(row.lastModified) }}</td>
                     <td v-if="colVisible.financialImpactType"     class="cell-muted">{{ row.financialImpactType || '-' }}</td>
                     <td v-if="colVisible.currency"       class="cell-muted">{{ ci.impactCurrency || '-' }}</td>
-                    <td v-if="colVisible.impact"         class="tr fw cell-muted">{{ ci.impact ? Number(ci.impact).toLocaleString() : '-' }}</td>
-                    <td v-if="colVisible.volumeCases"    class="tr cell-muted">{{ ci.volumeCases ? Number(ci.volumeCases).toLocaleString() : '-' }}</td>
+                    <td v-if="colVisible.impact"         :class="['tr', 'fw', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ ci.impact ? Number(ci.impact).toLocaleString() : '-' }}</td>
+                    <td v-if="colVisible.volumeCases"    :class="['tr', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ ci.volumeCases ? Number(ci.volumeCases).toLocaleString() : '-' }}</td>
                     <td v-if="colVisible.volumeImpactType" class="cell-muted">{{ row.volumeImpactType || '-' }}</td>
-                    <td v-if="colVisible.volumeImpactValue" class="tr cell-muted">{{ ci.volumeImpactValue ? Number(ci.volumeImpactValue).toLocaleString() : '-' }}</td>
+                    <td v-if="colVisible.volumeImpactValue" :class="['tr', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ ci.volumeImpactValue ? Number(ci.volumeImpactValue).toLocaleString() : '-' }}</td>
                     <template v-if="hasPhasedViews">
-                      <td v-for="col in phasedColumns" :key="col.label" class="tc cell-muted phased-cell">
+                      <td v-for="col in phasedColumns" :key="col.label" :class="['tc', 'cell-muted', 'phased-cell', { 'text-red': row.rAndO === 'Risk' }]">
                         {{ formatPhasedCellChild(ci, col) }}
                       </td>
                     </template>
@@ -529,12 +529,12 @@
               <td v-if="colVisible.lastModified" class="cell-muted">{{ formatDate(row.lastModified) }}</td>
               <td v-if="colVisible.financialImpactType">{{ row.financialImpactType || '-' }}</td>
               <td v-if="colVisible.currency">{{ row.impactCurrency || '-' }}</td>
-              <td v-if="colVisible.impact" class="tr fw">{{ row.impact ? Number(row.impact).toLocaleString() : '-' }}</td>
-                  <td v-if="colVisible.volumeCases" class="tr">{{ row.volumeCases ? Number(row.volumeCases).toLocaleString() : '-' }}</td>
+              <td v-if="colVisible.impact" :class="['tr', 'fw', { 'text-red': row.rAndO === 'Risk' }]">{{ row.impact ? Number(row.impact).toLocaleString() : '-' }}</td>
+                  <td v-if="colVisible.volumeCases" :class="['tr', { 'text-red': row.rAndO === 'Risk' }]">{{ row.volumeCases ? Number(row.volumeCases).toLocaleString() : '-' }}</td>
               <td v-if="colVisible.volumeImpactType">{{ (row as any).volumeImpactType || '-' }}</td>
-              <td v-if="colVisible.volumeImpactValue" class="tr">{{ (row as any).volumeImpactValue ? Number((row as any).volumeImpactValue).toLocaleString() : '-' }}</td>
+              <td v-if="colVisible.volumeImpactValue" :class="['tr', { 'text-red': row.rAndO === 'Risk' }]">{{ (row as any).volumeImpactValue ? Number((row as any).volumeImpactValue).toLocaleString() : '-' }}</td>
               <template v-if="hasPhasedViews">
-                <td v-for="col in phasedColumns" :key="col.label" class="tc phased-cell">
+                <td v-for="col in phasedColumns" :key="col.label" :class="['tc', 'phased-cell', { 'text-red': row.rAndO === 'Risk' }]">
                   {{ formatPhasedCell(getAggregatedImpact(row, col)) }}
                 </td>
               </template>
@@ -588,12 +588,12 @@
                 <td v-if="colVisible.lastModified"   class="cell-muted">-</td>
                 <td v-if="colVisible.financialImpactType"     class="cell-muted">{{ row.financialImpactType || '-' }}</td>
                 <td v-if="colVisible.currency"       class="cell-muted">{{ ci.impactCurrency || '-' }}</td>
-                <td v-if="colVisible.impact"         class="tr fw cell-muted">{{ ci.impact ? Number(ci.impact).toLocaleString() : '-' }}</td>
-                <td v-if="colVisible.volumeCases"    class="tr cell-muted">{{ ci.volumeCases ? Number(ci.volumeCases).toLocaleString() : '-' }}</td>
+                <td v-if="colVisible.impact"         :class="['tr', 'fw', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ ci.impact ? Number(ci.impact).toLocaleString() : '-' }}</td>
+                <td v-if="colVisible.volumeCases"    :class="['tr', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ ci.volumeCases ? Number(ci.volumeCases).toLocaleString() : '-' }}</td>
                 <td v-if="colVisible.volumeImpactType" class="cell-muted">{{ row.volumeImpactType || '-' }}</td>
-                <td v-if="colVisible.volumeImpactValue" class="tr cell-muted">{{ ci.volumeImpactValue ? Number(ci.volumeImpactValue).toLocaleString() : '-' }}</td>
+                <td v-if="colVisible.volumeImpactValue" :class="['tr', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ ci.volumeImpactValue ? Number(ci.volumeImpactValue).toLocaleString() : '-' }}</td>
                 <template v-if="hasPhasedViews">
-                  <td v-for="col in phasedColumns" :key="col.label" class="tc cell-muted phased-cell">
+                  <td v-for="col in phasedColumns" :key="col.label" :class="['tc', 'cell-muted', 'phased-cell', { 'text-red': row.rAndO === 'Risk' }]">
                     {{ formatPhasedCellChild(ci, col) }}
                   </td>
                 </template>
@@ -1776,6 +1776,10 @@ function clearFilters() {
 .action-icon:hover { background:#f3f4f6; color:#111827; }
 .action-icon--danger { color:#d4183d; }
 .action-icon--danger:hover { background:#fff1f3; color:#d4183d; }
+
+.text-red {
+  color: #d4183d !important;
+}
 
 /* ── Split group ──────────────────────────────────────── */
 .split-group { margin-bottom:24px; }

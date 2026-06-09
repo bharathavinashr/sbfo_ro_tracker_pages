@@ -266,23 +266,26 @@
 
       <el-row :gutter="24">
         <el-col :span="12">
-          <el-form-item label="Channel" prop="channel">
-            <div class="combo-wrap" ref="channelRef" v-click-outside="handleChannelClickOutside" :title="!countryDivisionActive ? channelDisabledMessage : ''">
+          <el-form-item prop="channel">
+            <template #label>
+              Channel <span class="impact-required">*</span>
+            </template>
+            <div class="combo-wrap" ref="channelRef" v-click-outside="handleChannelClickOutside" :title="!countryActive ? 'Please select Country' : ''">
               <el-input
                 readonly
                 :placeholder="Object.keys(formData.channel).length ? Object.values(formData.channel).join(', ') : 'Select one or more channels'"
                 class="multi-dropdown-trigger"
                 :class="{ 
                   'has-selected-value': Object.keys(formData.channel).length > 0, 
-                  'pointer-input': countryDivisionActive,
+                  'pointer-input': countryActive,
                   'force-focus': channelOpen 
                 }"
-                :disabled="!countryDivisionActive"
-                @click="countryDivisionActive && (channelOpen = !channelOpen)"
+                :disabled="!countryActive"
+                @click="countryActive && (channelOpen = !channelOpen)"
               >
                 <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
               </el-input>
-              <div v-if="channelOpen && countryDivisionActive" class="combo-dropdown brand-family-dropdown">
+              <div v-if="channelOpen && countryActive" class="combo-dropdown brand-family-dropdown">
                 <el-input v-model="channelSearch" placeholder="Type to search..." class="bf-search" />
                 <div class="combo-item combo-check-item bf-select-all" @mousedown.prevent="toggleAllChannels">
                   <el-checkbox :model-value="allChannelsSelected" />
@@ -296,7 +299,10 @@
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="Brand" prop="brand">
+          <el-form-item prop="brand">
+            <template #label>
+              Brand <span class="impact-required">*</span>
+            </template>
             <div class="combo-wrap" ref="brandRef" v-click-outside="handleBrandClickOutside" :title="!countryDivisionActive ? channelSubChannelAccountBrandMessage : ''">
               <el-input
                 readonly
@@ -328,23 +334,26 @@
 
       <el-row :gutter="24">
         <el-col :span="12">
-          <el-form-item label="Sub Channel" prop="subChannel">
-            <div class="combo-wrap" ref="subChannelRef" v-click-outside="handleSubChannelClickOutside" :title="!countryDivisionActive ? channelSubChannelAccountBrandMessage : ''">
+          <el-form-item prop="subChannel">
+            <template #label>
+              Sub Channel <span class="impact-required">*</span>
+            </template>
+            <div class="combo-wrap" ref="subChannelRef" v-click-outside="handleSubChannelClickOutside" :title="!countryActive ? 'Please select Country' : ''">
               <el-input
                 readonly
                 :placeholder="Object.keys(formData.subChannel).length ? Object.values(formData.subChannel).join(', ') : 'Select one or more sub-channels'"
                 class="multi-dropdown-trigger"
                 :class="{ 
                   'has-selected-value': Object.keys(formData.subChannel).length > 0, 
-                  'pointer-input': countryDivisionActive,
+                  'pointer-input': countryActive,
                   'force-focus': subChannelOpen 
                 }"
-                :disabled="!countryDivisionActive"
-                @click="countryDivisionActive && (subChannelOpen = !subChannelOpen)"
+                :disabled="!countryActive"
+                @click="countryActive && (subChannelOpen = !subChannelOpen)"
               >
                 <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
               </el-input>
-              <div v-if="subChannelOpen && countryDivisionActive" class="combo-dropdown brand-family-dropdown">
+              <div v-if="subChannelOpen && countryActive" class="combo-dropdown brand-family-dropdown">
                 <el-input v-model="subChannelSearch" placeholder="Type to search..." class="bf-search" />
                 <div class="combo-item combo-check-item bf-select-all" @mousedown.prevent="toggleAllSubChannels">
                   <el-checkbox :model-value="allSubChannelsSelected" />
@@ -358,7 +367,10 @@
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="Brand Family" prop="brandFamily">
+          <el-form-item prop="brandFamily">
+            <template #label>
+              Brand Family <span class="impact-required">*</span>
+            </template>
             <div class="combo-wrap" ref="brandFamilyRef" v-click-outside="handleBrandFamilyClickOutside" :title="!countryDivisionActive ? channelSubChannelAccountBrandMessage : ''">
               <el-input
                 readonly
@@ -400,23 +412,26 @@
 
       <el-row :gutter="24">
         <el-col :span="12">
-          <el-form-item label="Account" prop="account">
-            <div class="combo-wrap" ref="accountRef" v-click-outside="handleAccountClickOutside" :title="!countryDivisionActive ? channelSubChannelAccountBrandMessage : ''">
+          <el-form-item prop="account">
+            <template #label>
+              Account <span class="impact-required">*</span>
+            </template>
+            <div class="combo-wrap" ref="accountRef" v-click-outside="handleAccountClickOutside" :title="!countryActive ? 'Please select Country' : ''">
               <el-input
                 readonly
                 :placeholder="Object.keys(formData.account).length ? Object.values(formData.account).join(', ') : 'Select one or more accounts'"
                 class="multi-dropdown-trigger"
                 :class="{ 
                   'has-selected-value': Object.keys(formData.account).length > 0, 
-                  'pointer-input': countryDivisionActive,
+                  'pointer-input': countryActive,
                   'force-focus': accountOpen 
                 }"
-                :disabled="!countryDivisionActive"
-                @click="countryDivisionActive && (accountOpen = !accountOpen)"
+                :disabled="!countryActive"
+                @click="countryActive && (accountOpen = !accountOpen)"
               >
                 <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
               </el-input>
-              <div v-if="accountOpen && countryDivisionActive" class="combo-dropdown brand-family-dropdown">
+              <div v-if="accountOpen && countryActive" class="combo-dropdown brand-family-dropdown">
                 <el-input v-model="accountSearch" placeholder="Type to search..." class="bf-search" />
                 <div class="combo-item combo-check-item bf-select-all" @mousedown.prevent="toggleAllAccounts">
                   <el-checkbox :model-value="allAccountsSelected" />
@@ -608,15 +623,17 @@
               
               <div class="impact-section-subtitle">Financial Impact</div>
               <el-form-item class="mt-2">
-                <template #label>{{ getfinancialImpactTypeLabel(formData.financialImpactType) }}</template>
+                <template #label>
+                  {{ getfinancialImpactTypeLabel(formData.financialImpactType) }} <span class="impact-required">*</span>
+                </template>
                 <div class="input-with-dropdown">
                   <el-input
                     :model-value="formData.impactValue"
                     :disabled="hasChildImpacts"
                     :placeholder="financialImpactPlaceholder"
-                    @input="formData.impactValue = cleanNumStr($event as string)"
+                    @input="formData.impactValue = enforceSign($event as string)"
                     @blur="formData.impactValue = formatNumStr(formData.impactValue)"
-                    @focus="formData.impactValue = cleanNumStr(formData.impactValue)"
+                    @focus="formData.impactValue = enforceSign(formData.impactValue)"
                   />
                   <el-dropdown trigger="click" @command="formData.financialImpactType = $event">
                     <el-button type="primary" class="black-dropdown-btn">
@@ -720,9 +737,9 @@
                 :model-value="child.impactValue"
                 :placeholder="childFinancialImpactPlaceholder"
                 style="margin-top: 6px"
-                @input="child.impactValue = cleanNumStr($event as string)"
+                @input="child.impactValue = enforceSign($event as string)"
                 @blur="child.impactValue = formatNumStr(child.impactValue)"
-                @focus="child.impactValue = cleanNumStr(child.impactValue)"
+                @focus="child.impactValue = enforceSign(child.impactValue)"
               />
             </el-col>
             <el-col :span="6">
@@ -888,9 +905,10 @@ const CATEG_ACTIVE_IBP_STEPS = ["Portfolio Review", "Demand Review", "Supply Rev
 const categActive = computed(() => CATEG_ACTIVE_IBP_STEPS.includes(formData.value.ibpStep));
 
 const countryDivisionActive = computed(() => Object.keys(formData.value.country).length > 0 && !!formData.value.division);
+const countryActive = computed(() => Object.keys(formData.value.country).length > 0);
 const channelDisabledMessage = computed(() => {
   if (Object.keys(formData.value.country).length > 0 && !formData.value.division) {
-    return "Please select Division";
+    return "";
   }
   return "Please select Country and Division";
 });
@@ -1100,7 +1118,7 @@ async function toggleChannel(code: string, name: string) {
 async function syncChannelFromSubChannels() {
   const subCodes = Object.keys(formData.value.subChannel);
   const countryName = Object.values(formData.value.country)[0];
-  if (!formData.value.division || !countryName) return;
+  if (!countryName) return;
 
   const newChannels: Record<string, string> = {};
   isReverseAction.value = true;
@@ -1163,7 +1181,7 @@ async function toggleSubChannel(code: string, name: string) {
 async function syncParentsFromAccounts() {
   const accountCodes = Object.keys(formData.value.account);
   const countryName = Object.values(formData.value.country)[0];
-  if (!formData.value.division || !countryName) return;
+  if (!countryName) return;
 
   const newChannels: Record<string, string> = {};
   const newSubChannels: Record<string, string> = {};
@@ -1730,14 +1748,18 @@ watch(() => formData.value.primaryImpact, (newUnit, oldUnit) => {
 });
 watch(() => formData.value.secondaryUnit, (val) => { if (isLoadingEntry.value) return; formData.value.childImpacts.forEach(ci => { ci.secondaryUnit = val; }); });
 
+watch(() => formData.value.childImpacts, () => {
+  if (isLoadingEntry.value) return;
+  if (hasChildImpacts.value) {
+    formData.value.impactValue = formatNumStr(totalPrimaryImpact.value);
+    formData.value.secondaryValue = formatNumStr(totalSecondaryImpact.value);
+  }
+}, { deep: true });
+
 watch(() => formData.value.division, async (division) => {
   if (!isLoadingEntry.value) {
     formData.value.brand = {};
     formData.value.brandFamily = {};
-    formData.value.channel = {};
-    formData.value.subChannel = {};
-    formData.value.account = {};
-    selectionPriority.value = null;
     brandSelectionPriority.value = null;
 
     // Use case-insensitive matching to ensure the default logic always fires
@@ -1768,26 +1790,28 @@ watch(() => formData.value.country, async (country) => {
   await loadCountryBasedLookups(country, formData.value.division);
 });
 
-async function loadCountryBasedLookups(country: Record<string, string>, division: string) {
-  if (Object.keys(country).length > 0 && division) {
+async function loadCountryBasedLookups(country: Record<string, string>, division: string | null) {
+  if (Object.keys(country).length > 0) {
     try {
       const countryName = Object.values(country)[0];
       
-      const brandData = await lookupApi.getBrands(division, countryName);
-      brandOptions.value = brandData.options;
+      if (division) {
+        const brandData = await lookupApi.getBrands(division, countryName);
+        brandOptions.value = brandData.options;
 
-      const brandNames = brandData.options.map(b => b.label);
-      if (brandNames.length > 0) {
-        const brandFamilyData = await lookupApi.getBrandFamilies(brandNames, countryName, division);
-        brandFamilyOptions.value = brandFamilyData.options;
-      } else {
-        brandFamilyOptions.value = [];
+        const brandNames = brandData.options.map(b => b.label);
+        if (brandNames.length > 0) {
+          const brandFamilyData = await lookupApi.getBrandFamilies(brandNames, countryName, division);
+          brandFamilyOptions.value = brandFamilyData.options;
+        } else {
+          brandFamilyOptions.value = [];
+        }
       }
 
-      const data = await lookupApi.getChannels(division, countryName);
+      const data = await lookupApi.getChannels(division || "", countryName);
       channelOptions.value = data.options;
 
-      const accData = await lookupApi.getAccounts(division, "", countryName);
+      const accData = await lookupApi.getAccounts(division || "", "", countryName);
       accountOptions.value = accData.options;
     } catch (error) {
       console.error("Error loading country-based lookups:", error);
@@ -2204,13 +2228,32 @@ function createChildImpactsFromRange() {
 }
 
 function cleanNumStr(val: string): string {
-  let s = val.replace(/,/g, "").replace(/[^\d.]/g, ""); const d = s.indexOf(".");
-  if (d !== -1) s = s.slice(0, d + 1) + s.slice(d + 1).replace(/\./g, ""); return s;
+  if (!val) return "";
+  const isNeg = val.trim().startsWith("-");
+  let s = val.replace(/,/g, "").replace(/[^\d.]/g, "");
+  const d = s.indexOf(".");
+  if (d !== -1) s = s.slice(0, d + 1) + s.slice(d + 1).replace(/\./g, "");
+  return (isNeg ? "-" : "") + s;
 }
+
 function formatNumStr(val: string): string {
-  const s = cleanNumStr(val); if (!s) return ""; const parts = s.split(".");
-  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ","); return parts.join(".");
+  const s = cleanNumStr(val);
+  if (!s) return "";
+  if (s === "-") return "-";
+  const isNeg = s.startsWith("-");
+  const magnitude = isNeg ? s.substring(1) : s;
+  const parts = magnitude.split(".");
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return (isNeg ? "-" : "") + parts.join(".");
 }
+
+function enforceSign(val: string): string {
+  const s = cleanNumStr(val);
+  const magnitude = s.startsWith("-") ? s.substring(1) : s;
+  if (!magnitude) return formData.value.rAndO === "Risk" ? "-" : "";
+  return formData.value.rAndO === "Risk" ? `-${magnitude}` : magnitude;
+}
+
 function isValidNum(val: string): boolean {
   const s = cleanNumStr(val).trim(); return s !== "" && !isNaN(Number(s));
 }

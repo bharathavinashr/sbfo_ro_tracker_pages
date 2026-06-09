@@ -60,7 +60,7 @@ def get_brand_families(
 
 @router.get("/channels")
 def get_channels(
-    division: str = Query(..., description="Division name"),
+    division: Optional[str] = Query(None, description="Division name"),
     country: Optional[str] = Query(None, description="Country name"),
     db: Session = Depends(get_db),
 ):
@@ -71,7 +71,7 @@ def get_channels(
 
 @router.get("/subchannels")
 def get_subchannels(
-    division: str = Query(..., description="Division name"),
+    division: Optional[str] = Query(None, description="Division name"),
     channel_code: Optional[str] = Query(None, description="Channel code"),
     country: Optional[str] = Query(None, description="Country name"),
     db: Session = Depends(get_db),
@@ -83,7 +83,7 @@ def get_subchannels(
 
 @router.get("/accounts")
 def get_accounts(
-    division: str = Query(..., description="Division name"),
+    division: Optional[str] = Query(None, description="Division name"),
     subchannel_code: Optional[str] = Query(None, description="Subchannel code"),
     country: Optional[str] = Query(None, description="Country name"),
     db: Session = Depends(get_db),
@@ -95,7 +95,7 @@ def get_accounts(
 
 @router.get("/subchannel-details")
 def get_subchannel_details(
-    division: str = Query(..., description="Division name"),
+    division: Optional[str] = Query(None, description="Division name"),
     subchannel_code: str = Query(..., description="Subchannel code"),
     country: Optional[str] = Query(None, description="Country name"),
     db: Session = Depends(get_db),
@@ -109,7 +109,7 @@ def get_subchannel_details(
 
 @router.get("/account-details")
 def get_account_details(
-    division: str = Query(..., description="Division name"),
+    division: Optional[str] = Query(None, description="Division name"),
     account_code: str = Query(..., description="Account code"),
     country: Optional[str] = Query(None, description="Country name"),
     db: Session = Depends(get_db),

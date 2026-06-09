@@ -75,6 +75,7 @@
         </div>
 
         <el-button
+          v-if="[0, 2, 3].includes(Number(store.currentUser?.role)) || Number(dbxAdminUser?.role) === 0"
           :icon="Camera"
           class="black-icon-btn"
           @click="lockViewOpen = true"

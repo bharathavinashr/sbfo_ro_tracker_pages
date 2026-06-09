@@ -10,9 +10,9 @@
           <el-select v-model="form.period" placeholder="Period" class="period-select">
             <el-option
               v-for="period in periods"
-              :key="period"
+              :key="period.value"
               :value="period.value"
-              :label="period.label"
+              :label="period.value"
             />
           </el-select>
           <el-select v-model="form.year" placeholder="Year" class="year-select">
@@ -83,7 +83,8 @@ const currentYear = new Date().getFullYear();
 const currentMonth = new Date().getMonth() + 1; // getMonth() is 0-indexed
 const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const periods = monthNames.map((name, index) => ({
-  value: `F${String(index + 1).padStart(2, "0")}`, label: name
+  value: `F${String(index + 1).padStart(2, "0")}`,
+  label: `F${String(index + 1).padStart(2, "0")}`
 }));
 const years = Array.from({ length: 10 }, (_, i) => (currentYear - 5 + i).toString());
 const ibpSteps = ["Portfolio Review", "Supply Review", "Demand Review", "A&P (Pre-Exec)", "Overheads (Pre-Exec)"];

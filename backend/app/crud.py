@@ -414,11 +414,9 @@ def get_countries_by_division(db: Session, division: str):
     return [{"code": r[0], "country": r[1]} for r in rows if r[1]]
 
 
-def get_channels_by_division(db: Session, division: str, country: str = None):
+def get_channels_by_division(db: Session, division: str = None, country: str = None):
     """Get distinct channels (code and name) from ro_customers table filtered by division and country."""
-    query = db.query(models.ROCustomer.channel_code, models.ROCustomer.channel_name).filter(
-        models.ROCustomer.division == division
-    )
+    query = db.query(models.ROCustomer.channel_code, models.ROCustomer.channel_name)
     if country:
         query = query.filter(models.ROCustomer.country == country)
     
@@ -431,9 +429,9 @@ def get_channels_by_division(db: Session, division: str, country: str = None):
     return [{"code": r[0], "name": r[1]} for r in rows]
 
 
-def get_subchannels_by_division_and_channel(db: Session, division: str, channel_code: str = None, country: str = None):
+def get_subchannels_by_division_and_channel(db: Session, division: str = None, channel_code: str = None, country: str = None):
     """Get distinct subchannels (code and name) filtered by division, channel and country."""
-    query = db.query(models.ROCustomer.subchannel_code, models.ROCustomer.subchannel_name).filter(models.ROCustomer.division == division)
+    query = db.query(models.ROCustomer.subchannel_code, models.ROCustomer.subchannel_name)
     
     if channel_code:
         query = query.filter(models.ROCustomer.channel_code == channel_code)
@@ -450,15 +448,12 @@ def get_subchannels_by_division_and_channel(db: Session, division: str, channel_
     return [{"code": r[0], "name": r[1]} for r in rows]
 
 
-def get_channel_by_subchannel(db: Session, division: str, subchannel_code: str, country: str = None):
+def get_channel_by_subchannel(db: Session, division: str = None, subchannel_code: str = None, country: str = None):
     """Get channel details for a specific subchannel."""
     query = db.query(
         models.ROCustomer.channel_code,
         models.ROCustomer.channel_name
-    ).filter(
-        models.ROCustomer.division == division,
-        models.ROCustomer.subchannel_code == subchannel_code
-    )
+    ).filter(models.ROCustomer.subchannel_code == subchannel_code)
     if country:
         query = query.filter(models.ROCustomer.country == country)
 
@@ -468,9 +463,9 @@ def get_channel_by_subchannel(db: Session, division: str, subchannel_code: str, 
     return None
 
 
-def get_accounts_by_division_and_subchannel(db: Session, division: str, subchannel_code: str = None, country: str = None):
+def get_accounts_by_division_and_subchannel(db: Session, division: str = None, subchannel_code: str = None, country: str = None):
     """Get distinct accounts (code and name) filtered by division, subchannel and country."""
-    query = db.query(models.ROCustomer.account_code, models.ROCustomer.account_name).filter(models.ROCustomer.division == division)
+    query = db.query(models.ROCustomer.account_code, models.ROCustomer.account_name)
     
     if subchannel_code:
         query = query.filter(models.ROCustomer.subchannel_code == subchannel_code)
@@ -487,17 +482,14 @@ def get_accounts_by_division_and_subchannel(db: Session, division: str, subchann
     return [{"code": r[0], "name": r[1]} for r in rows]
 
 
-def get_channel_and_subchannel_by_account(db: Session, division: str, account_code: str, country: str = None):
+def get_channel_and_subchannel_by_account(db: Session, division: str = None, account_code: str = None, country: str = None):
     """Get channel and subchannel for a specific account."""
     query = db.query(
         models.ROCustomer.channel_code,
         models.ROCustomer.channel_name,
         models.ROCustomer.subchannel_code,
         models.ROCustomer.subchannel_name
-    ).filter(
-        models.ROCustomer.division == division,
-        models.ROCustomer.account_code == account_code
-    )
+    ).filter(models.ROCustomer.account_code == account_code)
     if country:
         query = query.filter(models.ROCustomer.country == country)
 

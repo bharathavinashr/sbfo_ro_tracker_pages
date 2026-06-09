@@ -5,15 +5,15 @@ resources:
       description: SBFO Risk & Opportunities Tracker - Vue + FastAPI Application
 
       resources:
-        - name: db_url_secret
+        - name: db_url_secret_dev
           secret:
             scope: my-app-secrets
-            key: DATABASE_URL
+            key: db_url_secret_dev
             permission: READ
 
       config:
         env:
           - name: DATABASE_URL
-            valueFrom: db_url_secret
+            valueFrom: db_url_secret_dev
 
       source_code_path: .
