@@ -415,6 +415,7 @@
                   </div>
                 </template>
                 <div class="card-content">
+                  <p class="snapshot-date">Created By: {{ snapshot.creator }}</p>
                   <p class="snapshot-date">Created: {{ formatDate(snapshot.created_at) }}</p>
                   <p class="snapshot-count">
                     <strong>{{ snapshot.entries_count }}</strong> {{ snapshot.entries_count === 1 ? 'entry' : 'entries' }} frozen
@@ -455,6 +456,7 @@ interface SnapshotGroup {
   created_at: string;
   is_final: boolean;
   version?: number;
+  creator?: string;
 }
 
 
@@ -1383,6 +1385,12 @@ async function handleCompare() {
 }
 
 .snapshot-date {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.snapshot-creator {
   font-size: 13px;
   color: var(--text-secondary);
   margin: 0;

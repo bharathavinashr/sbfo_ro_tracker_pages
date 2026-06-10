@@ -23,6 +23,7 @@ class SnapshotCreate(BaseModel):
     year: str
     ibp_step: str
     is_final: Optional[bool] = False
+    creator_email: Optional[str] = None
 
 class SnapshotFinalUpdate(BaseModel):
     is_final: bool = Field(validation_alias="isFinal")
@@ -173,6 +174,7 @@ def create_snapshot(data: SnapshotCreate, db: Session = Depends(get_db)):
             entry_data=entry_data,
             is_final=data.is_final,
             version=new_version,
+            creator=data.creator_email,
         )
         snapshots.append(snapshot)
     
@@ -282,10 +284,11 @@ def get_all_snapshots(db: Session = Depends(get_db)):
             Snapshot.ibp_step,
             Snapshot.is_final,
             Snapshot.version,
+            Snapshot.creator,
             func.count(Snapshot.id).label("entries_count"),
             func.min(Snapshot.created_at).label("created_at"),
         )
-        .group_by(Snapshot.snapshot_id, Snapshot.period, Snapshot.year, Snapshot.ibp_step, Snapshot.is_final, Snapshot.version)
+        .group_by(Snapshot.snapshot_id, Snapshot.period, Snapshot.year, Snapshot.ibp_step, Snapshot.is_final, Snapshot.version, Snapshot.creator)
         .order_by(func.min(Snapshot.created_at).desc())
         .all()
     )
@@ -303,6 +306,7 @@ def get_all_snapshots(db: Session = Depends(get_db)):
             "entries_count": snap.entries_count,
             "version": snap.version,
             "created_at": snap.created_at.isoformat() if snap.created_at else None,
+            "creator": snap.creator,
         })
     
     return {"snapshots": result}

@@ -132,6 +132,7 @@ async function handleCreateSnapshot() {
       year: form.value.year,
       ibp_step: form.value.ibpStep,
       is_final: form.value.isFinal,
+      creator_email: store.currentUser?.email ?? undefined,
     });
     ElMessage.success(`Locked view created: ${snapshotName} (${result.entries_count} entries)`);
     handleClose();

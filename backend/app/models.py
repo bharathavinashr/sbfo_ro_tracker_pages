@@ -152,3 +152,4 @@ class Snapshot(Base):
     created_at = Column(DateTime, server_default=func.now())
     version = Column(Integer, nullable=False, default=1)
     is_final = Column(Boolean, nullable=False, default=False)
+    creator = Column(String(200), nullable=True)
