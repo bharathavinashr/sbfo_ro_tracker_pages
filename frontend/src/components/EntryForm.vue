@@ -291,7 +291,7 @@
                   <el-checkbox :model-value="allChannelsSelected" />
                   <span class="bf-select-all-label">Select All Suggestions</span>
                 </div>
-                <div v-for="c in filteredChannels" :key="c.value" class="combo-item combo-check-item" :class="{ 'is-disabled': isChannelDisabled(c.label) }" @mousedown.prevent="toggleChannel(c.value, c.label)">
+                <div v-for="c in filteredChannels" :key="c.value" class="combo-item combo-check-item" @mousedown.prevent="toggleChannel(c.value, c.label)">
                   <el-checkbox :model-value="!!formData.channel[c.value]" /><span>{{ c.label }}</span>
                 </div>
               </div>
@@ -906,12 +906,7 @@ const categActive = computed(() => CATEG_ACTIVE_IBP_STEPS.includes(formData.valu
 
 const countryDivisionActive = computed(() => Object.keys(formData.value.country).length > 0 && !!formData.value.division);
 const countryActive = computed(() => Object.keys(formData.value.country).length > 0);
-const channelDisabledMessage = computed(() => {
-  if (Object.keys(formData.value.country).length > 0 && !formData.value.division) {
-    return "";
-  }
-  return "Please select Country and Division";
-});
+const channelDisabledMessage = "Please select Country";
 const channelSubChannelAccountBrandMessage = "Please select Country and Division";
 const categDisabledMessage = "Please select IBP Step";
 
@@ -1057,33 +1052,24 @@ const getFilteredChildYears = (search?: string) => yearOptions.map(String).filte
 
 const allBrandFamiliesSelected = computed(() => brandFamilyOptions.value.length > 0 && brandFamilyOptions.value.every(f => !!formData.value.brandFamily[f.value]));
 const allBrandsSelected = computed(() => filteredBrands.value.length > 0 && filteredBrands.value.every(b => !!formData.value.brand[b.value]));
-const allChannelsSelected = computed(() => {
-  const suggestions = filteredChannels.value.filter(c => !isChannelDisabled(c.label));
-  return suggestions.length > 0 && suggestions.every(c => !!formData.value.channel[c.value]);
-});
+const allChannelsSelected = computed(() =>
+  filteredChannels.value.length > 0 && filteredChannels.value.every(c => !!formData.value.channel[c.value])
+);
 const allSubChannelsSelected = computed(() => 
   filteredSubChannels.value.length > 0 && filteredSubChannels.value.every(s => !!formData.value.subChannel[s.value])
 );
 const allAccountsSelected = computed(() => filteredAccounts.value.length > 0 && filteredAccounts.value.every(a => !!formData.value.account[a.value]));
 
-function isChannelDisabled(ch: string) {
-  if (formData.value.division === "Non-Alcohol") return ch === "Licensed" || ch === "Route";
-  if (formData.value.division === "Alcohol")     return ch === "Convenience" || ch === "Grocery";
-  return false;
-}
 async function toggleChannel(code: string, name: string) {
-  if (isChannelDisabled(name)) return;
-  
   if (formData.value.channel[code]) {
     delete formData.value.channel[code];
 
     if (selectionPriority.value === 'account') {
       const countryName = Object.values(formData.value.country)[0];
-      const division = formData.value.division;
-      
+
       const subCodes = Object.keys(formData.value.subChannel);
       for (const scCode of subCodes) {
-        const details = await lookupApi.getSubchannelDetails(division, scCode, countryName);
+        const details = await lookupApi.getSubchannelDetails("", scCode, countryName);
         if (details?.channel?.code === code) {
           delete formData.value.subChannel[scCode];
         }
@@ -1091,7 +1077,7 @@ async function toggleChannel(code: string, name: string) {
 
       const accCodes = Object.keys(formData.value.account);
       for (const accCode of accCodes) {
-        const details = await lookupApi.getAccountDetails(division, accCode, countryName);
+        const details = await lookupApi.getAccountDetails("", accCode, countryName);
         if (details?.channel?.code === code) {
           delete formData.value.account[accCode];
         }
@@ -1125,7 +1111,7 @@ async function syncChannelFromSubChannels() {
   
   try {
     const results = await Promise.all(
-      subCodes.map(code => lookupApi.getSubchannelDetails(formData.value.division, code, countryName))
+      subCodes.map(code => lookupApi.getSubchannelDetails("", code, countryName))
     );
 
     results.forEach(details => {
@@ -1148,11 +1134,10 @@ async function toggleSubChannel(code: string, name: string) {
 
     if (selectionPriority.value === 'account') {
       const countryName = Object.values(formData.value.country)[0];
-      const division = formData.value.division;
 
       const accCodes = Object.keys(formData.value.account);
       for (const accCode of accCodes) {
-        const details = await lookupApi.getAccountDetails(division, accCode, countryName);
+        const details = await lookupApi.getAccountDetails("", accCode, countryName);
         if (details?.subchannel?.code === code) {
           delete formData.value.account[accCode];
         }
@@ -1189,7 +1174,7 @@ async function syncParentsFromAccounts() {
 
   try {
     const results = await Promise.all(
-      accountCodes.map(code => lookupApi.getAccountDetails(formData.value.division, code, countryName))
+      accountCodes.map(code => lookupApi.getAccountDetails("", code, countryName))
     );
 
     results.forEach(details => {
@@ -1374,17 +1359,16 @@ async function toggleAllBrands() {
 }
 
 async function toggleAllChannels() {
-  const suggestions = filteredChannels.value.filter(c => !isChannelDisabled(c.label));
-  
+  const suggestions = filteredChannels.value;
+
   if (allChannelsSelected.value) {
     if (selectionPriority.value === 'account') {
       const countryName = Object.values(formData.value.country)[0];
-      const division = formData.value.division;
       const codesToRemove = suggestions.map(c => c.value);
 
       const subCodes = Object.keys(formData.value.subChannel);
       for (const scCode of subCodes) {
-        const details = await lookupApi.getSubchannelDetails(division, scCode, countryName);
+        const details = await lookupApi.getSubchannelDetails("", scCode, countryName);
         if (details?.channel?.code && codesToRemove.includes(details.channel.code)) {
           delete formData.value.subChannel[scCode];
         }
@@ -1392,7 +1376,7 @@ async function toggleAllChannels() {
 
       const accCodes = Object.keys(formData.value.account);
       for (const accCode of accCodes) {
-        const details = await lookupApi.getAccountDetails(division, accCode, countryName);
+        const details = await lookupApi.getAccountDetails("", accCode, countryName);
         if (details?.channel?.code && codesToRemove.includes(details.channel.code)) {
           delete formData.value.account[accCode];
         }
@@ -1423,12 +1407,11 @@ async function toggleAllSubChannels() {
   if (allSubChannelsSelected.value) {
     if (selectionPriority.value === 'account') {
       const countryName = Object.values(formData.value.country)[0];
-      const division = formData.value.division;
       const codesToRemove = suggestions.map(s => s.value);
 
       const accCodes = Object.keys(formData.value.account);
       for (const accCode of accCodes) {
-        const details = await lookupApi.getAccountDetails(division, accCode, countryName);
+        const details = await lookupApi.getAccountDetails("", accCode, countryName);
         if (details?.subchannel?.code && codesToRemove.includes(details.subchannel.code)) {
           delete formData.value.account[accCode];
         }
@@ -1790,41 +1773,43 @@ watch(() => formData.value.country, async (country) => {
   await loadCountryBasedLookups(country, formData.value.division);
 });
 
-async function loadCountryBasedLookups(country: Record<string, string>, division: string | null) {
-  if (Object.keys(country).length > 0) {
+async function loadCountryBasedLookups(country: Record<string, string>, division: string) {
+  const countryName = Object.values(country)[0];
+  const hasCountry = Object.keys(country).length > 0;
+
+  if (hasCountry) {
     try {
-      const countryName = Object.values(country)[0];
-      
-      if (division) {
-        const brandData = await lookupApi.getBrands(division, countryName);
-        brandOptions.value = brandData.options;
-
-        const brandNames = brandData.options.map(b => b.label);
-        if (brandNames.length > 0) {
-          const brandFamilyData = await lookupApi.getBrandFamilies(brandNames, countryName, division);
-          brandFamilyOptions.value = brandFamilyData.options;
-        } else {
-          brandFamilyOptions.value = [];
-        }
-      }
-
-      const data = await lookupApi.getChannels(division || "", countryName);
+      const data = await lookupApi.getChannels("", countryName);
       channelOptions.value = data.options;
-
-      const accData = await lookupApi.getAccounts(division || "", "", countryName);
+    } catch { channelOptions.value = []; }
+    try {
+      const accData = await lookupApi.getAccounts("", "", countryName);
       accountOptions.value = accData.options;
+    } catch { accountOptions.value = []; }
+  } else {
+    channelOptions.value = [];
+    accountOptions.value = [];
+  }
+
+  if (hasCountry && division) {
+    try {
+      const brandData = await lookupApi.getBrands(division, countryName);
+      brandOptions.value = brandData.options;
+      const brandNames = brandData.options.map(b => b.label);
+      if (brandNames.length > 0) {
+        const brandFamilyData = await lookupApi.getBrandFamilies(brandNames, countryName, division);
+        brandFamilyOptions.value = brandFamilyData.options;
+      } else {
+        brandFamilyOptions.value = [];
+      }
     } catch (error) {
-      console.error("Error loading country-based lookups:", error);
+      console.error("Error loading brand lookups:", error);
       brandOptions.value = [];
       brandFamilyOptions.value = [];
-      channelOptions.value = [];
-      accountOptions.value = [];
     }
   } else {
     brandOptions.value = [];
     brandFamilyOptions.value = [];
-    channelOptions.value = [];
-    accountOptions.value = [];
   }
 }
 
@@ -1837,14 +1822,14 @@ watch(() => formData.value.channel, async (channelsMap) => {
   }
   
   const countryName = Object.values(formData.value.country)[0];
-  if (!formData.value.division || !countryName) {
+  if (!countryName) {
     subChannelOptions.value = [];
     return;
   }
 
   if (selectionPriority.value === 'account') {
     try {
-      const data = await lookupApi.getSubchannels(formData.value.division, "", countryName);
+      const data = await lookupApi.getSubchannels("", "", countryName);
       subChannelOptions.value = data.options;
     } catch (error) {
       subChannelOptions.value = [];
@@ -1855,7 +1840,7 @@ watch(() => formData.value.channel, async (channelsMap) => {
       const subchannelsMap = new Map<string, {value: string, label: string}>();
       for (const channelCode of channelCodes) {
         if (channelCode) {
-          const data = await lookupApi.getSubchannels(formData.value.division, channelCode, countryName);
+          const data = await lookupApi.getSubchannels("", channelCode, countryName);
           data.options.forEach(opt => subchannelsMap.set(opt.value, opt));
         }
       }
@@ -1874,14 +1859,14 @@ watch(() => formData.value.subChannel, async (subChannelsMap) => {
   }
   
   const countryName = Object.values(formData.value.country)[0];
-  if (!formData.value.division || !countryName) {
+  if (!countryName) {
     accountOptions.value = [];
     return;
   }
 
   if (selectionPriority.value === 'account') {
     try {
-      const data = await lookupApi.getAccounts(formData.value.division, "", countryName);
+      const data = await lookupApi.getAccounts("", "", countryName);
       accountOptions.value = data.options;
     } catch (error) {
       accountOptions.value = [];
@@ -1892,14 +1877,14 @@ watch(() => formData.value.subChannel, async (subChannelsMap) => {
       const accountsMap = new Map<string, {value: string, label: string}>();
       for (const subchannelCode of subchannelCodes) {
         if (subchannelCode) {
-          const data = await lookupApi.getAccounts(formData.value.division, subchannelCode, countryName);
+          const data = await lookupApi.getAccounts("", subchannelCode, countryName);
           data.options.forEach(opt => accountsMap.set(opt.value, opt));
         }
       }
       accountOptions.value = Array.from(accountsMap.values());
     } else {
       try {
-        const data = await lookupApi.getAccounts(formData.value.division, "", countryName);
+        const data = await lookupApi.getAccounts("", "", countryName);
         accountOptions.value = data.options;
       } catch (e) {
         accountOptions.value = [];
@@ -1997,9 +1982,9 @@ watch(accountOpen, async (isOpen) => {
     
     if (accountOptions.value.length === 0) {
       const countryName = Object.values(formData.value.country)[0];
-      if (formData.value.division && countryName) {
+      if (countryName) {
         try {
-          const data = await lookupApi.getAccounts(formData.value.division, "", countryName);
+          const data = await lookupApi.getAccounts("", "", countryName);
           accountOptions.value = data.options;
         } catch (e) {
           console.error("Error loading accounts on open:", e);
