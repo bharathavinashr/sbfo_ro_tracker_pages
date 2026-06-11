@@ -2086,7 +2086,8 @@ watch(() => props.entry, async (entry) => {
         return { secondaryUnit: found.unit, secondaryValue: formatNumStr(found.val) };
       })(),
       owner:   owner, creator: entry.id === 0 ? (currentUserEmail.value || creator) : creator,
-      status:  entry.status || "Open", shortDescription: entry.shortDescription || "", detailedDescription: entry.detailedDescription || "",
+      status:  entry.status || "Open", shortDescription: entry.shortDescription || "",
+      detailedDescription: entry.description || entry.detailedDescription || "",
       childImpacts: (entry.childImpacts || []).map(ci => {
         const primary = entry.primaryImpact || "AUD";
         const secondaryCandidates = [
