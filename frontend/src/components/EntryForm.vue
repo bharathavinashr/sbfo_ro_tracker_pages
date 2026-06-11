@@ -301,7 +301,7 @@
         <el-col :span="12">
           <el-form-item prop="brand">
             <template #label>
-              Brand <span class="impact-required">*</span>
+              Brand <span v-if="formData.categorisation !== 'NPD'" class="impact-required">*</span>
             </template>
             <div class="combo-wrap" ref="brandRef" v-click-outside="handleBrandClickOutside" :title="!countryDivisionActive ? channelSubChannelAccountBrandMessage : ''">
               <el-input
@@ -369,7 +369,7 @@
         <el-col :span="12">
           <el-form-item prop="brandFamily">
             <template #label>
-              Brand Family <span class="impact-required">*</span>
+              Brand Family <span v-if="formData.categorisation !== 'NPD'" class="impact-required">*</span>
             </template>
             <div class="combo-wrap" ref="brandFamilyRef" v-click-outside="handleBrandFamilyClickOutside" :title="!countryDivisionActive ? channelSubChannelAccountBrandMessage : ''">
               <el-input
@@ -2030,6 +2030,11 @@ watch(() => formData.value.ibpStep, (val) => {
     formData.value.financialImpactType = defaultForm().financialImpactType;
   }
 });
+
+watch(() => formData.value.categorisation, () => {
+  formRef.value?.validateField(['brand', 'brandFamily']);
+});
+
 watch(() => formData.value.rAndO, (val) => {
   if (isInitialLoadRef.value) return;
   function applySign(v: string, shouldBeNeg: boolean): string {
@@ -2128,8 +2133,8 @@ const rules: FormRules = {
   channel: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
   subChannel: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
   account: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
-  brand: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
-  brandFamily: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
+  brand: [{ validator: (_rule: any, value: any, callback: any) => { if (formData.value.categorisation !== 'NPD' && !Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
+  brandFamily: [{ validator: (_rule: any, value: any, callback: any) => { if (formData.value.categorisation !== 'NPD' && !Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
   rAndO: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
   probability: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
   categorisation: [{ validator: (_rule: unknown, value: string, callback: (e?: Error) => void) => { if (categActive.value && !value) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
