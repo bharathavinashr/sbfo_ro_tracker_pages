@@ -173,6 +173,7 @@
               <el-checkbox v-model="colVisible.addToForecastBy">Add to Forecast By</el-checkbox>
               <el-checkbox v-model="colVisible.categorisation">Categorisation</el-checkbox>
               <el-checkbox v-model="colVisible.description">Short Description</el-checkbox>
+              <el-checkbox v-model="colVisible.detailedDescription">Detailed Description</el-checkbox>
               <el-checkbox v-model="colVisible.financialImpactType">Financial Impact Type</el-checkbox>
               <el-checkbox v-model="colVisible.currency">Financial Impact Currency</el-checkbox>
               <el-checkbox v-model="colVisible.impact">Financial Impact Value</el-checkbox>
@@ -299,6 +300,7 @@
               <th v-if="colVisible.country" class="col-sm">Country</th>
               <th v-if="colVisible.categorisation" class="col-lg">Categorisation</th>
               <th v-if="colVisible.description" class="col-xl">Short Description</th>
+              <th v-if="colVisible.detailedDescription" class="col-xl">Detailed Description</th>
               <th v-if="colVisible.customer" class="col-lg">Customer(s)</th>
               <th v-if="colVisible.product" class="col-lg">Product</th>
               <th v-if="colVisible.rAndO" class="col-md">Risk vs. Opp.</th>
@@ -333,6 +335,7 @@
                   <td v-if="colVisible.country">{{ formatCountry(row.country) }}</td>
                   <td v-if="colVisible.categorisation">{{ row.categorisation }}</td>
                   <td v-if="colVisible.description">{{ row.shortDescription || row.description || '-' }}</td>
+                  <td v-if="colVisible.detailedDescription">{{ row.description || '-' }}</td>
                   <td v-if="colVisible.customer">
                     <div v-if="row.account">{{ formatBrandFamily(row.account) }}</div>
                     <div v-if="row.subChannel" class="cell-sub">{{ formatBrandFamily(row.subChannel) }}</div>
@@ -459,6 +462,7 @@
           <th v-if="colVisible.country" class="col-sm">Country</th>
           <th v-if="colVisible.categorisation" class="col-lg">Categorisation</th>
           <th v-if="colVisible.description" class="col-xl">Short Description</th>
+          <th v-if="colVisible.detailedDescription" class="col-xl">Detailed Description</th>
           <th v-if="colVisible.customer" class="col-lg">Customer(s)</th>
           <th v-if="colVisible.product" class="col-lg">Product</th>
           <th v-if="colVisible.rAndO" class="col-md">Risk vs. Opp.</th>
@@ -496,6 +500,7 @@
               <td v-if="colVisible.country">{{ formatCountry(row.country) }}</td>
               <td v-if="colVisible.categorisation">{{ row.categorisation }}</td>
               <td v-if="colVisible.description">{{ row.shortDescription || row.description || '-' }}</td>
+              <td v-if="colVisible.detailedDescription">{{ row.description || '-' }}</td>
               <td v-if="colVisible.customer">
                 <div v-if="row.account">{{ formatBrandFamily(row.account) }}</div>
                 <div v-if="row.subChannel" class="cell-sub">{{ formatBrandFamily(row.subChannel) }}</div>
@@ -1048,6 +1053,7 @@ const colVisible = ref({
   addToForecastBy:false,
   categorisation: true,
   description:    true,
+  detailedDescription: false,
   financialImpactType:     false,
   currency:       false,
   impact:         false,
@@ -1392,6 +1398,7 @@ function exportToCSV(rows: Entry[], filename = `entries_${new Date().toISOString
   if (cv.country)         headers.push("Country");
   if (cv.categorisation)  headers.push("Categorisation");
   if (cv.description)     headers.push("Short Description");
+  if (cv.detailedDescription) headers.push("Detailed Description");
   if (cv.customer)        headers.push("Customer(s)");
   if (cv.product)         headers.push("Product");
   if (cv.rAndO)           headers.push("Risk vs. Opp.");
@@ -1420,6 +1427,7 @@ function exportToCSV(rows: Entry[], filename = `entries_${new Date().toISOString
     if (cv.country)         r.push(escapeCSV(formatCountry(e.country) || ""));
     if (cv.categorisation)  r.push(escapeCSV(e.categorisation || ""));
     if (cv.description)     r.push(escapeCSV((e as any).shortDescription || e.description || ""));
+    if (cv.detailedDescription) r.push(escapeCSV(e.description || ""));
     if (cv.customer)        r.push(escapeCSV([e.account, e.subChannel, e.channel].filter(Boolean).join(" / ")));
     if (cv.product)         r.push(escapeCSV([e.brand, formatBrandFamily(e.brandFamily)].filter(Boolean).join(" / ")));
     if (cv.rAndO)           r.push(escapeCSV(e.rAndO || ""));
