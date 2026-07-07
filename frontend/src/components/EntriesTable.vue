@@ -710,10 +710,10 @@ function applyUserDefaults() {
     }
   }
 
-  let steps = user.ibp_steps;
-  if (typeof steps === 'string') {
-    const raw = steps;
-    try { steps = JSON.parse(raw); } catch { steps = raw.split(',').map((s: string) => s.trim()); }
+  let steps: string[] | null | undefined = user.ibp_steps;
+  const rawSteps = user.ibp_steps as any;
+  if (typeof rawSteps === 'string') {
+    try { steps = JSON.parse(rawSteps); } catch { steps = rawSteps.split(',').map((s: string) => s.trim()); }
   }
   if (store.filters.ibp_step.length === 0 && Array.isArray(steps) && steps.length > 0) {
     const availableSteps = lookupStore.getCached("ibp_step") || [];
