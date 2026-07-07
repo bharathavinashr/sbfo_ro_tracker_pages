@@ -44,7 +44,7 @@
           <span class="qf-label">Status:</span>
           <div class="qf-buttons">
             <button v-for="st in ['Open', 'Approved', 'Included in Forecast']" :key="st"
-                    :class="['quick-btn', { active: store.filters.status === st }]"
+                    :class="['quick-btn', { active: store.filters.status.includes(st) }]"
                     @click="toggleStatusQuick(st)">{{ st }}</button>
           </div>
         </div>
