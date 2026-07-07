@@ -2,23 +2,52 @@
   <div class="entries-table-wrapper">
 
     <div class="quick-filters-section">
-      <p class="section-label" style="font-family: 'Jost', Arial, sans-serif; font-size:16px; font-weight: 500; margin-bottom:6px">Database Entries</p>
-      <p class="section-label">Quick Filters</p>
-      <div class="quick-filter-row">
-        <button
-          v-for="qf in quickFilterDefs"
-          :key="qf.key"
-          :class="['quick-btn', { active: quickFilters[qf.key] }]"
-          @click="toggleQuick(qf.key)"
-        >{{ qf.label }}</button>
-      </div>
-      <div class="quick-filter-row">
-        <button
-          v-for="step in ibpStepOptions"
-          :key="step"
-          :class="['quick-btn', { active: store.filters.ibp_step === step }]"
-          @click="toggleIbpStep(step)"
-        >{{ step }}</button>
+      <p class="section-label" style="font-family: 'Jost', Arial, sans-serif; font-size:16px; font-weight: 500; margin-bottom:12px">Database Entries</p>
+      
+      <div class="quick-filters-grid">
+        <div class="qf-row">
+          <span class="qf-label">IBP Step:</span>
+          <div class="qf-buttons">
+            <button v-for="step in ['Portfolio Review', 'Demand Review', 'Supply Review', 'A&P (Pre-Exec)', 'Overheads (Pre-Exec)']" :key="step"
+                    :class="['quick-btn', { active: store.filters.ibp_step.includes(step) }]"
+                    @click="toggleIbpStep(step)">{{ step }}</button>
+          </div>
+        </div>
+
+        <div class="qf-row">
+          <span class="qf-label">Country:</span>
+          <div class="qf-buttons">
+            <button v-for="cName in ['Australia', 'New Zealand']" :key="cName"
+                    :class="['quick-btn', { active: isCountryActive(cName) }]"
+                    @click="toggleCountryQuick(cName)">{{ cName }}</button>
+          </div>
+        </div>
+
+        <div class="qf-row">
+          <span class="qf-label">Division:</span>
+          <div class="qf-buttons">
+            <button v-for="div in ['Alcohol', 'Non-Alcohol']" :key="div"
+                    :class="['quick-btn', { active: store.filters.division.includes(div) }]"
+                    @click="toggleDivisionQuick(div)">{{ div }}</button>
+          </div>
+        </div>
+
+        <div class="qf-row">
+          <span class="qf-label">Probability:</span>
+          <div class="qf-buttons">
+            <button :class="['quick-btn', { active: store.filters.probability === 'High' }]" @click="toggleProbQuick('High')">High</button>
+            <button :class="['quick-btn', { active: store.filters.probability === 'High & Medium' }]" @click="toggleProbQuick('High & Medium')">High & Medium</button>
+          </div>
+        </div>
+
+        <div class="qf-row">
+          <span class="qf-label">Status:</span>
+          <div class="qf-buttons">
+            <button v-for="st in ['Open', 'Approved', 'Included in Forecast']" :key="st"
+                    :class="['quick-btn', { active: store.filters.status === st }]"
+                    @click="toggleStatusQuick(st)">{{ st }}</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -36,13 +65,13 @@
         <el-row :gutter="16" class="filter-row">
           <el-col :span="6">
             <label class="filter-label">Division</label>
-            <el-select v-model="store.filters.division" clearable placeholder="All">
+            <el-select v-model="store.filters.division" multiple collapse-tags clearable placeholder="All">
               <el-option v-for="d in divisionOptions" :key="d" :value="d" :label="d" />
             </el-select>
           </el-col>
           <el-col :span="6">
             <label class="filter-label">Country</label>
-            <el-select v-model="store.filters.country" clearable placeholder="All">
+            <el-select v-model="store.filters.country" multiple collapse-tags clearable placeholder="All">
               <el-option v-for="c in countryOptions" :key="c.value" :value="c.value" :label="c.label" />
             </el-select>
           </el-col>
@@ -67,7 +96,7 @@
           </el-col>
           <el-col :span="6">
             <label class="filter-label">IBP Step</label>
-            <el-select v-model="store.filters.ibp_step" clearable placeholder="All" @change="store.fetchEntries()">
+            <el-select v-model="store.filters.ibp_step" multiple collapse-tags clearable placeholder="All" @change="store.fetchEntries()">
               <el-option v-for="d in ibpStepOptions" :key="d" :value="d" :label="d" />
             </el-select>
           </el-col>
@@ -118,10 +147,11 @@
     </div>
 
     <div class="table-toolbar">
-      <span class="entry-count">All Entries ({{ filteredEntries.length }})</span>
+      <div class="toolbar-left">
+        <span class="entry-count">All Entries ({{ filteredEntries.length }})</span>
+      </div>
 
       <div class="toolbar-right">
-
         <div class="split-view-control">
           <span class="split-view-label">Split view by:</span>
           <div class="group-by-wrap" v-click-outside="closeGroupBy">
@@ -177,6 +207,7 @@
               <el-checkbox v-model="colVisible.financialImpactType">Financial Impact Type</el-checkbox>
               <el-checkbox v-model="colVisible.currency">Financial Impact Currency</el-checkbox>
               <el-checkbox v-model="colVisible.impact">Financial Impact Value</el-checkbox>
+              <el-checkbox v-model="colVisible.volumeCases">Volume (Cases)</el-checkbox>
               <el-checkbox v-model="colVisible.volumeImpactType">Volume Impact Type</el-checkbox>
               <el-checkbox v-model="colVisible.volumeImpactValue">Volume Impact Value</el-checkbox>
               <el-checkbox v-model="colVisible.impactPeriods">Impact Period(s)</el-checkbox>
@@ -294,155 +325,141 @@
           <table class="data-table">
             <thead>
               <tr>
-              <th class="col-expand"></th>
-              <th v-if="colVisible.ibpStep" class="col-md">IBP Step</th>
-              <th v-if="colVisible.division" class="col-sm">Division</th>
-              <th v-if="colVisible.country" class="col-sm">Country</th>
-              <th v-if="colVisible.categorisation" class="col-lg">Categorisation</th>
-              <th v-if="colVisible.description" class="col-xl">Short Description</th>
-              <th v-if="colVisible.detailedDescription" class="col-xl">Detailed Description</th>
-              <th v-if="colVisible.customer" class="col-lg">Customer(s)</th>
-              <th v-if="colVisible.product" class="col-lg">Product</th>
-              <th v-if="colVisible.rAndO" class="col-md">Risk vs. Opp.</th>
-              <th v-if="colVisible.probability" class="col-sm tc">Probability</th>
-              <th v-if="colVisible.addToForecastBy" class="col-md">Add to Forecast By</th>
-              <th v-if="colVisible.creator" class="col-md">Creator</th>
-              <th v-if="colVisible.owner" class="col-md">Owner</th>
-              <th v-if="colVisible.status" class="col-md">Status</th>
-              <th v-if="colVisible.lastModified" class="col-lg">Last Modified</th>
-              <th v-if="colVisible.financialImpactType" class="col-md">Financial Impact Type</th>
-              <th v-if="colVisible.currency" class="col-sm">Financial Impact Currency</th>
-              <th v-if="colVisible.impact" class="col-md tr">Financial Impact Value</th>
-              <th v-if="colVisible.volumeCases" class="col-md tr">Volume Impact</th>
-              <th v-if="colVisible.volumeImpactType" class="col-sm">Volume Impact Type</th>
-              <th v-if="colVisible.volumeImpactValue" class="col-md tr">Volume Impact Value</th>
-              <template v-if="hasPhasedViews">
-                <th v-for="col in phasedColumns" :key="col.label" class="col-phased tc">{{ col.label }}</th>
-              </template>
-              <th v-else-if="colVisible.impactPeriods" class="col-lg">Impact Period(s)</th>
-              <th class="col-actions tc">Actions</th>
-            </tr></thead>
+                <th v-for="(col, index) in visibleColumns" :key="col.id" 
+                    :class="[col.class, { 'draggable-th': isColumnsDraggable && !col.fixed, 'drag-over': dragOverIndex === index }]"
+                    :draggable="isColumnsDraggable && !col.fixed"
+                    @dragstart="onDragStart($event, index)"
+                    @dragover.prevent="onDragOver($event, index)"
+                    @dragenter.prevent="onDragEnter($event, index)"
+                    @dragleave="onDragLeave($event, index)"
+                    @drop="onDrop($event, index)"
+                    @dragend="onDragEnd">
+                  {{ col.label || '' }}
+                </th>
+              </tr>
+            </thead>
             <tbody>
               <template v-for="row in group.entries" :key="row.id">
                 <tr :class="rowClass(row)">
-                  <td class="col-expand">
-                    <button v-if="row.childImpacts?.length" class="expand-btn" @click="toggleExpand(row.id)">
-                      <svg :class="['expand-icon', { rotated: expandedRows.has(row.id) }]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-                    </button>
-                  </td>
-                  <td v-if="colVisible.ibpStep">{{ row.ibpStep || '-' }}</td>
-                  <td v-if="colVisible.division">{{ row.division }}</td>
-                  <td v-if="colVisible.country">{{ formatCountry(row.country) }}</td>
-                  <td v-if="colVisible.categorisation">{{ row.categorisation }}</td>
-                  <td v-if="colVisible.description">{{ row.shortDescription || row.description || '-' }}</td>
-                  <td v-if="colVisible.detailedDescription">{{ row.description || '-' }}</td>
-                  <td v-if="colVisible.customer">
-                    <div v-if="row.account">{{ formatBrandFamily(row.account) }}</div>
-                    <div v-if="row.subChannel" class="cell-sub">{{ formatBrandFamily(row.subChannel) }}</div>
-                    <div v-if="row.channel"    class="cell-sub italic">{{ formatBrandFamily(row.channel) }}</div>
-                    <span v-if="!row.account && !row.subChannel && !row.channel">-</span>
-                  </td>
-                  <td v-if="colVisible.product">
-                    <div v-if="row.brand">{{ formatBrandFamily(row.brand) }}</div>
-                    <div v-if="row.brandFamily" class="cell-sub italic">{{ formatBrandFamily(row.brandFamily) }}</div>
-                    <span v-if="!row.brand && !row.brandFamily">-</span>
-                  </td>
-                  <td v-if="colVisible.rAndO">{{ row.rAndO }}</td>
-                  <td v-if="colVisible.probability" class="tc">
-                    <span :class="['prob-badge', `prob-${(row.probability||'').toLowerCase()}`]">
-                      {{ (row.probability||'').charAt(0).toUpperCase() }}
-                    </span>
-                  </td>
-                  <td v-if="colVisible.addToForecastBy">
-                    {{ row.addToForecastByPeriod && row.addToForecastByYear
-                        ? `${row.addToForecastByPeriod} ${row.addToForecastByYear}`
-                        : (row.impactPeriod && row.impactYear ? `${row.impactPeriod} ${row.impactYear}` : '-') }}
-                  </td>
-                  <td v-if="colVisible.creator">{{ row.creator || '-' }}</td>
-                  <td v-if="colVisible.owner">{{ row.owner }}</td>
-                  <td v-if="colVisible.status">
-                    <el-select v-if="canEditStatusRow(row)" :model-value="row.status" size="small" style="width:100%" @change="(v:string) => handleStatusChange(row, v)">
-                      <el-option v-for="s in allowedStatusRow(row)" :key="s" :value="s" :label="s" />
-                    </el-select>
-                    <span v-else :class="['status-badge', statusClass(row.status)]">{{ row.status }}</span>
-                  </td>
-                  <td v-if="colVisible.lastModified" class="cell-muted">{{ formatDate(row.lastModified) }}</td>
-                  <td v-if="colVisible.financialImpactType">{{ row.financialImpactType || '-' }}</td>
-                  <td v-if="colVisible.currency">{{ row.impactCurrency || '-' }}</td>
-                  <td v-if="colVisible.impact" :class="['tr', 'fw', { 'text-red': row.rAndO === 'Risk' }]">{{ row.impact ? Number(row.impact).toLocaleString() : '-' }}</td>
-                  <td v-if="colVisible.volumeCases" :class="['tr', { 'text-red': row.rAndO === 'Risk' }]"> {{ (row as any).volumeCases ? Number((row as any).volumeCases).toLocaleString() : '-' }}
-                    <div v-if="(row as any).volumeImpactValue" class="cell-sub">({{ (row as any).volumeImpactType }})</div>
-                  </td>
-                  <td v-if="colVisible.volumeImpactType">{{ (row as any).volumeImpactType || '-' }}</td>
-                  <td v-if="colVisible.volumeImpactValue" :class="['tr', { 'text-red': row.rAndO === 'Risk' }]">{{ (row as any).volumeImpactValue ? Number((row as any).volumeImpactValue).toLocaleString() : '-' }}</td>
-                  <template v-if="hasPhasedViews">
-                    <td v-for="col in phasedColumns" :key="col.label" :class="['tc', 'phased-cell', { 'text-red': row.rAndO === 'Risk' }]">
-                      {{ formatPhasedCell(getAggregatedImpact(row, col)) }}
+                  <template v-for="col in visibleColumns" :key="col.id">
+                    <td v-if="col.type === 'expand'" class="col-expand">
+                      <button v-if="row.childImpacts?.length" class="expand-btn" @click="toggleExpand(row.id)">
+                        <svg :class="['expand-icon', { rotated: expandedRows.has(row.id) }]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                      </button>
+                    </td>
+                    <td v-else-if="col.id === 'ibpStep'">{{ row.ibpStep || '-' }}</td>
+                    <td v-else-if="col.id === 'division'">{{ row.division }}</td>
+                    <td v-else-if="col.id === 'country'">{{ formatCountry(row.country) }}</td>
+                    <td v-else-if="col.id === 'categorisation'">{{ row.categorisation }}</td>
+                    <td v-else-if="col.id === 'description'">{{ row.shortDescription || row.description || '-' }}</td>
+                    <td v-else-if="col.id === 'detailedDescription'">{{ row.description || '-' }}</td>
+                    <td v-else-if="col.id === 'customer'">
+                      <div v-if="row.account">{{ formatBrandFamily(row.account) }}</div>
+                      <div v-if="row.subChannel" class="cell-sub">{{ formatBrandFamily(row.subChannel) }}</div>
+                      <div v-if="row.channel" class="cell-sub italic">{{ formatBrandFamily(row.channel) }}</div>
+                      <span v-if="!row.account && !row.subChannel && !row.channel">-</span>
+                    </td>
+                    <td v-else-if="col.id === 'product'">
+                      <div v-if="row.brand">{{ formatBrandFamily(row.brand) }}</div>
+                      <div v-if="row.brandFamily" class="cell-sub italic">{{ formatBrandFamily(row.brandFamily) }}</div>
+                      <span v-if="!row.brand && !row.brandFamily">-</span>
+                    </td>
+                    <td v-else-if="col.id === 'rAndO'">{{ row.rAndO }}</td>
+                    <td v-else-if="col.id === 'probability'" class="tc">
+                      <span :class="['prob-badge', `prob-${(row.probability||'').toLowerCase()}`]">
+                        {{ (row.probability||'').charAt(0).toUpperCase() }}
+                      </span>
+                    </td>
+                    <td v-else-if="col.id === 'addToForecastBy'">
+                      {{ row.addToForecastByPeriod && row.addToForecastByYear ? `${row.addToForecastByPeriod} ${row.addToForecastByYear}` : (row.impactPeriod && row.impactYear ? `${row.impactPeriod} ${row.impactYear}` : '-') }}
+                    </td>
+                    <td v-else-if="col.id === 'creator'">{{ row.creator || '-' }}</td>
+                    <td v-else-if="col.id === 'owner'">{{ row.owner }}</td>
+                    <td v-else-if="col.id === 'status'">
+                      <el-select v-if="canEditStatusRow(row)" :model-value="row.status" size="small" style="width:100%" @change="(v:string) => handleStatusChange(row, v)">
+                        <el-option v-for="s in allowedStatusRow(row)" :key="s" :value="s" :label="s" />
+                      </el-select>
+                      <span v-else :class="['status-badge', statusClass(row.status)]">{{ row.status }}</span>
+                    </td>
+                    <td v-else-if="col.id === 'lastModified'" class="cell-muted">{{ formatDate(row.lastModified) }}</td>
+                    <td v-else-if="col.id === 'financialImpactType'">{{ row.financialImpactType || '-' }}</td>
+                    <td v-else-if="col.id === 'currency'">{{ row.impactCurrency || '-' }}</td>
+                    <td v-else-if="col.id === 'impact'" :class="['tr', 'fw', { 'text-red': row.rAndO === 'Risk' }]">{{ row.impact ? Number(row.impact).toLocaleString() : '-' }}</td>
+                    <td v-else-if="col.id === 'volumeCases'" :class="['tr', { 'text-red': row.rAndO === 'Risk' }]">
+                      {{ (row as any).volumeCases ? Number((row as any).volumeCases).toLocaleString() : '-' }}
+                      <div v-if="(row as any).volumeImpactValue" class="cell-sub">({{ (row as any).volumeImpactType }})</div>
+                    </td>
+                    <td v-else-if="col.id === 'volumeImpactType'">{{ (row as any).volumeImpactType || '-' }}</td>
+                    <td v-else-if="col.id === 'volumeImpactValue'" :class="['tr', { 'text-red': row.rAndO === 'Risk' }]">{{ (row as any).volumeImpactValue ? Number((row as any).volumeImpactValue).toLocaleString() : '-' }}</td>
+                    <td v-else-if="col.type === 'phased'" :class="['tc', 'phased-cell', { 'text-red': row.rAndO === 'Risk' }]">
+                      {{ formatPhasedCell(getAggregatedImpact(row, col.colDef!)) }}
+                    </td>
+                    <td v-else-if="col.id === 'impactPeriods'">{{ formatImpactPeriods(row.childImpacts, row.impactPeriod, row.impactYear) }}</td>
+                    
+                    <td v-else-if="col.type === 'actions'" class="tc">
+                      <div class="action-btns">
+                        <button class="action-icon" @click="$emit('history', row)" title="History">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                        <button v-if="!isReadOnly && store.canCreate" class="action-icon" @click="$emit('duplicate', row)" title="Duplicate">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        </button>
+                        <button v-if="!isReadOnly && canEditRow(row)" class="action-icon" @click="handleEditClick(row)" title="Edit">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+                        <el-popconfirm v-if="!isReadOnly && canDeleteRow(row)" title="Delete all versions of this entry?" confirm-button-type="danger" @confirm="$emit('delete', row)">
+                          <template #reference>
+                            <button class="action-icon action-icon--danger" title="Delete">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                            </button>
+                          </template>
+                        </el-popconfirm>
+                      </div>
                     </td>
                   </template>
-                  <td v-else-if="colVisible.impactPeriods">{{ formatImpactPeriods(row.childImpacts, row.impactPeriod, row.impactYear) }}</td>
-                  <td class="tc">
-                    <div class="action-btns">
-                      <button class="action-icon" @click="$emit('history', row)" title="History">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                      </button>
-                      <button v-if="!isReadOnly && store.canCreate" class="action-icon" @click="$emit('duplicate', row)" title="Duplicate">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                      </button>
-                      <button v-if="!isReadOnly && canEditRow(row)" class="action-icon" @click="handleEditClick(row)" title="Edit">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                      </button>
-                      <el-popconfirm v-if="!isReadOnly && canDeleteRow(row)" title="Delete all versions of this entry?" confirm-button-type="danger" @confirm="$emit('delete', row)">
-                        <template #reference>
-                          <button class="action-icon action-icon--danger" title="Delete">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                          </button>
-                        </template>
-                      </el-popconfirm>
-                    </div>
-                  </td>
                 </tr>
                 <template v-if="expandedRows.has(row.id) && row.childImpacts?.length">
                   <tr v-for="(ci, cIdx) in row.childImpacts" :key="`${row.id}-c${cIdx}`" class="child-row">
-                    <td class="col-expand"></td>
-                    <td v-if="colVisible.ibpStep"        class="cell-muted">{{ row.ibpStep || '-' }}</td>
-                    <td v-if="colVisible.division"       class="cell-muted">{{ row.division }}</td>
-                    <td v-if="colVisible.country"        class="cell-muted">{{ formatCountry(row.country) }}</td>
-                    <td v-if="colVisible.categorisation" class="cell-muted">{{ row.categorisation }}</td>
-                    <td v-if="colVisible.description"    class="cell-muted">{{ row.shortDescription || '-' }}</td>
-                    <td v-if="colVisible.customer"       class="cell-muted">
-                      <div v-if="row.account">{{ formatBrandFamily(row.account) }}</div>
-                      <div v-if="row.subChannel" class="cell-sub">{{ formatBrandFamily(row.subChannel) }}</div>
-                    </td>
-                    <td v-if="colVisible.product"        class="cell-muted">
-                      <div v-if="row.brand">{{ formatBrandFamily(row.brand) }}</div>
-                    </td>
-                    <td v-if="colVisible.rAndO"          class="cell-muted">{{ row.rAndO }}</td>
-                    <td v-if="colVisible.probability"    class="tc cell-muted">
-                      <span :class="['prob-badge', `prob-${(row.probability||'').toLowerCase()}`, 'dim']">{{ (row.probability||'').charAt(0).toUpperCase() }}</span>
-                    </td>
-                    <td v-if="colVisible.addToForecastBy" class="cell-muted">-</td>
-                    <td v-if="colVisible.creator"        class="cell-muted">{{ row.creator || '-' }}</td>
-                    <td v-if="colVisible.owner"          class="cell-muted">{{ row.owner }}</td>
-                    <td v-if="colVisible.status"         class="cell-muted">
-                      <span :class="['status-badge', statusClass(row.status), 'dim']">{{ row.status }}</span>
-                    </td>
-                    <td v-if="colVisible.lastModified"   class="cell-muted">{{ formatDate(row.lastModified) }}</td>
-                    <td v-if="colVisible.financialImpactType"     class="cell-muted">{{ row.financialImpactType || '-' }}</td>
-                    <td v-if="colVisible.currency"       class="cell-muted">{{ ci.impactCurrency || '-' }}</td>
-                    <td v-if="colVisible.impact"         :class="['tr', 'fw', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ ci.impact ? Number(ci.impact).toLocaleString() : '-' }}</td>
-                    <td v-if="colVisible.volumeCases"    :class="['tr', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ ci.volumeCases ? Number(ci.volumeCases).toLocaleString() : '-' }}</td>
-                    <td v-if="colVisible.volumeImpactType" class="cell-muted">{{ row.volumeImpactType || '-' }}</td>
-                    <td v-if="colVisible.volumeImpactValue" :class="['tr', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ ci.volumeImpactValue ? Number(ci.volumeImpactValue).toLocaleString() : '-' }}</td>
-                    <template v-if="hasPhasedViews">
-                      <td v-for="col in phasedColumns" :key="col.label" :class="['tc', 'cell-muted', 'phased-cell', { 'text-red': row.rAndO === 'Risk' }]">
-                        {{ formatPhasedCellChild(ci, col) }}
+                    <template v-for="col in visibleColumns" :key="col.id">
+                      <td v-if="col.type === 'expand'" class="col-expand"></td>
+                      <td v-else-if="col.id === 'ibpStep'" class="cell-muted">{{ row.ibpStep || '-' }}</td>
+                      <td v-else-if="col.id === 'division'" class="cell-muted">{{ row.division }}</td>
+                      <td v-else-if="col.id === 'country'" class="cell-muted">{{ formatCountry(row.country) }}</td>
+                      <td v-else-if="col.id === 'categorisation'" class="cell-muted">{{ row.categorisation }}</td>
+                      <td v-else-if="col.id === 'description'" class="cell-muted">{{ row.shortDescription || '-' }}</td>
+                      <td v-else-if="col.id === 'detailedDescription'" class="cell-muted">{{ row.description || '-' }}</td>
+                      <td v-else-if="col.id === 'customer'" class="cell-muted">
+                        <div v-if="row.account">{{ formatBrandFamily(row.account) }}</div>
+                        <div v-if="row.subChannel" class="cell-sub">{{ formatBrandFamily(row.subChannel) }}</div>
                       </td>
+                      <td v-else-if="col.id === 'product'" class="cell-muted">
+                        <div v-if="row.brand">{{ formatBrandFamily(row.brand) }}</div>
+                      </td>
+                      <td v-else-if="col.id === 'rAndO'" class="cell-muted">{{ row.rAndO }}</td>
+                      <td v-else-if="col.id === 'probability'" class="tc cell-muted">
+                        <span :class="['prob-badge', `prob-${(row.probability||'').toLowerCase()}`, 'dim']">{{ (row.probability||'').charAt(0).toUpperCase() }}</span>
+                      </td>
+                      <td v-else-if="col.id === 'addToForecastBy'" class="cell-muted">-</td>
+                      <td v-else-if="col.id === 'creator'" class="cell-muted">-</td>
+                      <td v-else-if="col.id === 'owner'" class="cell-muted">-</td>
+                      <td v-else-if="col.id === 'status'" class="cell-muted">
+                        <span :class="['status-badge', statusClass(row.status), 'dim']">{{ row.status }}</span>
+                      </td>
+                      <td v-else-if="col.id === 'lastModified'" class="cell-muted">-</td>
+                      <td v-else-if="col.id === 'financialImpactType'" class="cell-muted">{{ row.financialImpactType || '-' }}</td>
+                      <td v-else-if="col.id === 'currency'" class="cell-muted">{{ ci.impactCurrency || '-' }}</td>
+                      <td v-else-if="col.id === 'impact'" :class="['tr', 'fw', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ ci.impact ? Number(ci.impact).toLocaleString() : '-' }}</td>
+                      <td v-else-if="col.id === 'volumeCases'" :class="['tr', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ ci.volumeCases ? Number(ci.volumeCases).toLocaleString() : '-' }}</td>
+                      <td v-else-if="col.id === 'volumeImpactType'" class="cell-muted">{{ row.volumeImpactType || '-' }}</td>
+                      <td v-else-if="col.id === 'volumeImpactValue'" :class="['tr', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ ci.volumeImpactValue ? Number(ci.volumeImpactValue).toLocaleString() : '-' }}</td>
+                      <td v-else-if="col.type === 'phased'" :class="['tc', 'cell-muted', 'phased-cell', { 'text-red': row.rAndO === 'Risk' }]">
+                        {{ formatPhasedCellChild(ci, col.colDef!) }}
+                      </td>
+                      <td v-else-if="col.id === 'impactPeriods'" class="cell-muted">
+                        {{ ci.impactPeriod && ci.impactYear ? `${periodToMonthAbbr(ci.impactPeriod)} ${ci.impactYear}` : '-' }}
+                      </td>
+                      <td v-else-if="col.type === 'actions'" class="cell-muted tc">-</td>
                     </template>
-                    <td v-else-if="colVisible.impactPeriods" class="cell-muted">
-                      {{ ci.impactPeriod && ci.impactYear ? `${periodToMonthAbbr(ci.impactPeriod)} ${ci.impactYear}` : '-' }}
-                    </td>
-                    <td class="cell-muted tc">-</td>
                   </tr>
                 </template>
               </template>
@@ -456,156 +473,145 @@
       <table class="data-table">
         <thead>
           <tr>
-          <th class="col-expand"></th>
-          <th v-if="colVisible.ibpStep" class="col-md">IBP Step</th>
-          <th v-if="colVisible.division" class="col-sm">Division</th>
-          <th v-if="colVisible.country" class="col-sm">Country</th>
-          <th v-if="colVisible.categorisation" class="col-lg">Categorisation</th>
-          <th v-if="colVisible.description" class="col-xl">Short Description</th>
-          <th v-if="colVisible.detailedDescription" class="col-xl">Detailed Description</th>
-          <th v-if="colVisible.customer" class="col-lg">Customer(s)</th>
-          <th v-if="colVisible.product" class="col-lg">Product</th>
-          <th v-if="colVisible.rAndO" class="col-md">Risk vs. Opp.</th>
-          <th v-if="colVisible.probability" class="col-sm tc">Probability</th>
-          <th v-if="colVisible.addToForecastBy" class="col-md">Add to Forecast By</th>
-          <th v-if="colVisible.creator" class="col-md">Creator</th>
-          <th v-if="colVisible.owner" class="col-md">Owner</th>
-          <th v-if="colVisible.status" class="col-md">Status</th>
-          <th v-if="colVisible.lastModified" class="col-lg">Last Modified</th>
-          <th v-if="colVisible.financialImpactType" class="col-md">Financial Impact Type</th>
-          <th v-if="colVisible.currency" class="col-sm">Financial Impact Currency</th>
-          <th v-if="colVisible.impact" class="col-md tr">Financial Impact Value</th>
-          <th v-if="colVisible.volumeCases" class="col-md tr">Volume (Cases)</th>
-          <th v-if="colVisible.volumeImpactType" class="col-sm">Volume Impact Type</th>
-          <th v-if="colVisible.volumeImpactValue" class="col-md tr">Volume Impact Value</th>
-          <template v-if="hasPhasedViews">
-            <th v-for="col in phasedColumns" :key="col.label" class="col-phased tc">{{ col.label }}</th>
-          </template>
-          <th v-else-if="colVisible.impactPeriods" class="col-lg">Impact Period(s)</th>
-          <th class="col-actions tc">Actions</th>
-        </tr></thead>
+            <th v-for="(col, index) in visibleColumns" :key="col.id" 
+                :class="[col.class, { 'draggable-th': isColumnsDraggable && !col.fixed, 'drag-over': dragOverIndex === index }]"
+                :draggable="isColumnsDraggable && !col.fixed"
+                @dragstart="onDragStart($event, index)"
+                @dragover.prevent="onDragOver($event, index)"
+                @dragenter.prevent="onDragEnter($event, index)"
+                @dragleave="onDragLeave($event, index)"
+                @drop="onDrop($event, index)"
+                @dragend="onDragEnd">
+              {{ col.label || '' }}
+            </th>
+          </tr>
+        </thead>
         <tbody>
           <template v-if="filteredEntries.length === 0">
-            <tr><td :colspan="100" class="tc cell-muted" style="padding:24px">No entries found</td></tr>
+            <tr><td :colspan="visibleColumns.length" class="tc cell-muted" style="padding:24px">No entries found</td></tr>
           </template>
           <template v-for="row in filteredEntries" :key="row.id">
             <tr :class="rowClass(row)">
-              <td class="col-expand">
-                <button v-if="row.childImpacts?.length" class="expand-btn" @click="toggleExpand(row.id)">
-                  <svg :class="['expand-icon', { rotated: expandedRows.has(row.id) }]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-                </button>
-              </td>
-              <td v-if="colVisible.ibpStep">{{ row.ibpStep || '-' }}</td>
-              <td v-if="colVisible.division">{{ row.division }}</td>
-              <td v-if="colVisible.country">{{ formatCountry(row.country) }}</td>
-              <td v-if="colVisible.categorisation">{{ row.categorisation }}</td>
-              <td v-if="colVisible.description">{{ row.shortDescription || row.description || '-' }}</td>
-              <td v-if="colVisible.detailedDescription">{{ row.description || '-' }}</td>
-              <td v-if="colVisible.customer">
-                <div v-if="row.account">{{ formatBrandFamily(row.account) }}</div>
-                <div v-if="row.subChannel" class="cell-sub">{{ formatBrandFamily(row.subChannel) }}</div>
-                <div v-if="row.channel"    class="cell-sub italic">{{ formatBrandFamily(row.channel) }}</div>
-                <span v-if="!row.account && !row.subChannel && !row.channel">-</span>
-              </td>
-              <td v-if="colVisible.product">
-                <div v-if="row.brand">{{ formatBrandFamily(row.brand) }}</div>
-                <div v-if="row.brandFamily" class="cell-sub italic">{{ formatBrandFamily(row.brandFamily) }}</div>
-                <span v-if="!row.brand && !row.brandFamily">-</span>
-              </td>
-              <td v-if="colVisible.rAndO">{{ row.rAndO }}</td>
-              <td v-if="colVisible.probability" class="tc">
-                <span :class="['prob-badge', `prob-${(row.probability||'').toLowerCase()}`]">
-                  {{ (row.probability||'').charAt(0).toUpperCase() }}
-                </span>
-              </td>
-              <td v-if="colVisible.addToForecastBy">
-                {{ row.addToForecastByPeriod && row.addToForecastByYear
-                    ? `${row.addToForecastByPeriod} ${row.addToForecastByYear}`
-                    : (row.impactPeriod && row.impactYear ? `${row.impactPeriod} ${row.impactYear}` : '-') }}
-              </td>
-              <td v-if="colVisible.creator">{{ row.creator || '-' }}</td>
-              <td v-if="colVisible.owner">{{ row.owner }}</td>
-              <td v-if="colVisible.status">
-                <el-select v-if="canEditStatusRow(row)" :model-value="row.status" size="small" style="width:100%" @change="(v:string) => handleStatusChange(row, v)">
-                  <el-option v-for="s in allowedStatusRow(row)" :key="s" :value="s" :label="s" />
-                </el-select>
-                <span v-else :class="['status-badge', statusClass(row.status)]">{{ row.status }}</span>
-              </td>
-              <td v-if="colVisible.lastModified" class="cell-muted">{{ formatDate(row.lastModified) }}</td>
-              <td v-if="colVisible.financialImpactType">{{ row.financialImpactType || '-' }}</td>
-              <td v-if="colVisible.currency">{{ row.impactCurrency || '-' }}</td>
-              <td v-if="colVisible.impact" :class="['tr', 'fw', { 'text-red': row.rAndO === 'Risk' }]">{{ row.impact ? Number(row.impact).toLocaleString() : '-' }}</td>
-                  <td v-if="colVisible.volumeCases" :class="['tr', { 'text-red': row.rAndO === 'Risk' }]">{{ row.volumeCases ? Number(row.volumeCases).toLocaleString() : '-' }}</td>
-              <td v-if="colVisible.volumeImpactType">{{ (row as any).volumeImpactType || '-' }}</td>
-              <td v-if="colVisible.volumeImpactValue" :class="['tr', { 'text-red': row.rAndO === 'Risk' }]">{{ (row as any).volumeImpactValue ? Number((row as any).volumeImpactValue).toLocaleString() : '-' }}</td>
-              <template v-if="hasPhasedViews">
-                <td v-for="col in phasedColumns" :key="col.label" :class="['tc', 'phased-cell', { 'text-red': row.rAndO === 'Risk' }]">
-                  {{ formatPhasedCell(getAggregatedImpact(row, col)) }}
+              <template v-for="col in visibleColumns" :key="col.id">
+                <td v-if="col.type === 'expand'" class="col-expand">
+                  <button v-if="row.childImpacts?.length" class="expand-btn" @click="toggleExpand(row.id)">
+                    <svg :class="['expand-icon', { rotated: expandedRows.has(row.id) }]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                  </button>
+                </td>
+                <td v-else-if="col.id === 'ibpStep'">{{ row.ibpStep || '-' }}</td>
+                <td v-else-if="col.id === 'division'">{{ row.division }}</td>
+                <td v-else-if="col.id === 'country'">{{ formatCountry(row.country) }}</td>
+                <td v-else-if="col.id === 'categorisation'">{{ row.categorisation }}</td>
+                <td v-else-if="col.id === 'description'">{{ row.shortDescription || row.description || '-' }}</td>
+                <td v-else-if="col.id === 'detailedDescription'">{{ row.description || '-' }}</td>
+                <td v-else-if="col.id === 'customer'">
+                  <div v-if="row.account">{{ formatBrandFamily(row.account) }}</div>
+                  <div v-if="row.subChannel" class="cell-sub">{{ formatBrandFamily(row.subChannel) }}</div>
+                  <div v-if="row.channel" class="cell-sub italic">{{ formatBrandFamily(row.channel) }}</div>
+                  <span v-if="!row.account && !row.subChannel && !row.channel">-</span>
+                </td>
+                <td v-else-if="col.id === 'product'">
+                  <div v-if="row.brand">{{ formatBrandFamily(row.brand) }}</div>
+                  <div v-if="row.brandFamily" class="cell-sub italic">{{ formatBrandFamily(row.brandFamily) }}</div>
+                  <span v-if="!row.brand && !row.brandFamily">-</span>
+                </td>
+                <td v-else-if="col.id === 'rAndO'">{{ row.rAndO }}</td>
+                <td v-else-if="col.id === 'probability'" class="tc">
+                  <span :class="['prob-badge', `prob-${(row.probability||'').toLowerCase()}`]">
+                    {{ (row.probability||'').charAt(0).toUpperCase() }}
+                  </span>
+                </td>
+                <td v-else-if="col.id === 'addToForecastBy'">
+                  {{ row.addToForecastByPeriod && row.addToForecastByYear ? `${row.addToForecastByPeriod} ${row.addToForecastByYear}` : (row.impactPeriod && row.impactYear ? `${row.impactPeriod} ${row.impactYear}` : '-') }}
+                </td>
+                <td v-else-if="col.id === 'creator'">{{ row.creator || '-' }}</td>
+                <td v-else-if="col.id === 'owner'">{{ row.owner }}</td>
+                <td v-else-if="col.id === 'status'">
+                  <el-select v-if="canEditStatusRow(row)" :model-value="row.status" size="small" style="width:100%" @change="(v:string) => handleStatusChange(row, v)">
+                    <el-option v-for="s in allowedStatusRow(row)" :key="s" :value="s" :label="s" />
+                  </el-select>
+                  <span v-else :class="['status-badge', statusClass(row.status)]">{{ row.status }}</span>
+                </td>
+                <td v-else-if="col.id === 'lastModified'" class="cell-muted">{{ formatDate(row.lastModified) }}</td>
+                <td v-else-if="col.id === 'financialImpactType'">{{ row.financialImpactType || '-' }}</td>
+                <td v-else-if="col.id === 'currency'">{{ row.impactCurrency || '-' }}</td>
+                <td v-else-if="col.id === 'impact'" :class="['tr', 'fw', { 'text-red': row.rAndO === 'Risk' }]">{{ row.impact ? Number(row.impact).toLocaleString() : '-' }}</td>
+                <td v-else-if="col.id === 'volumeCases'" :class="['tr', { 'text-red': row.rAndO === 'Risk' }]">
+                  {{ (row as any).volumeCases ? Number((row as any).volumeCases).toLocaleString() : '-' }}
+                  <div v-if="(row as any).volumeImpactValue" class="cell-sub">({{ (row as any).volumeImpactType }})</div>
+                </td>
+                <td v-else-if="col.id === 'volumeImpactType'">{{ (row as any).volumeImpactType || '-' }}</td>
+                <td v-else-if="col.id === 'volumeImpactValue'" :class="['tr', { 'text-red': row.rAndO === 'Risk' }]">{{ (row as any).volumeImpactValue ? Number((row as any).volumeImpactValue).toLocaleString() : '-' }}</td>
+                <td v-else-if="col.type === 'phased'" :class="['tc', 'phased-cell', { 'text-red': row.rAndO === 'Risk' }]">
+                  {{ formatPhasedCell(getAggregatedImpact(row, col.colDef!)) }}
+                </td>
+                <td v-else-if="col.id === 'impactPeriods'">{{ formatImpactPeriods(row.childImpacts, row.impactPeriod, row.impactYear) }}</td>
+                
+                <td v-else-if="col.type === 'actions'" class="tc">
+                  <div class="action-btns">
+                    <button class="action-icon" @click="$emit('history', row)" title="History">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                    <button v-if="!isReadOnly && store.canCreate" class="action-icon" @click="$emit('duplicate', row)" title="Duplicate">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    </button>
+                    <button v-if="!isReadOnly && canEditRow(row)" class="action-icon" @click="handleEditClick(row)" title="Edit">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <el-popconfirm v-if="!isReadOnly && canDeleteRow(row)" title="Delete all versions of this entry?" confirm-button-type="danger" @confirm="$emit('delete', row)">
+                      <template #reference>
+                        <button class="action-icon action-icon--danger" title="Delete">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                        </button>
+                      </template>
+                    </el-popconfirm>
+                  </div>
                 </td>
               </template>
-              <td v-else-if="colVisible.impactPeriods">{{ formatImpactPeriods(row.childImpacts, row.impactPeriod, row.impactYear) }}</td>
-              <td class="tc">
-                <div class="action-btns">
-                  <button class="action-icon" @click="$emit('history', row)" title="History">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                  </button>
-                  <button v-if="!isReadOnly && store.canCreate" class="action-icon" @click="$emit('duplicate', row)" title="Duplicate">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                  </button>
-                  <button v-if="!isReadOnly && canEditRow(row)" class="action-icon" @click="handleEditClick(row)" title="Edit">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                  </button>
-                  <el-popconfirm v-if="!isReadOnly && canDeleteRow(row)" title="Delete all versions of this entry?" confirm-button-type="danger" @confirm="$emit('delete', row)">
-                    <template #reference>
-                      <button class="action-icon action-icon--danger" title="Delete">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                      </button>
-                    </template>
-                  </el-popconfirm>
-                </div>
-              </td>
             </tr>
 
             <template v-if="expandedRows.has(row.id) && row.childImpacts?.length">
               <tr v-for="(ci, cIdx) in row.childImpacts" :key="`${row.id}-c${cIdx}`" class="child-row">
-                <td class="col-expand"></td>
-                <td v-if="colVisible.ibpStep"        class="cell-muted">{{ row.ibpStep || '-' }}</td>
-                <td v-if="colVisible.division"       class="cell-muted">{{ row.division }}</td>
-                <td v-if="colVisible.country"        class="cell-muted">{{ formatCountry(row.country) }}</td>
-                <td v-if="colVisible.categorisation" class="cell-muted">{{ row.categorisation }}</td>
-                <td v-if="colVisible.description"    class="cell-muted">{{ row.shortDescription || '-' }}</td>
-                <td v-if="colVisible.customer"       class="cell-muted">
-                  <div v-if="row.account">{{ formatBrandFamily(row.account) }}</div>
-                </td>
-                <td v-if="colVisible.product"        class="cell-muted">
-                  <div v-if="row.brand">{{ formatBrandFamily(row.brand) }}</div>
-                </td>
-                <td v-if="colVisible.rAndO"          class="cell-muted">{{ row.rAndO }}</td>
-                <td v-if="colVisible.probability"    class="tc cell-muted">
-                  <span :class="['prob-badge', `prob-${(row.probability||'').toLowerCase()}`, 'dim']">{{ (row.probability||'').charAt(0).toUpperCase() }}</span>
-                </td>
-                <td v-if="colVisible.addToForecastBy" class="cell-muted">-</td>
-                <td v-if="colVisible.creator"        class="cell-muted">-</td>
-                <td v-if="colVisible.owner"          class="cell-muted">-</td>
-                <td v-if="colVisible.status"         class="cell-muted">
-                  <span :class="['status-badge', statusClass(row.status), 'dim']">{{ row.status }}</span>
-                </td>
-                <td v-if="colVisible.lastModified"   class="cell-muted">-</td>
-                <td v-if="colVisible.financialImpactType"     class="cell-muted">{{ row.financialImpactType || '-' }}</td>
-                <td v-if="colVisible.currency"       class="cell-muted">{{ ci.impactCurrency || '-' }}</td>
-                <td v-if="colVisible.impact"         :class="['tr', 'fw', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ ci.impact ? Number(ci.impact).toLocaleString() : '-' }}</td>
-                <td v-if="colVisible.volumeCases"    :class="['tr', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ ci.volumeCases ? Number(ci.volumeCases).toLocaleString() : '-' }}</td>
-                <td v-if="colVisible.volumeImpactType" class="cell-muted">{{ row.volumeImpactType || '-' }}</td>
-                <td v-if="colVisible.volumeImpactValue" :class="['tr', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ ci.volumeImpactValue ? Number(ci.volumeImpactValue).toLocaleString() : '-' }}</td>
-                <template v-if="hasPhasedViews">
-                  <td v-for="col in phasedColumns" :key="col.label" :class="['tc', 'cell-muted', 'phased-cell', { 'text-red': row.rAndO === 'Risk' }]">
-                    {{ formatPhasedCellChild(ci, col) }}
+                <template v-for="col in visibleColumns" :key="col.id">
+                  <td v-if="col.type === 'expand'" class="col-expand"></td>
+                  <td v-else-if="col.id === 'ibpStep'" class="cell-muted">{{ row.ibpStep || '-' }}</td>
+                  <td v-else-if="col.id === 'division'" class="cell-muted">{{ row.division }}</td>
+                  <td v-else-if="col.id === 'country'" class="cell-muted">{{ formatCountry(row.country) }}</td>
+                  <td v-else-if="col.id === 'categorisation'" class="cell-muted">{{ row.categorisation }}</td>
+                  <td v-else-if="col.id === 'description'" class="cell-muted">{{ row.shortDescription || '-' }}</td>
+                  <td v-else-if="col.id === 'detailedDescription'" class="cell-muted">{{ row.description || '-' }}</td>
+                  <td v-else-if="col.id === 'customer'" class="cell-muted">
+                    <div v-if="row.account">{{ formatBrandFamily(row.account) }}</div>
+                    <div v-if="row.subChannel" class="cell-sub">{{ formatBrandFamily(row.subChannel) }}</div>
                   </td>
+                  <td v-else-if="col.id === 'product'" class="cell-muted">
+                    <div v-if="row.brand">{{ formatBrandFamily(row.brand) }}</div>
+                  </td>
+                  <td v-else-if="col.id === 'rAndO'" class="cell-muted">{{ row.rAndO }}</td>
+                  <td v-else-if="col.id === 'probability'" class="tc cell-muted">
+                    <span :class="['prob-badge', `prob-${(row.probability||'').toLowerCase()}`, 'dim']">{{ (row.probability||'').charAt(0).toUpperCase() }}</span>
+                  </td>
+                  <td v-else-if="col.id === 'addToForecastBy'" class="cell-muted">-</td>
+                  <td v-else-if="col.id === 'creator'" class="cell-muted">-</td>
+                  <td v-else-if="col.id === 'owner'" class="cell-muted">-</td>
+                  <td v-else-if="col.id === 'status'" class="cell-muted">
+                    <span :class="['status-badge', statusClass(row.status), 'dim']">{{ row.status }}</span>
+                  </td>
+                  <td v-else-if="col.id === 'lastModified'" class="cell-muted">-</td>
+                  <td v-else-if="col.id === 'financialImpactType'" class="cell-muted">{{ row.financialImpactType || '-' }}</td>
+                  <td v-else-if="col.id === 'currency'" class="cell-muted">{{ ci.impactCurrency || '-' }}</td>
+                  <td v-else-if="col.id === 'impact'" :class="['tr', 'fw', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ ci.impact ? Number(ci.impact).toLocaleString() : '-' }}</td>
+                  <td v-else-if="col.id === 'volumeCases'" :class="['tr', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ ci.volumeCases ? Number(ci.volumeCases).toLocaleString() : '-' }}</td>
+                  <td v-else-if="col.id === 'volumeImpactType'" class="cell-muted">{{ row.volumeImpactType || '-' }}</td>
+                  <td v-else-if="col.id === 'volumeImpactValue'" :class="['tr', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ ci.volumeImpactValue ? Number(ci.volumeImpactValue).toLocaleString() : '-' }}</td>
+                  <td v-else-if="col.type === 'phased'" :class="['tc', 'cell-muted', 'phased-cell', { 'text-red': row.rAndO === 'Risk' }]">
+                    {{ formatPhasedCellChild(ci, col.colDef!) }}
+                  </td>
+                  <td v-else-if="col.id === 'impactPeriods'" class="cell-muted">
+                    {{ ci.impactPeriod && ci.impactYear ? `${periodToMonthAbbr(ci.impactPeriod)} ${ci.impactYear}` : '-' }}
+                  </td>
+                  <td v-else-if="col.type === 'actions'" class="cell-muted tc">-</td>
                 </template>
-                <td v-else-if="colVisible.impactPeriods" class="cell-muted">
-                  {{ ci.impactPeriod && ci.impactYear ? `${periodToMonthAbbr(ci.impactPeriod)} ${ci.impactYear}` : '-' }}
-                </td>
-                <td class="cell-muted tc">-</td>
               </tr>
             </template>
           </template>
@@ -624,7 +630,7 @@ import { useLookupStore } from "@/stores/lookupStore";
 import { entryApi, lookupApi } from "@/services/api";
 import type { Entry } from "@/types";
 import { STATUS_OPTIONS } from "@/types";
-import { formatDate, formatMoney, formatVol } from "@/utils/formatters";
+import { formatDate } from "@/utils/formatters";
 
 // ─── Props / emits ────────────────────────────────────────────────────────────
 const props = withDefaults(defineProps<{
@@ -647,11 +653,109 @@ const emit = defineEmits<{
 const store        = useEntryStore();
 const lookupStore = useLookupStore();
 
+function normalizeCountryCode(code: string | number): string {
+  const value = String(code).trim();
+  const stripped = value.replace(/^0+/, "");
+  return stripped.length > 0 ? stripped : value;
+}
+
+// ─── Apply Default Filters ──────────────────────────────────────────────────
+function applyUserDefaults() {
+  const user = store.currentUser;
+  if (!user) return false;
+
+  let changed = false;
+
+  let divs = user.division;
+  if (typeof divs === 'string') {
+    try { divs = JSON.parse(divs); } catch {}
+  }
+  if (store.filters.division.length === 0 && Array.isArray(divs) && divs.length > 0) {
+    const availableDivs = divisionOptions.value || [];
+    let toApply = Array.isArray(availableDivs) && availableDivs.length > 0
+      ? divs.filter((d: string) => availableDivs.includes(d))
+      : divs;
+    if (toApply.length === 0) {
+      toApply = [...divs];
+    }
+    store.filters.division = [...toApply];
+    changed = true;
+  }
+
+  let cntry = user.country;
+  if (typeof cntry === 'string') {
+    try { cntry = JSON.parse(cntry); } catch {}
+  }
+  if (store.filters.country.length === 0 && cntry) {
+    const availableCountryCodes = countryOptions.value.map(c => String(c.value));
+    const normalizedAvailable = new Map<string, string>();
+    availableCountryCodes.forEach(code => normalizedAvailable.set(normalizeCountryCode(code), code));
+
+    const normalizeKeys = (keys: string[]) => keys.map(k => normalizeCountryCode(k));
+
+    if (typeof cntry === 'object' && !Array.isArray(cntry)) {
+      const normalizedKeys = normalizeKeys(Object.keys(cntry));
+      const matched = normalizedKeys
+        .map(k => normalizedAvailable.get(k) ?? k)
+        .filter(Boolean);
+      store.filters.country = matched.length ? matched : normalizedKeys;
+      changed = true;
+    } else if (Array.isArray(cntry) && cntry.length > 0) {
+      const normalizedKeys = normalizeKeys(cntry as string[]);
+      const matched = normalizedKeys
+        .map(k => normalizedAvailable.get(k) ?? k)
+        .filter(Boolean);
+      store.filters.country = matched.length ? matched : normalizedKeys;
+      changed = true;
+    }
+  }
+
+  let steps = user.ibp_steps;
+  if (typeof steps === 'string') {
+    try { steps = JSON.parse(steps); } catch { steps = steps.split(',').map((s: string) => s.trim()); }
+  }
+  if (store.filters.ibp_step.length === 0 && Array.isArray(steps) && steps.length > 0) {
+    const availableSteps = lookupStore.getCached("ibp_step") || [];
+    let toApply = Array.isArray(availableSteps) && availableSteps.length > 0
+      ? steps.filter((s: string) => availableSteps.includes(s))
+      : steps;
+    if (toApply.length === 0) {
+      toApply = [...steps];
+    }
+    store.filters.ibp_step = [...toApply];
+    changed = true;
+  }
+
+  return changed;
+}
+
+watch(() => store.currentUser, async (newUser) => {
+  if (!newUser) return;
+  
+  // Use a unique property (email or ID) to check if the user actually swapped accounts
+  const userIdentifier = newUser.email || (newUser as any).id || JSON.stringify(newUser);
+  const lastUser = sessionStorage.getItem('entries_table_last_user');
+  
+  let isDifferentUser = false;
+  if (lastUser !== userIdentifier) {
+    isDifferentUser = true;
+    store.resetFilters();
+    store.filters.probability = ""; // Ensure local-like state resets alongside the store
+    sessionStorage.setItem('entries_table_last_user', userIdentifier);
+  }
+
+  const changed = applyUserDefaults();
+  if (changed || isDifferentUser) {
+    await updateDynamicLookups();
+  }
+  store.fetchEntries();
+}, { immediate: true });
+
+
 onMounted(async () => {
   await lookupStore.preload();
   if (store.users.length === 0) store.fetchUsers();
 
-  // Fetch all countries across all divisions to make the filter independent
   const divs = divisionOptions.value.length ? divisionOptions.value : ["Alcohol", "Non-Alcohol"];
   try {
     const allResults = await Promise.all(divs.map(d => lookupApi.getCountries(d)));
@@ -664,7 +768,6 @@ onMounted(async () => {
     console.error("Error loading countries for filters:", error);
   }
 
-  // Fetch all channels across all divisions to make the filter independent
   try {
     const allChanResults = await Promise.all(divs.map(d => lookupApi.getChannels(d)));
     const mergedChans = new Map<string, string>();
@@ -676,7 +779,6 @@ onMounted(async () => {
     console.error("Error loading channels for filters:", error);
   }
 
-  // Fetch all brands across all divisions to make the filter independent
   try {
     const allBrandResults = await Promise.all(divs.map(d => lookupApi.getBrands(d)));
     const mergedBrands = new Map<string, string>();
@@ -688,7 +790,7 @@ onMounted(async () => {
     console.error("Error loading brands for filters:", error);
   }
 
-  if (store.filters.division || store.filters.country) {
+  if (store.filters.division.length > 0 || store.filters.country.length > 0) {
     await updateDynamicLookups();
   }
 
@@ -696,19 +798,79 @@ onMounted(async () => {
 });
 
 // ─── Quick filters ────────────────────────────────────────────────────────────
-const quickFilters = ref({ openOnly: false, highPriority: false, recentlyModified: false });
-const quickFilterDefs = [
-  { key: "openOnly"         as const, label: "Show Open Only" },
-  { key: "highPriority"     as const, label: "Show High Priority Only" },
-  { key: "recentlyModified" as const, label: "Show Recently Modified Only" },
-];
-function toggleQuick(key: keyof typeof quickFilters.value) {
-  quickFilters.value[key] = !quickFilters.value[key];
-}
 function toggleIbpStep(step: string) {
-  store.filters.ibp_step = store.filters.ibp_step === step ? "" : step;
+  const idx = store.filters.ibp_step.indexOf(step);
+  if (idx > -1) store.filters.ibp_step.splice(idx, 1);
+  else store.filters.ibp_step.push(step);
   store.fetchEntries();
 }
+
+function isCountryActive(cName: string) {
+  const opt = countryOptions.value.find(c => c.label === cName);
+  if (opt && store.filters.country.includes(opt.value)) return true;
+
+  if (opt) {
+    const normalizedOpt = normalizeCountryCode(opt.value);
+    if (store.filters.country.some(code => normalizeCountryCode(code) === normalizedOpt)) return true;
+  }
+
+  if (store.filters.country.includes(cName)) return true;
+
+  const userCountryObj = store.currentUser?.country;
+  if (userCountryObj && typeof userCountryObj === 'object' && !Array.isArray(userCountryObj)) {
+     const keys = Object.keys(userCountryObj);
+     const values = Object.values(userCountryObj);
+     const idx = values.indexOf(cName);
+     if (idx > -1) {
+        const expected = normalizeCountryCode(keys[idx]);
+        if (store.filters.country.some(code => normalizeCountryCode(code) === expected)) return true;
+     }
+  }
+  
+  if (typeof userCountryObj === 'string') {
+    try {
+      const parsed = JSON.parse(userCountryObj);
+      const keys = Object.keys(parsed);
+      const values = Object.values(parsed);
+      const idx = values.indexOf(cName);
+      if (idx > -1) {
+        const expected = normalizeCountryCode(keys[idx]);
+        if (store.filters.country.some(code => normalizeCountryCode(code) === expected)) return true;
+      }
+    } catch {}
+  }
+
+  return false;
+}
+
+function toggleCountryQuick(cName: string) {
+  const opt = countryOptions.value.find(c => c.label === cName);
+  const val = opt ? opt.value : cName;
+  const idx = store.filters.country.indexOf(val);
+  if (idx > -1) store.filters.country.splice(idx, 1);
+  else store.filters.country.push(val);
+  store.fetchEntries();
+}
+
+function toggleDivisionQuick(div: string) {
+  const idx = store.filters.division.indexOf(div);
+  if (idx > -1) store.filters.division.splice(idx, 1);
+  else store.filters.division.push(div);
+  store.fetchEntries();
+}
+
+function toggleProbQuick(val: "High" | "High & Medium") {
+  store.filters.probability = store.filters.probability === val ? "" : val;
+  store.fetchEntries();
+}
+
+function toggleStatusQuick(st: string) {
+  const idx = store.filters.status.indexOf(st);
+  if (idx > -1) store.filters.status.splice(idx, 1);
+  else store.filters.status.push(st);
+  store.fetchEntries();
+}
+
 
 // ─── All-filters panel ────────────────────────────────────────────────────────
 const allFiltersOpen = ref(false);
@@ -732,8 +894,7 @@ const ibpStepOptions    = computed(() => {
   return lookupStore.getCached("ibp_step");
 });
 
-// Dynamic Country Loading for Filters
-watch(() => store.filters.division, async (division) => {
+watch(() => store.filters.division, async () => {
   store.filters.channel = [];
   store.filters.brand = "";
   store.filters.categorisation = "";
@@ -742,7 +903,6 @@ watch(() => store.filters.division, async (division) => {
 }, { immediate: false });
 
 watch(() => store.filters.country, async () => {
-  // Reset dependent filters to ensure data consistency when geography changes
   store.filters.channel = [];
   store.filters.brand = "";
   await updateDynamicLookups();
@@ -750,36 +910,39 @@ watch(() => store.filters.country, async () => {
 });
 
 async function updateDynamicLookups() {
-  const division = store.filters.division;
-  const countryCode = store.filters.country;
-  const countryName = countryOptions.value.find(c => c.value === countryCode)?.label;
-
-  // Always refresh Brand Families if a brand is selected, independent of division selection
   if (store.filters.brand) {
     await updateBrandFamilyOptions();
   } else {
     brandFamilyOptions.value = [];
   }
 
-  // Refresh dependent dropdowns if filters are already selected
   if (store.filters.channel?.length) await onChannelFilterChange();
   else subChannelOptions.value = [];
 
   if (store.filters.sub_channel?.length) await onSubChannelFilterChange();
   else accountOptions.value = [];
-
 }
 
 async function onChannelFilterChange() {
   const selectedDiv = store.filters.division;
-  const countryName = countryOptions.value.find(c => c.value === store.filters.country)?.label;
+  const countryCodes = store.filters.country;
   const channelCodes = store.filters.channel;
 
   if (channelCodes.length > 0) {
-    const divs = selectedDiv ? [selectedDiv] : (divisionOptions.value || ["Alcohol", "Non-Alcohol"]);
+    const divs = selectedDiv.length > 0 ? selectedDiv : (divisionOptions.value || ["Alcohol", "Non-Alcohol"]);
+    const countryNames = countryCodes.map(code => countryOptions.value.find(c => c.value === code)?.label).filter(Boolean) as string[];
+    const cNames = countryNames.length > 0 ? countryNames : [undefined];
+
     const subMap = new Map<string, {value: string, label: string}>();
     try {
-      const promises = divs.flatMap(d => channelCodes.map(ch => lookupApi.getSubchannels(d, ch, countryName)));
+      const promises = [];
+      for (const d of divs) {
+        for (const ch of channelCodes) {
+          for (const cN of cNames) {
+            promises.push(lookupApi.getSubchannels(d, ch, cN));
+          }
+        }
+      }
       const results = await Promise.all(promises);
       results.forEach(res => res.options.forEach(opt => subMap.set(String(opt.value), opt)));
       subChannelOptions.value = Array.from(subMap.values());
@@ -792,14 +955,24 @@ async function onChannelFilterChange() {
 
 async function onSubChannelFilterChange() {
   const selectedDiv = store.filters.division;
-  const countryName = countryOptions.value.find(c => c.value === store.filters.country)?.label;
+  const countryCodes = store.filters.country;
   const subChannelCodes = store.filters.sub_channel;
 
   if (subChannelCodes.length > 0) {
-    const divs = selectedDiv ? [selectedDiv] : (divisionOptions.value || ["Alcohol", "Non-Alcohol"]);
+    const divs = selectedDiv.length > 0 ? selectedDiv : (divisionOptions.value || ["Alcohol", "Non-Alcohol"]);
+    const countryNames = countryCodes.map(code => countryOptions.value.find(c => c.value === code)?.label).filter(Boolean) as string[];
+    const cNames = countryNames.length > 0 ? countryNames : [undefined];
+
     const accMap = new Map<string, {value: string, label: string}>();
     try {
-      const promises = divs.flatMap(d => subChannelCodes.map(sc => lookupApi.getAccounts(d, sc, countryName)));
+      const promises = [];
+      for (const d of divs) {
+        for (const sc of subChannelCodes) {
+          for (const cN of cNames) {
+            promises.push(lookupApi.getAccounts(d, sc, cN));
+          }
+        }
+      }
       const results = await Promise.all(promises);
       results.forEach(res => res.options.forEach(opt => accMap.set(String(opt.value), opt)));
       accountOptions.value = Array.from(accMap.values());
@@ -812,14 +985,22 @@ async function onSubChannelFilterChange() {
 
 async function updateBrandFamilyOptions() {
   const selectedDiv = store.filters.division;
-  const countryName = countryOptions.value.find(c => c.value === store.filters.country)?.label;
+  const countryCodes = store.filters.country;
   const brandCode = store.filters.brand;
 
   if (brandCode) {
-    const divs = selectedDiv ? [selectedDiv] : (divisionOptions.value || ["Alcohol", "Non-Alcohol"]);
+    const divs = selectedDiv.length > 0 ? selectedDiv : (divisionOptions.value || ["Alcohol", "Non-Alcohol"]);
+    const countryNames = countryCodes.map(code => countryOptions.value.find(c => c.value === code)?.label).filter(Boolean) as string[];
+    const cNames = countryNames.length > 0 ? countryNames : [undefined];
+
     const bfMap = new Map<string, {value: string, label: string}>();
     try {
-      const promises = divs.map(d => lookupApi.getBrandFamiliesByBrand(d, brandCode, countryName));
+      const promises = [];
+      for (const d of divs) {
+        for (const cN of cNames) {
+          promises.push(lookupApi.getBrandFamiliesByBrand(d, brandCode, cN));
+        }
+      }
       const results = await Promise.all(promises);
       results.forEach(res => res.options.forEach(opt => bfMap.set(String(opt.value), opt)));
       brandFamilyOptions.value = Array.from(bfMap.values());
@@ -839,13 +1020,12 @@ async function onBrandFilterChange() {
 const filteredEntries = computed(() => {
   let r = props.entries;
 
-  // Apply Main Filters (Safety Layer)
-  if (store.filters.division) {
-    r = r.filter(e => e.division === store.filters.division);
+  if (store.filters.division && store.filters.division.length > 0) {
+    r = r.filter(e => store.filters.division.includes(e.division));
   }
 
-  if (store.filters.country) {
-    const filterCode = store.filters.country;
+  if (store.filters.country && store.filters.country.length > 0) {
+    const filterCodes = store.filters.country;
     r = r.filter(e => {
       if (!e.country) return false;
       let c = e.country;
@@ -853,10 +1033,9 @@ const filteredEntries = computed(() => {
         try { c = JSON.parse(c); } catch { return false; }
       }
       if (c && typeof c === 'object') {
-        // Check if the selected code exists as a key in the {code: name} map
-        return Object.keys(c).includes(filterCode);
+        return filterCodes.some(fc => Object.keys(c).includes(fc));
       }
-      return String(c) === filterCode;
+      return filterCodes.includes(String(c));
     });
   }
 
@@ -869,7 +1048,6 @@ const filteredEntries = computed(() => {
         try { entryChannels = JSON.parse(entryChannels); } catch { return false; }
       }
       if (entryChannels && typeof entryChannels === 'object') {
-        // Check if any of the selected filter channels exist as keys in the entry's channel object
         return filterChannels.some(fc => Object.keys(entryChannels as Record<string, string>).includes(fc));
       }
       return false;
@@ -940,8 +1118,8 @@ const filteredEntries = computed(() => {
     r = r.filter(e => e.categorisation === store.filters.categorisation);
   }
 
-  if (store.filters.status) {
-    r = r.filter(e => e.status === store.filters.status);
+  if (store.filters.status && store.filters.status.length > 0) {
+    r = r.filter(e => store.filters.status.includes(e.status as string));
   }
 
   if (store.filters.owner) {
@@ -949,18 +1127,16 @@ const filteredEntries = computed(() => {
     r = r.filter(e => e.owner?.toLowerCase().includes(s));
   }
 
-  if (store.filters.ibp_step) {
-    r = r.filter(e => e.ibpStep === store.filters.ibp_step);
+  if (store.filters.ibp_step && store.filters.ibp_step.length > 0) {
+    r = r.filter(e => store.filters.ibp_step.includes(e.ibpStep as string));
   }
 
-  if (quickFilters.value.openOnly)
-    r = r.filter(e => e.status === "Open");
-  if (quickFilters.value.highPriority)
-    r = r.filter(e => e.probability === "High" || e.probability === "Very High");
-  if (quickFilters.value.recentlyModified) {
-    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    r = r.filter(e => e.lastModified && new Date(e.lastModified).getTime() > cutoff);
+  if (store.filters.probability === 'High') {
+    r = r.filter(e => e.probability === 'High' || e.probability === 'Very High');
+  } else if (store.filters.probability === 'High & Medium') {
+    r = r.filter(e => e.probability === 'High' || e.probability === 'Very High' || e.probability === 'Medium');
   }
+
   return r;
 });
 
@@ -973,12 +1149,10 @@ const splitByOptions = [
   { key: "probability", label: "Priority" },
 ];
 
-const splitBy    = ref<string[]>(props.defaultSplitBy.length ? props.defaultSplitBy : []); //"country", "division"
+const splitBy    = ref<string[]>(props.defaultSplitBy.length ? props.defaultSplitBy : []);
 const groupByOpen = ref(false);
 
-const closeGroupBy = () => {
-  groupByOpen.value = false;
-};
+const closeGroupBy = () => { groupByOpen.value = false; };
 
 function toggleSplitBy(key: string) {
   const i = splitBy.value.indexOf(key);
@@ -994,13 +1168,10 @@ const groupedEntries = computed(() => {
   if (!dims.length) return [];
   const map = new Map<string, { entries: Entry[]; vals: string[] }>();
   
-  // Helper to format country values
   const formatDimensionValue = (d: string, val: unknown): string => {
     if (!val) return "—";
     if (d === "country") {
       let countryObj = val;
-      
-      // If it's a string that looks like JSON, parse it
       if (typeof val === "string" && val.startsWith("{")) {
         try {
           countryObj = JSON.parse(val);
@@ -1008,13 +1179,10 @@ const groupedEntries = computed(() => {
           return val;
         }
       }
-      
-      // If it's an object, extract the country name
       if (typeof countryObj === "object") {
         const countryName = Object.values(countryObj as Record<string, string>)[0];
         return countryName || "—";
       }
-      
       return String(val);
     }
     return String(val);
@@ -1042,7 +1210,7 @@ const groupedEntries = computed(() => {
 });
 
 // ─── Column visibility ────────────────────────────────────────────────────────
-const colVisible = ref({
+const colVisible = ref<Record<string, boolean>>({
   ibpStep:        true,
   division:       false,
   country:        false,
@@ -1070,6 +1238,99 @@ const colVisible = ref({
   lastModified:   false,
 });
 
+// ─── Column Definitions & Dynamic Reordering (Drag and Drop) ───────────────────
+interface VisibleCol {
+  type: 'expand' | 'actions' | 'base' | 'phased';
+  id: string;
+  label?: string;
+  class?: string;
+  fixed: boolean;
+  colDef?: PhasedCol;
+}
+
+const columnDefinitions = [
+  { key: 'ibpStep', label: 'IBP Step', class: 'col-md' },
+  { key: 'division', label: 'Division', class: 'col-sm' },
+  { key: 'country', label: 'Country', class: 'col-sm' },
+  { key: 'categorisation', label: 'Categorisation', class: 'col-lg' },
+  { key: 'description', label: 'Short Description', class: 'col-xl' },
+  { key: 'detailedDescription', label: 'Detailed Description', class: 'col-xl' },
+  { key: 'customer', label: 'Customer(s)', class: 'col-lg' },
+  { key: 'product', label: 'Product', class: 'col-lg' },
+  { key: 'rAndO', label: 'Risk vs. Opp.', class: 'col-md' },
+  { key: 'probability', label: 'Probability', class: 'col-sm tc' },
+  { key: 'addToForecastBy', label: 'Add to Forecast By', class: 'col-md' },
+  { key: 'creator', label: 'Creator', class: 'col-md' },
+  { key: 'owner', label: 'Owner', class: 'col-md' },
+  { key: 'status', label: 'Status', class: 'col-md' },
+  { key: 'lastModified', label: 'Last Modified', class: 'col-lg' },
+  { key: 'financialImpactType', label: 'Financial Impact Type', class: 'col-md' },
+  { key: 'currency', label: 'Financial Impact Currency', class: 'col-sm' },
+  { key: 'impact', label: 'Financial Impact Value', class: 'col-md tr' },
+  { key: 'volumeCases', label: 'Volume (Cases)', class: 'col-md tr' },
+  { key: 'volumeImpactType', label: 'Volume Impact Type', class: 'col-sm' },
+  { key: 'volumeImpactValue', label: 'Volume Impact Value', class: 'col-md tr' },
+  { key: 'impactPeriods', label: 'Impact Period(s)', class: 'col-lg' }
+];
+
+const columnOrder = ref<string[]>([
+  'ibpStep', 'division', 'country', 'categorisation', 'description', 'detailedDescription',
+  'customer', 'product', 'rAndO', 'probability', 'addToForecastBy', 'creator', 'owner',
+  'status', 'lastModified', 'financialImpactType', 'currency', 'impact', 'volumeCases',
+  'volumeImpactType', 'volumeImpactValue', 'impactPeriods'
+]);
+
+const isColumnsDraggable = ref(true);
+const dragIndex = ref<number | null>(null);
+const dragOverIndex = ref<number | null>(null);
+
+const onDragStart = (e: DragEvent, index: number) => {
+  if (!isColumnsDraggable.value || visibleColumns.value[index].fixed) {
+    e.preventDefault();
+    return;
+  }
+  dragIndex.value = index;
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index.toString());
+  }
+};
+const onDragOver = (e: DragEvent, index: number) => {
+  if (!isColumnsDraggable.value || visibleColumns.value[index].fixed) return;
+  e.preventDefault();
+};
+const onDragEnter = (e: DragEvent, index: number) => {
+  if (!isColumnsDraggable.value || visibleColumns.value[index].fixed) return;
+  e.preventDefault();
+  dragOverIndex.value = index;
+};
+const onDragLeave = (e: DragEvent, index: number) => {
+  if (dragOverIndex.value === index) dragOverIndex.value = null;
+};
+const onDrop = (e: DragEvent, index: number) => {
+  if (!isColumnsDraggable.value || visibleColumns.value[index].fixed) return;
+  e.preventDefault();
+  
+  if (dragIndex.value !== null && dragIndex.value !== index) {
+    const fromCol = visibleColumns.value[dragIndex.value];
+    const toCol = visibleColumns.value[index];
+
+    const fromOrderIndex = columnOrder.value.indexOf(fromCol.id);
+    const toOrderIndex = columnOrder.value.indexOf(toCol.id);
+
+    if (fromOrderIndex !== -1 && toOrderIndex !== -1) {
+      columnOrder.value.splice(fromOrderIndex, 1);
+      columnOrder.value.splice(toOrderIndex, 0, fromCol.id);
+    }
+  }
+  dragIndex.value = null;
+  dragOverIndex.value = null;
+};
+const onDragEnd = () => {
+  dragIndex.value = null;
+  dragOverIndex.value = null;
+};
+
 // ─── Phased Impact View (multi-select) ───────────────────────────────────────
 interface PhasedCol {
   label:   string;
@@ -1079,7 +1340,6 @@ interface PhasedCol {
 }
 
 const MONTH_ABBRS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
 function periodToMonthAbbr(period: string): string {
   const i = parseInt(period.replace("F","")) - 1;
   return (i >= 0 && i < 12) ? MONTH_ABBRS[i] : period;
@@ -1129,13 +1389,11 @@ watch(phasedVolumeViews, (val) => {
 
 const hasPhasedViews = computed(() => phasedImpactViews.value.length > 0 || phasedVolumeViews.value.length > 0);
 
-// Build columns for all currently-selected phased views, in definition order
 const phasedColumns = computed((): PhasedCol[] => {
   const cols: PhasedCol[] = [];
   const currentYear = new Date().getFullYear();
   const years = [currentYear, currentYear + 1];
 
-  // Financial Impact Columns
   const activeImpactKeys = phasedViewOptions.map(o => o.key).filter(k => phasedImpactViews.value.includes(k));
   for (const view of activeImpactKeys) {
     if (view === "month") {
@@ -1159,7 +1417,6 @@ const phasedColumns = computed((): PhasedCol[] => {
     }
   }
 
-  // Volume Impact Columns
   const activeVolumeKeys = phasedViewOptions.map(o => o.key).filter(k => phasedVolumeViews.value.includes(k));
   for (const view of activeVolumeKeys) {
     if (view === "month") {
@@ -1182,6 +1439,40 @@ const phasedColumns = computed((): PhasedCol[] => {
         cols.push({ label: `${y} Total (Vol.)`, year: String(y), periods: Array.from({length:12},(_,i) => `F${String(i+1).padStart(2,"0")}`), type: 'volume' });
     }
   }
+  return cols;
+});
+
+// Update column order with new phased columns maintaining their insertion 
+watch(phasedColumns, (newCols) => {
+  newCols.forEach(c => {
+    const key = `phased_${c.label}`;
+    if (!columnOrder.value.includes(key)) {
+      const idx = columnOrder.value.indexOf('impactPeriods');
+      if (idx !== -1) columnOrder.value.splice(idx, 0, key);
+      else columnOrder.value.push(key);
+    }
+  });
+}, { immediate: true, deep: true });
+
+const visibleColumns = computed((): VisibleCol[] => {
+  const cols: VisibleCol[] = [];
+  cols.push({ id: 'expand', type: 'expand', class: 'col-expand', fixed: true });
+
+  columnOrder.value.forEach(key => {
+    if (key.startsWith('phased_')) {
+      if (hasPhasedViews.value) {
+        const pc = phasedColumns.value.find(c => `phased_${c.label}` === key);
+        if (pc) cols.push({ id: key, type: 'phased', colDef: pc, label: pc.label, class: 'col-phased tc', fixed: false });
+      }
+    } else {
+      if (colVisible.value[key]) {
+        const def = columnDefinitions.find(d => d.key === key);
+        if (def) cols.push({ id: key, type: 'base', label: def.label, class: def.class, fixed: false });
+      }
+    }
+  });
+
+  cols.push({ id: 'actions', type: 'actions', label: 'Actions', class: 'col-actions tc', fixed: true });
   return cols;
 });
 
@@ -1230,7 +1521,6 @@ function formatImpactPeriods(
       const yd = parseInt(a.impactYear) - parseInt(b.impactYear);
       return yd || parseInt(a.impactPeriod.substring(1)) - parseInt(b.impactPeriod.substring(1));
     });
-  // Check continuity
   let continuous = true;
   for (let i = 1; i < sorted.length; i++) {
     const py = parseInt(sorted[i-1].impactYear), cy = parseInt(sorted[i].impactYear);
@@ -1346,25 +1636,15 @@ async function handleStatusChange(row: Entry, newStatus: string) {
 // ─── Formatters ───────────────────────────────────────────────────────────────
 function formatCountry(c?: string | Record<string, string>): string {
   if (!c) return "—";
-  
   let countryObj = c;
   
-  // If it's a string that looks like JSON, parse it
   if (typeof c === "string" && c.startsWith("{")) {
-    try {
-      countryObj = JSON.parse(c);
-    } catch {
-      return c;
-    }
+    try { countryObj = JSON.parse(c); } catch { return c; }
   }
-  
-  // Handle country as a dictionary {company_code: country_name}
   if (typeof countryObj === "object") {
     const countryName = Object.values(countryObj as Record<string, string>)[0];
     return countryName || "—";
   }
-  
-  // Handle as string (legacy)
   return String(c) || "—";
 }
 
@@ -1391,69 +1671,42 @@ function escapeCSV(v: string | number): string {
 function exportToCSV(rows: Entry[], filename = `entries_${new Date().toISOString().split("T")[0]}.csv`) {
   if (!rows.length) { ElMessage.warning("No entries to export"); return; }
 
-  const headers: string[] = [];
-  const cv = colVisible.value;
-  if (cv.ibpStep)         headers.push("IBP Step");
-  if (cv.division)        headers.push("Division");
-  if (cv.country)         headers.push("Country");
-  if (cv.categorisation)  headers.push("Categorisation");
-  if (cv.description)     headers.push("Short Description");
-  if (cv.detailedDescription) headers.push("Detailed Description");
-  if (cv.customer)        headers.push("Customer(s)");
-  if (cv.product)         headers.push("Product");
-  if (cv.rAndO)           headers.push("Risk vs. Opp.");
-  if (cv.probability)     headers.push("Probability");
-  if (cv.addToForecastBy) headers.push("Add to Forecast By");
-  if (cv.creator)         headers.push("Creator");
-  if (cv.owner)           headers.push("Owner");
-  if (cv.status)          headers.push("Status");
-  if (cv.lastModified)    headers.push("Last Modified");
-  if (cv.financialImpactType)      headers.push("Impact Type");
-  if (cv.currency)        headers.push("Financial Impact Currency");
-  if (cv.impact)          headers.push("Impact");
-  if (cv.volumeCases)     headers.push("Volume (Cases)");
-  if (cv.volumeImpactType) headers.push("Volume Impact Type");
-  if (cv.volumeImpactValue) headers.push("Volume Impact Value");
-  if (hasPhasedViews.value) {
-    phasedColumns.value.forEach(c => headers.push(c.label));
-  } else if (cv.impactPeriods) {
-    headers.push("Impact Period(s)");
-  }
+  const activeHeaders = visibleColumns.value.filter(c => c.type !== 'expand' && c.type !== 'actions');
+  const headers = activeHeaders.map(c => c.label || '');
 
   const data = rows.map(e => {
     const r: string[] = [];
-    if (cv.ibpStep)         r.push(escapeCSV(e.ibpStep || ""));
-    if (cv.division)        r.push(escapeCSV(e.division || ""));
-    if (cv.country)         r.push(escapeCSV(formatCountry(e.country) || ""));
-    if (cv.categorisation)  r.push(escapeCSV(e.categorisation || ""));
-    if (cv.description)     r.push(escapeCSV((e as any).shortDescription || e.description || ""));
-    if (cv.detailedDescription) r.push(escapeCSV(e.description || ""));
-    if (cv.customer)        r.push(escapeCSV([e.account, e.subChannel, e.channel].filter(Boolean).join(" / ")));
-    if (cv.product)         r.push(escapeCSV([e.brand, formatBrandFamily(e.brandFamily)].filter(Boolean).join(" / ")));
-    if (cv.rAndO)           r.push(escapeCSV(e.rAndO || ""));
-    if (cv.probability)     r.push(escapeCSV(e.probability || ""));
-    if (cv.addToForecastBy) r.push(escapeCSV(
-      e.addToForecastByPeriod && e.addToForecastByYear
-        ? `${e.addToForecastByPeriod} ${e.addToForecastByYear}`
-        : (e.impactPeriod && e.impactYear ? `${e.impactPeriod} ${e.impactYear}` : "")));
-    if (cv.creator)         r.push(escapeCSV((e as any).creator || ""));
-    if (cv.owner)           r.push(escapeCSV(e.owner || ""));
-    if (cv.status)          r.push(escapeCSV(e.status || "Open"));
-    if (cv.lastModified)    r.push(escapeCSV(formatDate(e.lastModified)));
-    if (cv.financialImpactType)      r.push(escapeCSV(e.financialImpactType || ""));
-    if (cv.currency)        r.push(escapeCSV(e.impactCurrency || ""));
-    if (cv.impact)          r.push(e.impact ? String(parseFloat(e.impact)) : "");
-    if (cv.volumeCases)     r.push((e as any).volumeImpact ? String(parseFloat((e as any).volumeImpact)) : "");
-    if (cv.volumeImpactType) r.push(escapeCSV((e as any).volumeImpactType || ""));
-    if (cv.volumeImpactValue) r.push((e as any).volumeImpactValue ? String(parseFloat((e as any).volumeImpactValue)) : "");
-    if (hasPhasedViews.value) {
-      phasedColumns.value.forEach(col => {
-        const v = getAggregatedImpact(e, col);
+    activeHeaders.forEach(col => {
+      if (col.id === 'ibpStep') r.push(escapeCSV(e.ibpStep || ""));
+      else if (col.id === 'division') r.push(escapeCSV(e.division || ""));
+      else if (col.id === 'country') r.push(escapeCSV(formatCountry(e.country) || ""));
+      else if (col.id === 'categorisation') r.push(escapeCSV(e.categorisation || ""));
+      else if (col.id === 'description') r.push(escapeCSV((e as any).shortDescription || e.description || ""));
+      else if (col.id === 'detailedDescription') r.push(escapeCSV(e.description || ""));
+      else if (col.id === 'customer') r.push(escapeCSV([e.account, e.subChannel, e.channel].filter(Boolean).join(" / ")));
+      else if (col.id === 'product') r.push(escapeCSV([e.brand, formatBrandFamily(e.brandFamily)].filter(Boolean).join(" / ")));
+      else if (col.id === 'rAndO') r.push(escapeCSV(e.rAndO || ""));
+      else if (col.id === 'probability') r.push(escapeCSV(e.probability || ""));
+      else if (col.id === 'addToForecastBy') r.push(escapeCSV(
+        e.addToForecastByPeriod && e.addToForecastByYear ? `${e.addToForecastByPeriod} ${e.addToForecastByYear}`
+          : (e.impactPeriod && e.impactYear ? `${e.impactPeriod} ${e.impactYear}` : "")));
+      else if (col.id === 'creator') r.push(escapeCSV((e as any).creator || ""));
+      else if (col.id === 'owner') r.push(escapeCSV(e.owner || ""));
+      else if (col.id === 'status') r.push(escapeCSV(e.status || "Open"));
+      else if (col.id === 'lastModified') r.push(escapeCSV(formatDate(e.lastModified)));
+      else if (col.id === 'financialImpactType') r.push(escapeCSV(e.financialImpactType || ""));
+      else if (col.id === 'currency') r.push(escapeCSV(e.impactCurrency || ""));
+      else if (col.id === 'impact') r.push(e.impact ? String(parseFloat(e.impact)) : "");
+      else if (col.id === 'volumeCases') r.push((e as any).volumeImpact ? String(parseFloat((e as any).volumeImpact)) : ((e as any).volumeCases ? String(parseFloat((e as any).volumeCases)) : ""));
+      else if (col.id === 'volumeImpactType') r.push(escapeCSV((e as any).volumeImpactType || ""));
+      else if (col.id === 'volumeImpactValue') r.push((e as any).volumeImpactValue ? String(parseFloat((e as any).volumeImpactValue)) : "");
+      else if (col.type === 'phased') {
+        const v = getAggregatedImpact(e, col.colDef!);
         r.push(v !== 0 ? String(v) : "");
-      });
-    } else if (cv.impactPeriods) {
-      r.push(escapeCSV(formatImpactPeriods(e.childImpacts, e.impactPeriod, e.impactYear)));
-    }
+      } else if (col.id === 'impactPeriods') {
+        r.push(escapeCSV(formatImpactPeriods(e.childImpacts, e.impactPeriod, e.impactYear)));
+      }
+    });
     return r.join(",");
   });
 
@@ -1470,7 +1723,8 @@ function exportToCSV(rows: Entry[], filename = `entries_${new Date().toISOString
 // ─── Misc ─────────────────────────────────────────────────────────────────────
 function clearFilters() {
   store.resetFilters();
-  quickFilters.value = { openOnly: false, highPriority: false, recentlyModified: false };
+  store.filters.probability = ""; // Ensure probability is wiped alongside the store function
+  applyUserDefaults();
   store.fetchEntries();
 }
 </script>
@@ -1491,8 +1745,31 @@ function clearFilters() {
   border-bottom: 1px solid var(--border-color);
 }
 .section-label { font-size:13px; font-weight:600; color:var(--text-secondary); margin:0 0 10px; }
-.quick-filter-row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
-.quick-filter-row:last-child { margin-bottom:0; }
+
+.quick-filters-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+.qf-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.qf-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 90px;
+}
+.qf-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .quick-btn {
   display:inline-flex; align-items:center;
   padding:5px 14px; border-radius:6px;
@@ -1517,7 +1794,6 @@ function clearFilters() {
 .filter-row { margin-bottom:12px; }
 .filter-label { display:block; font-size:12px; font-weight:500; color:var(--text-secondary); margin-bottom:4px; }
 
-/* --- Custom Filter Input Styles (Matching EntryForm) --- */
 :deep(.all-filters-body .el-input__wrapper),
 :deep(.all-filters-body .el-select__wrapper) {
   background-color: #f4f5f7 !important;
@@ -1551,16 +1827,23 @@ function clearFilters() {
 
 /* ── Toolbar ──────────────────────────────────────────── */
 .table-toolbar {
-  display:flex; justify-content:space-between; align-items:center;
+  display:flex; justify-content:space-between; align-items:flex-start;
   padding:16px 24px; border-bottom:1px solid var(--border-color);
   background:linear-gradient(180deg,rgba(245,247,251,.8) 0%,rgba(241,245,252,.9) 100%);
 }
+
+.toolbar-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
 .entry-count { font-size:14px; color:var(--text-secondary); font-weight:500; }
-.toolbar-right { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.toolbar-right { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top: -2px; }
 .split-view-control { display:flex; align-items:center; gap:8px; }
 .split-view-label { font-size:13px; color:var(--text-secondary); white-space:nowrap; }
 
-/* ── SHARED UNIFORM STYLES FOR ALL TOOLBAR BUTTONS/DROPDOWNS ── */
 .toolbar-right .el-button,
 .phased-view-trigger,
 .group-by-trigger {
@@ -1586,11 +1869,9 @@ function clearFilters() {
   gap: 8px !important;
 }
 
-/* Ensure individual widths aren't destroyed entirely but maintained at their minimums */
 .phased-view-trigger { min-width: 160px; }
 .group-by-trigger { min-width: 140px; }
 
-/* Unified hover states */
 .toolbar-right .el-button:hover,
 .phased-view-trigger:hover,
 .group-by-trigger:hover {
@@ -1598,7 +1879,6 @@ function clearFilters() {
   border-color: #c0c4cc !important;
 }
 
-/* Overriding Active States for Phased View Dropdowns to remain white */
 .phased-view-active {
   background-color: #ffffff !important;
   border-color: var(--border-color, #dcdfe6) !important;
@@ -1608,7 +1888,6 @@ function clearFilters() {
   color: #000 !important;
 }
 
-/* Button specific overrides */
 .black-icon-text {
   color: #000 !important;
   border-color: var(--border-color);
@@ -1616,13 +1895,8 @@ function clearFilters() {
 .black-icon-text :deep(.el-icon) {
   color: #000 !important;
 }
+.phased-view-text { color: #000; font-weight: 500; }
 
-.phased-view-text {
-  color: #000;
-  font-weight: 500;
-}
-
-/* ── Phased view / Group By dropdowns ─────────────────── */
 .phased-view-control, .group-by-wrap { position:relative; }
 .phased-view-trigger svg, .chevron-sm { width:14px; height:14px; flex-shrink:0; color:var(--text-secondary); }
 
@@ -1648,10 +1922,7 @@ function clearFilters() {
 .gbd-divider { height:1px; background:var(--el-border-color-lighter); margin:2px 0; }
 
 /* ── Column selector popover ─────────────────────────── */
-.column-popover {
-  padding: 12px 0 12px 12px !important;
-}
-
+.column-popover { padding: 12px 0 12px 12px !important; }
 .column-selector-container { display: flex; flex-direction: column; }
 .column-selector-title {
   font-family: 'Jost', Arial, sans-serif;
@@ -1661,7 +1932,6 @@ function clearFilters() {
   margin: 0 0 12px 0;
   padding-right: 12px;
 }
-
 .column-selector-list {
   display: flex;
   flex-direction: column;
@@ -1669,23 +1939,16 @@ function clearFilters() {
   overflow-y: auto;
   padding-right: 8px;
 }
-
 .column-selector-list :deep(.el-checkbox) {
   margin-right: 0;
   margin-bottom: 8px;
   font-weight: normal;
 }
-
 .column-selector-list :deep(.el-checkbox:last-child) {
   margin-bottom: 0;
 }
-
-.column-selector-list::-webkit-scrollbar {
-  width: 6px;
-}
-.column-selector-list::-webkit-scrollbar-track {
-  background: transparent;
-}
+.column-selector-list::-webkit-scrollbar { width: 6px; }
+.column-selector-list::-webkit-scrollbar-track { background: transparent; }
 .column-selector-list::-webkit-scrollbar-thumb {
   background-color: #909399;
   border-radius: 10px;
@@ -1704,6 +1967,7 @@ function clearFilters() {
   padding:9px 12px; white-space:nowrap;
   border-bottom:1px solid var(--border-color);
   color:var(--text-secondary); text-align:left;
+  transition: background-color 0.2s, border-left 0.2s;
 }
 .data-table td {
   padding:8px 12px; border-bottom:1px solid #f0f2f5;
@@ -1712,16 +1976,20 @@ function clearFilters() {
 .data-table tr:last-child td { border-bottom:none; }
 .data-table tbody tr:hover td { background:#f9fafb; }
 
-/* Row state styles */
+.draggable-th { cursor: grab; }
+.draggable-th:active { cursor: grabbing; }
+.drag-over {
+  background-color: #e5e7eb !important;
+  border-left: 2px solid var(--primary, #030213);
+}
+
 .row-approved td  { background:#f0fdf4 !important; }
 .row-dismissed td { background:#f3f4f6 !important; }
 .row-forecast td  { background:#eff6ff !important; }
 
-/* Child rows */
 .child-row td { background:#fafafa; padding-left:24px; }
 .child-row:hover td { background:#f3f4f6 !important; }
 
-/* Column width helpers */
 .col-expand  { width:36px; }
 .col-sm      { min-width:80px; }
 .col-md      { min-width:120px; }
@@ -1730,12 +1998,10 @@ function clearFilters() {
 .col-phased  { min-width:90px; }
 .col-actions { width:120px; }
 
-/* Text alignment helpers */
 .tc { text-align:center; }
 .tr { text-align:left; }
 .fw { font-weight:600; }
 
-/* ── Expand button ────────────────────────────────────── */
 .expand-btn {
   display:inline-flex; align-items:center; justify-content:center;
   width:22px; height:22px; border:none; background:transparent;
@@ -1745,13 +2011,11 @@ function clearFilters() {
 .expand-icon { width:14px; height:14px; transition:transform 0.2s; }
 .expand-icon.rotated { transform:rotate(90deg); }
 
-/* ── Cell helpers ─────────────────────────────────────── */
 .cell-muted { color:#9ca3af; }
 .cell-sub { font-size:11px; color:#9ca3af; }
 .italic { font-style:italic; }
 .phased-cell { font-variant-numeric:tabular-nums; }
 
-/* ── Status badge ─────────────────────────────────────── */
 .status-badge {
   display:inline-block; padding:2px 8px; border-radius:4px;
   font-size:12px; font-weight:500;
@@ -1762,7 +2026,6 @@ function clearFilters() {
 .status-forecast { background:#dbeafe; color:#1e40af; }
 .dim { opacity:.5; }
 
-/* ── Probability badge ────────────────────────────────── */
 .prob-badge {
   display:inline-flex; align-items:center; justify-content:center;
   width:28px; height:28px; border-radius:6px;
@@ -1772,7 +2035,6 @@ function clearFilters() {
 .prob-medium { background:#cffafe; color:#0e7490; }
 .prob-low    { background:#e0f2fe; color:#0369a1; }
 
-/* ── Action buttons ───────────────────────────────────── */
 .action-btns { display:flex; align-items:center; justify-content:center; gap:4px; }
 .action-icon {
   display:inline-flex; align-items:center; justify-content:center;
@@ -1785,11 +2047,8 @@ function clearFilters() {
 .action-icon--danger { color:#d4183d; }
 .action-icon--danger:hover { background:#fff1f3; color:#d4183d; }
 
-.text-red {
-  color: #d4183d !important;
-}
+.text-red { color: #d4183d !important; }
 
-/* ── Split group ──────────────────────────────────────── */
 .split-group { margin-bottom:24px; }
 .split-group-header {
   display:flex; align-items:center; justify-content:space-between;
@@ -1814,7 +2073,6 @@ function clearFilters() {
   padding:2px 12px; white-space:nowrap; flex-shrink:0;
 }
 
-/* ── Scrollbar styling ────────────────────────────────── */
 .table-scroll-wrap::-webkit-scrollbar { height:8px; }
 .table-scroll-wrap::-webkit-scrollbar-track { background:transparent; }
 .table-scroll-wrap::-webkit-scrollbar-thumb { background:rgba(0,0,0,.22); border-radius:4px; }

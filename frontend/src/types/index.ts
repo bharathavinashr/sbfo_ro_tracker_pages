@@ -7,6 +7,8 @@ export interface ChildImpact {
   volumeLitres?: string;
   volumeCases?: string;
   volumeImpactValue?: string;
+  gpAud?: string;
+  gpNzd?: string;
   impact?: string;
   impactCurrency?: string;
   volumeImpact?: string;
@@ -54,6 +56,11 @@ export interface Entry {
   impact?: string;
   impactCurrency?: string;
   volumeImpact?: string;
+  
+  // NEW FIELDS
+  fixedNsvGpRatio?: string;
+  fixedNsvVolRatio?: string;
+  netFinancialImpactValue?: string;
 }
 
 export type UserRole =

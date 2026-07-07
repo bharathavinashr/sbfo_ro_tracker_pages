@@ -11,6 +11,8 @@ class ChildImpactBase(BaseModel):
     volume_litres: Optional[str] = None
     volume_cases: Optional[str] = None
     volume_impact_value: Optional[str] = None
+    gp_aud: Optional[str] = None
+    gp_nzd: Optional[str] = None
 
 
 class ChildImpactOut(ChildImpactBase):
@@ -50,6 +52,11 @@ class EntryBase(BaseModel):
     volume_cases: Optional[str] = None
     volume_impact_type: Optional[str] = None
     volume_impact_value: Optional[str] = None
+
+    # NEW FIELDS
+    fixed_nsv_gp_ratio: Optional[str] = None
+    fixed_nsv_vol_ratio: Optional[str] = None
+    net_financial_impact_value: Optional[str] = None
 
 
 class EntryCreate(EntryBase):

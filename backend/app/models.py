@@ -59,6 +59,11 @@ class Entry(Base):
     volume_impact_type = Column(String(20), nullable=True) # Stores "Cases" or "9LE"
     volume_impact_value = Column(String(50), nullable=True)
 
+    # NEW COLUMNS
+    fixed_nsv_gp_ratio = Column(String(50), nullable=True)
+    fixed_nsv_vol_ratio = Column(String(50), nullable=True)
+    net_financial_impact_value = Column(String(50), nullable=True)
+
 
 class ChildImpact(Base):
     __tablename__ = "child_impacts"
@@ -78,6 +83,8 @@ class ChildImpact(Base):
     volume_litres = Column(String(50), nullable=True)
     volume_cases = Column(String(50), nullable=True)
     volume_impact_value = Column(String(50), nullable=True)
+    gp_aud = Column(String(50), nullable=True)
+    gp_nzd = Column(String(50), nullable=True)
 
 
 class AppUser(Base):

@@ -29,10 +29,21 @@ def get_latest_entries(db: Session, filters: dict = None, include_deleted: bool 
             column = getattr(models.Entry, field)
             # Handle JSON multi-select columns
             if field in ["channel", "sub_channel", "account", "brand", "brand_family", "country"]:
-                # For JSON storage, we check if any of the filter values match keys in the JSON object
                 filter_list = [value] if isinstance(value, str) else value
-                # column is already JSONB type from models.Entry
+                if field == "country":
+                    normalized: list[str] = []
+                    for item in filter_list:
+                        normalized.append(item)
+                        if isinstance(item, str) and item.isdigit():
+                            stripped = item.lstrip("0") or "0"
+                            if stripped != item:
+                                normalized.append(stripped)
+                            if len(stripped) < 4:
+                                normalized.append(stripped.zfill(4))
+                    filter_list = list(dict.fromkeys(normalized))
                 query = query.filter(func.jsonb_exists_any(column, filter_list))
+            elif isinstance(value, (list, tuple)):
+                query = query.filter(column.in_(value))
             else:
                 query = query.filter(column == value)
 
@@ -164,6 +175,8 @@ def _new_version_with_status(db: Session, entry_id: int, new_status: str, modifi
             volume_litres=ci.volume_litres,
             volume_cases=ci.volume_cases,
             volume_impact_value=ci.volume_impact_value,
+            gp_aud=ci.gp_aud,
+            gp_nzd=ci.gp_nzd,
         ))
 
     db.commit()

@@ -6,7 +6,6 @@
       <img :src="logoUrl" alt="Suntory Oceania" class="header-logo" />
     </header>
     <div class="page-container">
-    <!-- Header -->
     <div class="main-header">
       <div class="header-left">
         <div class="title-with-logo">
@@ -21,7 +20,6 @@
           <el-icon class="role-icon"><User /></el-icon>
           <div class="role-meta">
             <span class="role-label">User Type</span>
-            <!-- LOCAL: manual user selector -->
             <el-select
               key="local-dropdown"
               v-if="authMode === 'LOCAL'"
@@ -42,7 +40,6 @@
                 <span class="user-role-tag">{{ ROLE_MAP[u.role] }}</span>
               </el-option>
             </el-select>
-            <!-- DBX + System Admin: test-user impersonation dropdown -->
             <template v-else-if="authMode === 'DBX' && dbxAdminUser && Number(dbxAdminUser.role) === 0">
               <span class="role-email">{{ dbxAdminUser.email }}</span>
               <el-select
@@ -67,7 +64,6 @@
                 </el-option>
               </el-select>
             </template>
-            <!-- DBX: plain identity display -->
             <span v-else class="role-email">
               {{ store.currentUser?.email ?? "Resolving identity..." }}
             </span>
@@ -99,19 +95,9 @@
         >
           Manage Users
         </el-button>
-
-        <!-- <el-button
-          v-if="store.canCreate"
-          type="primary"
-          :icon="Plus"
-          @click="openCreate"
-        >
-          Add Entry
-        </el-button> -->
       </div>
     </div>
 
-    <!-- Table -->
     <EntriesTable
       :entries="store.displayEntries"
       :can-approve="store.canApprove"
@@ -123,7 +109,6 @@
       @approve="handleApprove"
     />
 
-    <!-- Entry Form Dialog -->
     <el-dialog
       v-model="formOpen"
       width="90%"
@@ -142,7 +127,6 @@
       </template>
     </el-dialog>
 
-    <!-- Generate Snapshot Dialog -->
     <LockView v-model="lockViewOpen" />
 
     </div>
@@ -161,7 +145,6 @@ import EntryForm from "@/components/EntryForm.vue";
 import LockView from "@/components/LockView.vue";
 import type { Entry } from "@/types";
 import logoUrl from "@/assets/SuntoryOceania-Logo-RGB-Reversed.png";
-import backgroundImage from "@/assets/SuntoryOceania-Patterns-RGB-Blue-Water_Ripples.png";
 import { ROLE_MAP } from "@/types";
 
 const router = useRouter();
@@ -169,12 +152,8 @@ const store = useEntryStore();
 
 const impersonationUsers = computed(() => {
   return store.users.filter(u => {
-    // Safely format the email for checking
     const email = u.email?.toLowerCase().trim() || "";
-    
     const isNotInternal = !['@suntory.com', '@beamsuntory.com'].some(domain => email.endsWith(domain));
-
-    // Only return users who meet ALL conditions
     return isNotInternal;
   });
 });
@@ -199,7 +178,6 @@ onMounted(async () => {
     try {
       const me = await authApi.getMe();
       store.currentUser = me;
-      // System Admin in DBX mode: load test users (non-@suntory.com) for impersonation
       if (Number(me.role) === 0) {
         dbxAdminUser.value = me;
         await store.fetchUsers();
@@ -218,7 +196,7 @@ watch(() => store.currentUser, () => { store.fetchEntries(); });
 
 function openCreate() {
   editingEntry.value = null;
-  formKey.value++; // Force EntryForm to reset by destroying and recreating it
+  formKey.value++; 
   formOpen.value = true;
 }
 
@@ -230,7 +208,6 @@ function openEdit(entry: Entry) {
 function openDuplicate(entry: Entry) {
   editingEntry.value = null;
   formOpen.value = true;
-  // Pre-fill form with copied data (minus id/version)
   setTimeout(() => {
     const hasChildren = entry.childImpacts && entry.childImpacts.length > 0;
     const copy = {
@@ -280,19 +257,27 @@ async function handleSave() {
       modified_user: store.currentUser?.email ?? null,
       status: data.status,
       short_description: data.shortDescription,
-      description: data.detailedDescription,          // ← was data.description
+      description: data.detailedDescription,          
       financial_impact_type: data.financialImpactType,
-      volume_cases: (data as any).volumeCases ?? null, // ← cast if field is missing from type
+      volume_cases: (data as any).volumeCases ?? null, 
       volume_impact_type: data.volumeImpactType,
       volume_impact_value: (data as any).volumeImpactValue,
-      child_impacts: data.childImpacts.map((ci) => ({
+      
+      // NEW FIELDS mapped here
+      fixed_nsv_gp_ratio: (data as any).fixedNsvGpRatio ?? null,
+      fixed_nsv_vol_ratio: (data as any).fixedNsvVolRatio ?? null,
+      net_financial_impact_value: (data as any).netFinancialImpactValue ?? null,
+
+      child_impacts: data.childImpacts.map((ci: any) => ({
         impact_year: ci.impactYear,
         impact_period: ci.impactPeriod,
         nsv_aud: ci.nsvAud,
         nsv_nzd: ci.nsvNzd,
         volume_litres: ci.volumeLitres,
-        volume_cases: (ci as any).volumeCases ?? null, // ← cast if missing from child type
+        volume_cases: ci.volumeCases ?? null,
         volume_impact_value: ci.volumeImpactValue,
+        gp_aud: ci.gp_aud ?? null,
+        gp_nzd: ci.gp_nzd ?? null,
       })),
     };
 
@@ -321,7 +306,6 @@ async function handleDelete(entry: Entry) {
     await store.deleteEntry(entry.id);
     ElMessage.success("Entry deleted");
   } catch {
-    // cancelled
   }
 }
 
@@ -358,7 +342,6 @@ function goToHistory(entry: Entry) {
   max-width: 1600px;
   margin: 0 auto;
   padding: 24px;
-  /* background-color: #D9F2F2; */
 }
 
 .logo-header {
@@ -376,7 +359,6 @@ function goToHistory(entry: Entry) {
   gap: 16px;
   flex-wrap: wrap;
   background: rgba(255, 255, 255, 0.5);
-  /* border: 1px solid var(--border-color); */
   border-radius: calc(var(--radius) + 4px);
   box-shadow: var(--shadow-sm);
   padding: 20px;
@@ -400,7 +382,7 @@ function goToHistory(entry: Entry) {
 }
 
 .page-title {
-  font-family: 'Jost', Arial, sans-serif; /* Already Jost */
+  font-family: 'Jost', Arial, sans-serif;
   font-size: 28px;
   font-weight: 500;
   margin: 0;
@@ -409,7 +391,7 @@ function goToHistory(entry: Entry) {
 }
 
 .page-subtitle {
-  font-family: 'Work Sans', Arial, sans-serif; /* Already Work Sans */
+  font-family: 'Work Sans', Arial, sans-serif;
   font-weight: 400;
   font-size: 15px;
   color: var(--text-secondary);
@@ -432,7 +414,6 @@ function goToHistory(entry: Entry) {
   padding: 6px 10px;
   border: 1px solid var(--border-color);
   border-radius: var(--radius);
-  /* background: var(--bg-secondary); */
 }
 
 .role-icon {
@@ -475,7 +456,6 @@ function goToHistory(entry: Entry) {
   border-color: var(--border-color);
 }
 
-/* Ensures the icon specifically is rendered as black */
 .black-icon-btn :deep(.el-icon) {
   color: #000 !important;
 }

@@ -8,59 +8,52 @@ router = APIRouter()
 
 
 def _calculate_impact(entry, child_impacts) -> tuple:
-    """
-    Calculate impact value and currency based on:
-    1. If child_impacts exist: sum the corresponding nsv_aud or nsv_nzd
-    2. Otherwise: use entry's own nsv_aud or nsv_nzd
-    3. Based on primary_impact field (AUD/NZD)
-    
-    Returns: (impact_value, impact_currency)
-    """
     primary_impact = entry.primary_impact or ""
     impact_value = None
     impact_currency = primary_impact if primary_impact in ["AUD", "NZD"] else None
     vol_impact_value = None
+    gp_value = None
     
     if child_impacts:
-        # Sum child impacts
         total_fin = 0
         total_vol = 0
+        total_gp = 0
         for ci in child_impacts:
             if primary_impact == "AUD" and ci.nsv_aud:
-                try:
-                    total_fin += float(ci.nsv_aud)
-                except (ValueError, TypeError):
-                    pass
+                try: total_fin += float(ci.nsv_aud)
+                except (ValueError, TypeError): pass
             elif primary_impact == "NZD" and ci.nsv_nzd:
-                try:
-                    total_fin += float(ci.nsv_nzd)
-                except (ValueError, TypeError):
-                    pass
+                try: total_fin += float(ci.nsv_nzd)
+                except (ValueError, TypeError): pass
 
             if ci.volume_impact_value:
-                try:
-                    total_vol += float(ci.volume_impact_value)
-                except (ValueError, TypeError):
-                    pass
+                try: total_vol += float(ci.volume_impact_value)
+                except (ValueError, TypeError): pass
+
+            gp_col = ci.gp_nzd if primary_impact == "NZD" else ci.gp_aud
+            if gp_col:
+                try: total_gp += float(gp_col)
+                except (ValueError, TypeError): pass
 
         if total_fin != 0:
             impact_value = str(total_fin)
         if total_vol != 0:
             vol_impact_value = str(total_vol)
+        if total_gp != 0:
+            gp_value = str(total_gp)
     else:
-        # Use entry's own value
         if primary_impact == "AUD" and entry.nsv_aud:
             impact_value = entry.nsv_aud
         elif primary_impact == "NZD" and entry.nsv_nzd:
             impact_value = entry.nsv_nzd
-        
         vol_impact_value = entry.volume_impact_value
+        gp_value = entry.net_financial_impact_value
     
-    return impact_value, impact_currency, vol_impact_value
+    return impact_value, impact_currency, vol_impact_value, gp_value
 
 
 def _entry_to_dict(entry, child_impacts) -> dict:
-    impact_value, impact_currency, vol_impact_value = _calculate_impact(entry, child_impacts)
+    impact_value, impact_currency, vol_impact_value, gp_value = _calculate_impact(entry, child_impacts)
     primary_impact = entry.primary_impact or ""
     
     return {
@@ -102,6 +95,12 @@ def _entry_to_dict(entry, child_impacts) -> dict:
         "impact": impact_value,
         "impactCurrency": impact_currency,
         "lastModified": entry.last_modified.isoformat() + "Z" if entry.last_modified else None,
+        
+        # NEW MAPPINGS
+        "fixedNsvGpRatio": entry.fixed_nsv_gp_ratio,
+        "fixedNsvVolRatio": entry.fixed_nsv_vol_ratio,
+        "netFinancialImpactValue": gp_value,
+        
         "childImpacts": [
             {
                 "id": ci.id,
@@ -115,6 +114,8 @@ def _entry_to_dict(entry, child_impacts) -> dict:
                 "volumeImpactValue": ci.volume_impact_value,
                 "impact": ci.nsv_aud if (primary_impact == "AUD" and ci.nsv_aud) else (ci.nsv_nzd if (primary_impact == "NZD" and ci.nsv_nzd) else None),
                 "impactCurrency": primary_impact if primary_impact in ["AUD", "NZD"] else None,
+                "gpAud": ci.gp_aud,
+                "gpNzd": ci.gp_nzd,
             }
             for ci in child_impacts
         ],
@@ -124,21 +125,21 @@ def _entry_to_dict(entry, child_impacts) -> dict:
 @router.get("")
 def list_entries(
     db: Session = Depends(get_db),
-    division: Optional[str] = Query(None),
-    ibp_step: Optional[str] = Query(None),
-    country: Optional[str] = Query(None),
+    division: Optional[List[str]] = Query(None),
+    ibp_step: Optional[List[str]] = Query(None),
+    country: Optional[List[str]] = Query(None),
     channel: Optional[List[str]] = Query(None),
     sub_channel: Optional[List[str]] = Query(None),
     account: Optional[List[str]] = Query(None),
-    brand: Optional[str] = Query(None),
-    brand_family: Optional[str] = Query(None),
-    categorisation: Optional[str] = Query(None),
-    r_and_o: Optional[str] = Query(None),
-    probability: Optional[str] = Query(None),
-    status: Optional[str] = Query(None),
+    brand: Optional[List[str]] = Query(None),
+    brand_family: Optional[List[str]] = Query(None),
+    categorisation: Optional[List[str]] = Query(None),
+    r_and_o: Optional[List[str]] = Query(None),
+    probability: Optional[List[str]] = Query(None),
+    status: Optional[List[str]] = Query(None),
     owner: Optional[str] = Query(None),
-    creation_date_period: Optional[str] = Query(None),
-    creation_date_year: Optional[str] = Query(None),
+    creation_date_period: Optional[List[str]] = Query(None),
+    creation_date_year: Optional[List[str]] = Query(None),
     role: Optional[str] = Query(None),
     user_ibp_steps: Optional[str] = Query(None),  # comma-separated; None = all
 ):

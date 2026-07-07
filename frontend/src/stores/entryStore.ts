@@ -15,9 +15,9 @@ export const useEntryStore = defineStore("entry", () => {
   );
 
   const filters = ref({
-    division: "",
+    division: [] as string[],
     department: "",
-    country: "",
+    country: [] as string[],
     channel: [] as string[],
     sub_channel: [] as string[],
     account: [] as string[],
@@ -26,9 +26,9 @@ export const useEntryStore = defineStore("entry", () => {
     categorisation: "",
     r_and_o: "",
     probability: "",
-    status: "",
+    status: [] as string[],
     owner: "",
-    ibp_step: "",
+    ibp_step: [] as string[],
     creation_date_period: "",
     creation_date_year: "",
   });
@@ -65,6 +65,12 @@ export const useEntryStore = defineStore("entry", () => {
     users.value = await userApi.getAll();
   }
 
+  function normalizeCountryCode(code: string | number): string {
+    const value = String(code).trim();
+    const stripped = value.replace(/^0+/, "");
+    return stripped.length > 0 ? stripped : value;
+  }
+
   async function fetchEntries() {
     loading.value = true;
     try {
@@ -74,6 +80,9 @@ export const useEntryStore = defineStore("entry", () => {
           return v !== "";
         })
       );
+      if (Array.isArray(activeFilters.country)) {
+        activeFilters.country = activeFilters.country.map(normalizeCountryCode);
+      }
       if (userRole.value) activeFilters.role = userRole.value;
       // Pass department restriction for IBP Step Approver (null = all, array = restricted)
       if (userRole.value === "IBP Step Approver") {
@@ -111,9 +120,9 @@ export const useEntryStore = defineStore("entry", () => {
 
   function resetFilters() {
     filters.value = {
-      division: "",
+      division: [],
       department: "",
-      country: "",
+      country: [],
       channel: [],
       sub_channel: [],
       account: [],
@@ -122,9 +131,9 @@ export const useEntryStore = defineStore("entry", () => {
       categorisation: "",
       r_and_o: "",
       probability: "",
-      status: "",
+      status: [],
       owner: "",
-      ibp_step: "",
+      ibp_step: [],
       creation_date_period: "",
       creation_date_year: "",
     };

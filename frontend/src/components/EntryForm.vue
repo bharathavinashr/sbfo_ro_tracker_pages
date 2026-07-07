@@ -620,7 +620,6 @@
             </el-col>
 
             <el-col :span="12">
-              
               <div class="impact-section-subtitle">Financial Impact</div>
               <el-form-item class="mt-2">
                 <template #label>
@@ -653,6 +652,30 @@
                 </div>
               </el-form-item>
 
+              <template v-if="formData.financialImpactType === 'NSV'">
+                <div class="ratio-lock-block mt-2">
+                  <el-checkbox v-model="formData.lockNsvGpRatio" @change="onLockNsvGpChange">Lock NSV/GP ratio</el-checkbox>
+                  <span v-if="formData.lockNsvGpRatio" class="ratio-value">{{ calculatedNsvGpRatio }}</span>
+                </div>
+
+                <el-form-item class="mt-2">
+                  <template #label>
+                    GP ({{ currencyCode }})
+                  </template>
+                  <div class="input-with-dropdown">
+                    <el-input
+                      :model-value="formData.netFinancialImpactValue"
+                      :disabled="hasChildImpacts"
+                      :placeholder="`Enter financial impact in GP (${currencyCode})`"
+                      @input="formData.netFinancialImpactValue = enforceSign($event as string)"
+                      @blur="formData.netFinancialImpactValue = formatNumStr(formData.netFinancialImpactValue)"
+                      @focus="formData.netFinancialImpactValue = enforceSign(formData.netFinancialImpactValue)"
+                    />
+                    <el-button type="primary" class="black-dropdown-btn" style="pointer-events: none;">GP</el-button>
+                  </div>
+                </el-form-item>
+              </template>
+
               <div class="impact-section-subtitle mt-4">Volume Impact</div>
               <el-form-item class="mt-2">
                 <template #label>Volume ({{ formData.volumeImpactType }})</template>
@@ -679,6 +702,17 @@
                   </el-dropdown>
                 </div>
               </el-form-item>
+
+              <template v-if="formData.financialImpactType === 'NSV'">
+                <div class="ratio-lock-block mt-2">
+                  <el-checkbox v-model="formData.lockNsvVolRatio" @change="onLockNsvVolChange">Lock NSV/Volume ratio</el-checkbox>
+                  <span v-if="formData.lockNsvVolRatio" class="ratio-value">
+                    <template v-if="calculatedNsvVolRatio">
+                      {{ currencyCode }} / {{ formData.volumeImpactType }}: {{ calculatedNsvVolRatio }}
+                    </template>
+                  </span>
+                </div>
+              </template>
               
               <div class="add-impact-row">
                 <el-button class="add-impact-btn" size="small" @click="addChild">
@@ -691,7 +725,7 @@
 
         <div v-for="(child, idx) in formData.childImpacts" :key="idx" class="impact-child-card">
           <el-row :gutter="16" align="middle">
-            <el-col :span="6">
+            <el-col :span="formData.financialImpactType === 'NSV' ? 4 : 6">
               <div class="sub-label">Period <span class="impact-required">*</span></div>
               <div class="combo-wrap" style="margin-top: 6px">
                 <el-input
@@ -711,8 +745,8 @@
                 </div>
               </div>
             </el-col>
-            <el-col :span="6">
-              <div class="sub-label">Year</div>
+            <el-col :span="formData.financialImpactType === 'NSV' ? 4 : 6">
+              <div class="sub-label">Year <span class="impact-required">*</span></div>
               <div class="combo-wrap" style="margin-top: 6px">
                 <el-input
                   v-model="child._yearSearch"
@@ -731,7 +765,7 @@
                 </div>
               </div>
             </el-col>
-            <el-col :span="6">
+            <el-col :span="formData.financialImpactType === 'NSV' ? 5 : 6">
               <div class="sub-label">{{ getfinancialImpactTypeLabel(formData.financialImpactType) }} <span class="impact-required">*</span></div>
               <el-input
                 :model-value="child.impactValue"
@@ -742,7 +776,18 @@
                 @focus="child.impactValue = enforceSign(child.impactValue)"
               />
             </el-col>
-            <el-col :span="6">
+            <el-col v-if="formData.financialImpactType === 'NSV'" :span="5">
+              <div class="sub-label">GP ({{ currencyCode }}) <span class="impact-required">*</span></div>
+              <el-input
+                :model-value="child.netFinancialImpactValue"
+                :placeholder="`GP (${currencyCode})`"
+                style="margin-top: 6px"
+                @input="child.netFinancialImpactValue = enforceSign($event as string)"
+                @blur="child.netFinancialImpactValue = formatNumStr(child.netFinancialImpactValue)"
+                @focus="child.netFinancialImpactValue = enforceSign(child.netFinancialImpactValue)"
+              />
+            </el-col>
+            <el-col :span="formData.financialImpactType === 'NSV' ? 6 : 6">
               <div class="sub-label">
                 Volume ({{ formData.volumeImpactType }})
               </div>
@@ -765,6 +810,10 @@
           <div class="totals-item">
             <span class="totals-label">Total {{ getfinancialImpactTypeLabel(formData.financialImpactType) }}</span>
             <span class="totals-value">{{ formatNumStr(totalPrimaryImpact) }} {{ currencyCode }}</span>
+          </div>
+          <div v-if="formData.financialImpactType === 'NSV'" class="totals-item">
+            <span class="totals-label">Total GP</span>
+            <span class="totals-value">{{ formatNumStr(totalGpImpact) }} {{ currencyCode }}</span>
           </div>
           <div v-if="secondaryTotalVisible" class="totals-item">
             <span class="totals-label">Total Volume ({{ formData.volumeImpactType }})</span>
@@ -1537,6 +1586,7 @@ interface ChildImpactForm {
   secondaryUnit:  string;
   _periodOpen?:   boolean;
   volumeImpactValue?: string; // Added for child impacts
+  netFinancialImpactValue?: string; // Added for GP child tracking
   _periodSearch?: string;
   _yearOpen?:     boolean;
   _yearSearch?:   string;
@@ -1573,6 +1623,13 @@ interface FormData {
   shortDescription:      string;
   detailedDescription:   string;
   childImpacts:          ChildImpactForm[];
+  
+  // NEW RATIO FIELDS
+  fixedNsvGpRatio: string;
+  fixedNsvVolRatio: string;
+  netFinancialImpactValue: string;
+  lockNsvGpRatio: boolean;
+  lockNsvVolRatio: boolean;
 }
 
 const props = defineProps<{ entry?: Entry | null }>();
@@ -1624,12 +1681,47 @@ function defaultForm(): FormData {
     volumeImpactValue: "",
     owner:           email, creator:         email, status:          "Open",
     shortDescription:    "", detailedDescription: "", childImpacts:    [],
+    
+    // NEW RATIO FIELDS
+    fixedNsvGpRatio: "", fixedNsvVolRatio: "", netFinancialImpactValue: "",
+    lockNsvGpRatio: false, lockNsvVolRatio: false,
   };
 }
 
 const formData = ref<FormData>(defaultForm());
 const isLoadingEntry  = ref(false);
 const hasChildImpacts = computed(() => formData.value.childImpacts.length > 0);
+
+// NEW RATIO COMPUTED PROPERTIES AND HANDLERS
+const calculatedNsvGpRatio = computed(() => {
+  const nsv = parseFloat(cleanNumStr(formData.value.impactValue));
+  const gp = parseFloat(cleanNumStr(formData.value.netFinancialImpactValue));
+  if (!isNaN(nsv) && !isNaN(gp) && gp !== 0) {
+    return (nsv / gp).toFixed(7);
+  }
+  return "";
+});
+
+const calculatedNsvVolRatio = computed(() => {
+  const nsv = parseFloat(cleanNumStr(formData.value.impactValue));
+  const vol = parseFloat(cleanNumStr(formData.value.secondaryValue));
+  if (!isNaN(nsv) && !isNaN(vol) && vol !== 0) {
+    return (nsv / vol).toFixed(7);
+  }
+  return "";
+});
+
+function onLockNsvGpChange(val: boolean) {
+  if (!val) {
+    formData.value.fixedNsvGpRatio = "";
+  }
+}
+
+function onLockNsvVolChange(val: boolean) {
+  if (!val) {
+    formData.value.fixedNsvVolRatio = "";
+  }
+}
 
 function getUnitOptions(countryDict: Record<string, string>): string[] {
   const countryName = Object.values(countryDict)[0];
@@ -1675,6 +1767,11 @@ const childVolumeImpactPlaceholder = computed(() => {
 const totalPrimaryImpact = computed(() => {
   return formData.value.childImpacts.reduce((acc, ci) => {
     const n = parseFloat(cleanNumStr(ci.impactValue)); return acc + (isNaN(n) ? 0 : n);
+  }, 0).toString();
+});
+const totalGpImpact = computed(() => {
+  return formData.value.childImpacts.reduce((acc, ci) => {
+    const n = parseFloat(cleanNumStr(ci.netFinancialImpactValue || "")); return acc + (isNaN(n) ? 0 : n);
   }, 0).toString();
 });
 const totalSecondaryImpact = computed(() => {
@@ -1736,6 +1833,9 @@ watch(() => formData.value.childImpacts, () => {
   if (hasChildImpacts.value) {
     formData.value.impactValue = formatNumStr(totalPrimaryImpact.value);
     formData.value.secondaryValue = formatNumStr(totalSecondaryImpact.value);
+    if (formData.value.financialImpactType === 'NSV') {
+      formData.value.netFinancialImpactValue = formatNumStr(totalGpImpact.value);
+    }
   }
 }, { deep: true });
 
@@ -2043,7 +2143,14 @@ watch(() => formData.value.rAndO, (val) => {
   }
   const neg = val === "Risk";
   formData.value.impactValue = applySign(formData.value.impactValue, neg);
-  formData.value.childImpacts.forEach(ci => { ci.impactValue = applySign(ci.impactValue, neg); });
+  formData.value.netFinancialImpactValue = applySign(formData.value.netFinancialImpactValue, neg);
+  
+  formData.value.childImpacts.forEach(ci => { 
+    ci.impactValue = applySign(ci.impactValue, neg); 
+    if (ci.netFinancialImpactValue) {
+      ci.netFinancialImpactValue = applySign(ci.netFinancialImpactValue, neg);
+    }
+  });
 });
 
 watch(() => props.entry, async (entry) => {
@@ -2103,9 +2210,16 @@ watch(() => props.entry, async (entry) => {
           impactYear: ci.impactYear || "", impactPeriod: ci.impactPeriod || "", impactUnit: primary,
           impactValue: formatNumStr(primary === "NZD" ? (ci.nsvNzd || "") : primary === "Volume" ? (ci.volumeImpactValue || fromStorage("Volume", ci.volumeLitres || "")) : (ci.nsvAud || "")),
           secondaryUnit:  sec.unit, secondaryValue: formatNumStr(sec.val),
+          netFinancialImpactValue: formatNumStr(primary === "NZD" ? (ci.gpNzd || "") : (ci.gpAud || "")),
           _periodOpen: false, _periodSearch: "", _yearOpen: false, _yearSearch: ""
         };
       }),
+      // NEW RATIO FIELDS POPULATION
+      netFinancialImpactValue: formatNumStr((entry as any).netFinancialImpactValue || ""),
+      fixedNsvGpRatio: (entry as any).fixedNsvGpRatio || "",
+      fixedNsvVolRatio: (entry as any).fixedNsvVolRatio || "",
+      lockNsvGpRatio: !!(entry as any).fixedNsvGpRatio,
+      lockNsvVolRatio: !!(entry as any).fixedNsvVolRatio,
     };
     
     await nextTick();
@@ -2152,14 +2266,16 @@ function addChild() {
         impactYear: String(currentYear), impactPeriod: i === 0 ? (formData.value.impactPeriod || "") : "",
         impactValue: i === 0 ? formData.value.impactValue : "", impactUnit: formData.value.primaryImpact,
         secondaryValue: i === 0 ? formData.value.secondaryValue : "", secondaryUnit: formData.value.secondaryUnit,
+        netFinancialImpactValue: i === 0 ? formData.value.netFinancialImpactValue : "",
         _periodOpen: false, _periodSearch: "", _yearOpen: false, _yearSearch: ""
       });
     }
-    formData.value.impactPeriod = ""; formData.value.impactYear = ""; formData.value.impactValue = ""; formData.value.secondaryValue = "";
+    formData.value.impactPeriod = ""; formData.value.impactYear = ""; formData.value.impactValue = ""; formData.value.secondaryValue = ""; formData.value.netFinancialImpactValue = "";
   } else {
     formData.value.childImpacts.push({
       impactYear: String(currentYear), impactPeriod: "", impactValue: "", impactUnit: formData.value.primaryImpact,
       secondaryValue: "", secondaryUnit: formData.value.secondaryUnit,
+      netFinancialImpactValue: "",
       _periodOpen: false, _periodSearch: "", _yearOpen: false, _yearSearch: ""
     });
   }
@@ -2171,6 +2287,7 @@ function removeChild(idx: number) {
     const last = formData.value.childImpacts[0];
     formData.value.impactPeriod = last.impactPeriod || currentPeriod; formData.value.impactYear = last.impactYear || String(currentYear);
     formData.value.impactValue = last.impactValue; formData.value.secondaryValue = last.secondaryValue;
+    formData.value.netFinancialImpactValue = last.netFinancialImpactValue || "";
     formData.value.childImpacts = [];
   } else if (formData.value.childImpacts.length === 0) {
     formData.value.impactPeriod = currentPeriod; formData.value.impactYear = String(currentYear);
@@ -2207,13 +2324,17 @@ function createChildImpactsFromRange() {
   if (!isPeriodAfter(sp, sy, formData.value.addToForecastByPeriod, formData.value.addToForecastByYear)) { ElMessage.error("Start period must be after Add to Forecast By period"); return; }
   const periods = generatePeriodRange(sp, sy, ep, ey);
   if (!periods.length) { ElMessage.error("No periods in range"); return; }
-  const totalPrimary = parseFloat(cleanNumStr(formData.value.impactValue)) || 0; const totalSecondary = parseFloat(cleanNumStr(formData.value.secondaryValue)) || 0;
+  const totalPrimary = parseFloat(cleanNumStr(formData.value.impactValue)) || 0; 
+  const totalSecondary = parseFloat(cleanNumStr(formData.value.secondaryValue)) || 0;
+  const totalGp = parseFloat(cleanNumStr(formData.value.netFinancialImpactValue)) || 0;
+
   formData.value.childImpacts = periods.map(({ period, year }) => ({
     impactYear: year, impactPeriod: period, impactValue: String(totalPrimary / periods.length), impactUnit: formData.value.primaryImpact,
     secondaryValue: String(totalSecondary / periods.length), secondaryUnit: formData.value.secondaryUnit,
+    netFinancialImpactValue: String(totalGp / periods.length),
     _periodOpen: false, _periodSearch: "", _yearOpen: false, _yearSearch: ""
   }));
-  formData.value.impactPeriod = ""; formData.value.impactValue = ""; formData.value.secondaryValue = "";
+  formData.value.impactPeriod = ""; formData.value.impactValue = ""; formData.value.secondaryValue = ""; formData.value.netFinancialImpactValue = "";
   usePeriodRange.value = false; periodRangeStart.value = { period: currentPeriod, year: String(currentYear) }; periodRangeEnd.value = { period: currentPeriod, year: String(currentYear) };
   ElMessage.success(`Created ${periods.length} child impacts with prorated values`);
 }
@@ -2279,6 +2400,13 @@ async function validate() {
         if (!ci.impactValue.trim()) { ElMessage.error(`Row ${i+1}: Primary Impact value is required.`); return null; }
         if (!isValidNum(ci.impactValue)) { ElMessage.error(`Row ${i+1}: Primary Impact must be a valid number.`); return null; }
         if (ci.secondaryValue.trim() && !isValidNum(ci.secondaryValue)) { ElMessage.error(`Row ${i+1}: Secondary Impact must be a valid number.`); return null; }
+        
+        if (formData.value.financialImpactType === 'NSV') {
+          if (!ci.netFinancialImpactValue?.trim()) { ElMessage.error(`Row ${i+1}: GP value is required.`); return null; }
+          if (!isValidNum(ci.netFinancialImpactValue)) { ElMessage.error(`Row ${i+1}: GP must be a valid number.`); return null; }
+          ci.netFinancialImpactValue = cleanNumStr(ci.netFinancialImpactValue);
+        }
+
         if (!isPeriodAfter(ci.impactPeriod, ci.impactYear, formData.value.addToForecastByPeriod, formData.value.addToForecastByYear)) { ElMessage.error(`Row ${i+1}: Impact Period must be after Add to Forecast By period`); return null; }
         ci.impactValue = cleanNumStr(ci.impactValue); ci.secondaryValue = cleanNumStr(ci.secondaryValue);
       }
@@ -2288,6 +2416,13 @@ async function validate() {
       if (!formData.value.impactValue.trim()) { ElMessage.error("Primary Impact value is required."); return null; }
       if (!isValidNum(formData.value.impactValue)) { ElMessage.error("Primary Impact must be a valid number."); return null; }
       if (formData.value.secondaryValue.trim() && !isValidNum(formData.value.secondaryValue)) { ElMessage.error("Secondary Impact must be a valid number."); return null; }
+      
+      if (formData.value.financialImpactType === 'NSV') {
+        if (!formData.value.netFinancialImpactValue.trim()) { ElMessage.error("GP value is required."); return null; }
+        if (!isValidNum(formData.value.netFinancialImpactValue)) { ElMessage.error("GP must be a valid number."); return null; }
+        formData.value.netFinancialImpactValue = cleanNumStr(formData.value.netFinancialImpactValue);
+      }
+
       if (!usePeriodRange.value && !isPeriodAfter(formData.value.impactPeriod, formData.value.impactYear, formData.value.addToForecastByPeriod, formData.value.addToForecastByYear)) { ElMessage.error("Primary Impact Period must be after Add to Forecast By period"); return null; }
       formData.value.impactValue = cleanNumStr(formData.value.impactValue); formData.value.secondaryValue = cleanNumStr(formData.value.secondaryValue);
     }
@@ -2298,6 +2433,12 @@ async function validate() {
       ...formData.value,
       // Ensure volumeImpactValue is correctly set for the parent entry
       volumeImpactValue: cleanNumStr(volumeImpactValue),
+      
+      // EXPORT NEW FIELDS
+      fixedNsvGpRatio: formData.value.lockNsvGpRatio ? calculatedNsvGpRatio.value : null,
+      fixedNsvVolRatio: formData.value.lockNsvVolRatio ? calculatedNsvVolRatio.value : null,
+      netFinancialImpactValue: (formData.value.financialImpactType === 'NSV') ? cleanNumStr(formData.value.netFinancialImpactValue) : null,
+      
       channel: formData.value.channel,
       subChannel: formData.value.subChannel,
       account: formData.value.account,
@@ -2309,6 +2450,10 @@ async function validate() {
           impactPeriod: ci.impactPeriod,
           ...m,
           volumeImpactValue: cleanNumStr(m.volumeImpactValue),
+          ...(formData.value.financialImpactType === 'NSV' ? {
+            gp_aud: formData.value.primaryImpact !== "NZD" ? cleanNumStr(ci.netFinancialImpactValue || "") : null,
+            gp_nzd: formData.value.primaryImpact === "NZD" ? cleanNumStr(ci.netFinancialImpactValue || "") : null,
+          } : { gp_aud: null, gp_nzd: null }),
         };
       }),
     };
@@ -2713,4 +2858,16 @@ defineExpose({ validate, reset });
 .mt-2 { margin-top: 8px; }
 .mt-3 { margin-top: 12px; }
 .mt-4 { margin-top: 24px; }
+
+/* Ratio Locks */
+.ratio-lock-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ratio-value {
+  font-size: 13px;
+  color: #8c8c8c;
+  font-weight: 500;
+}
 </style>
