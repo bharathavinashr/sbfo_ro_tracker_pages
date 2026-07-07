@@ -712,7 +712,8 @@ function applyUserDefaults() {
 
   let steps = user.ibp_steps;
   if (typeof steps === 'string') {
-    try { steps = JSON.parse(steps); } catch { steps = steps.split(',').map((s: string) => s.trim()); }
+    const raw = steps;
+    try { steps = JSON.parse(raw); } catch { steps = raw.split(',').map((s: string) => s.trim()); }
   }
   if (store.filters.ibp_step.length === 0 && Array.isArray(steps) && steps.length > 0) {
     const availableSteps = lookupStore.getCached("ibp_step") || [];
