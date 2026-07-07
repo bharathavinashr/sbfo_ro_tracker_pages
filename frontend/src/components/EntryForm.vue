@@ -2339,7 +2339,7 @@ function createChildImpactsFromRange() {
   ElMessage.success(`Created ${periods.length} child impacts with prorated values`);
 }
 
-function cleanNumStr(val: string): string {
+function cleanNumStr(val: string | undefined): string {
   if (!val) return "";
   const isNeg = val.trim().startsWith("-");
   let s = val.replace(/,/g, "").replace(/[^\d.]/g, "");
@@ -2348,7 +2348,7 @@ function cleanNumStr(val: string): string {
   return (isNeg ? "-" : "") + s;
 }
 
-function formatNumStr(val: string): string {
+function formatNumStr(val: string | undefined): string {
   const s = cleanNumStr(val);
   if (!s) return "";
   if (s === "-") return "-";
@@ -2359,14 +2359,14 @@ function formatNumStr(val: string): string {
   return (isNeg ? "-" : "") + parts.join(".");
 }
 
-function enforceSign(val: string): string {
+function enforceSign(val: string | undefined): string {
   const s = cleanNumStr(val);
   const magnitude = s.startsWith("-") ? s.substring(1) : s;
   if (!magnitude) return formData.value.rAndO === "Risk" ? "-" : "";
   return formData.value.rAndO === "Risk" ? `-${magnitude}` : magnitude;
 }
 
-function isValidNum(val: string): boolean {
+function isValidNum(val: string | undefined): boolean {
   const s = cleanNumStr(val).trim(); return s !== "" && !isNaN(Number(s));
 }
 
