@@ -2131,9 +2131,7 @@ watch(() => formData.value.ibpStep, (val) => {
   }
 });
 
-watch(() => formData.value.categorisation, () => {
-  formRef.value?.validateField(['brand', 'brandFamily']);
-});
+// Removed the aggressive watch on categorisation that was prematurely triggering brand/brandFamily validation
 
 watch(() => formData.value.rAndO, (val) => {
   if (isInitialLoadRef.value) return;
@@ -2247,8 +2245,9 @@ const rules: FormRules = {
   channel: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
   subChannel: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
   account: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
-  brand: [{ validator: (_rule: any, value: any, callback: any) => { if (formData.value.categorisation !== 'NPD' && !Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
-  brandFamily: [{ validator: (_rule: any, value: any, callback: any) => { if (formData.value.categorisation !== 'NPD' && !Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
+  // Removed `trigger: "change"` to restrict validation only to form submission
+  brand: [{ validator: (_rule: any, value: any, callback: any) => { if (formData.value.categorisation !== 'NPD' && !Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); } }],
+  brandFamily: [{ validator: (_rule: any, value: any, callback: any) => { if (formData.value.categorisation !== 'NPD' && !Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); } }],
   rAndO: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
   probability: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
   categorisation: [{ validator: (_rule: unknown, value: string, callback: (e?: Error) => void) => { if (categActive.value && !value) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
