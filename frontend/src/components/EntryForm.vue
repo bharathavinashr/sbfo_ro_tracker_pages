@@ -475,297 +475,171 @@
 
       <template v-else>
         <div class="impact-card" :class="{ 'has-children': hasChildImpacts }">
-          <el-row :gutter="24">
-            <el-col :span="12">
-              <el-form-item label="Primary Impact Period">
-                <el-input v-if="hasChildImpacts" :model-value="impactPeriodSummary || 'Add child impact periods'" disabled />
-                
-                <template v-else-if="usePeriodRange">
-                  <div class="range-block">
-                    <div class="period-range-check" style="margin-bottom: 12px;">
-                      <el-checkbox v-model="usePeriodRange" @change="onCancelPeriodRange">Use Period Range</el-checkbox>
-                    </div>
-
-                    <div class="sub-label">Start Period</div>
-                    <div class="period-pair mt-1">
-                      <div class="combo-wrap period-select">
-                        <el-input
-                          v-model="prStartPeriodSearch"
-                          :placeholder="periodRangeStart.period ? periodToMonth(periodRangeStart.period) : 'Select period'"
-                          :class="{ 'has-selected-value': !!periodRangeStart.period && !prStartPeriodSearch, 'force-focus': prStartPeriodOpen }"
-                          @focus="prStartPeriodOpen = true"
-                          @blur="onPrStartPeriodBlur"
-                          @input="prStartPeriodOpen = true"
-                          clearable
-                          @clear="periodRangeStart.period = ''; prStartPeriodSearch = ''"
-                        >
-                          <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
-                        </el-input>
-                        <div v-if="prStartPeriodOpen" class="combo-dropdown">
-                          <div v-for="p in filteredPrStartPeriods" :key="p" class="combo-item" @mousedown.prevent="periodRangeStart.period = p; prStartPeriodSearch = ''; prStartPeriodOpen = false">{{ periodToMonth(p) }}</div>
-                        </div>
-                      </div>
-
-                      <div class="combo-wrap year-select">
-                        <el-input
-                          v-model="prStartYearSearch"
-                          :placeholder="periodRangeStart.year || 'Select year'"
-                          :class="{ 'has-selected-value': !!periodRangeStart.year && !prStartYearSearch, 'force-focus': prStartYearOpen }"
-                          @focus="prStartYearOpen = true"
-                          @blur="onPrStartYearBlur"
-                          @input="prStartYearOpen = true"
-                          clearable
-                          @clear="periodRangeStart.year = ''; prStartYearSearch = ''"
-                        >
-                          <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
-                        </el-input>
-                        <div v-if="prStartYearOpen" class="combo-dropdown">
-                          <div v-for="y in filteredPrStartYears" :key="y" class="combo-item" @mousedown.prevent="periodRangeStart.year = y; prStartYearSearch = ''; prStartYearOpen = false">{{ y }}</div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div class="sub-label mt-3">End Period</div>
-                    <div class="period-pair mt-1">
-                      <div class="combo-wrap period-select">
-                        <el-input
-                          v-model="prEndPeriodSearch"
-                          :placeholder="periodRangeEnd.period ? periodToMonth(periodRangeEnd.period) : 'Select period'"
-                          :class="{ 'has-selected-value': !!periodRangeEnd.period && !prEndPeriodSearch, 'force-focus': prEndPeriodOpen }"
-                          @focus="prEndPeriodOpen = true"
-                          @blur="onPrEndPeriodBlur"
-                          @input="prEndPeriodOpen = true"
-                          clearable
-                          @clear="periodRangeEnd.period = ''; prEndPeriodSearch = ''"
-                        >
-                          <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
-                        </el-input>
-                        <div v-if="prEndPeriodOpen" class="combo-dropdown">
-                          <div v-for="p in filteredPrEndPeriods" :key="p" class="combo-item" @mousedown.prevent="periodRangeEnd.period = p; prEndPeriodSearch = ''; prEndPeriodOpen = false">{{ periodToMonth(p) }}</div>
-                        </div>
-                      </div>
-
-                      <div class="combo-wrap year-select">
-                        <el-input
-                          v-model="prEndYearSearch"
-                          :placeholder="periodRangeEnd.year || 'Select year'"
-                          :class="{ 'has-selected-value': !!periodRangeEnd.year && !prEndYearSearch, 'force-focus': prEndYearOpen }"
-                          @focus="prEndYearOpen = true"
-                          @blur="onPrEndYearBlur"
-                          @input="prEndYearOpen = true"
-                          clearable
-                          @clear="periodRangeEnd.year = ''; prEndYearSearch = ''"
-                        >
-                          <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
-                        </el-input>
-                        <div v-if="prEndYearOpen" class="combo-dropdown">
-                          <div v-for="y in filteredPrEndYears" :key="y" class="combo-item" @mousedown.prevent="periodRangeEnd.year = y; prEndYearSearch = ''; prEndYearOpen = false">{{ y }}</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <el-button
-                      class="prorate-btn"
-                      :disabled="!periodRangeStart.period || !periodRangeStart.year || !periodRangeEnd.period || !periodRangeEnd.year"
-                      @click="createChildImpactsFromRange"
-                    >Generate Monthly Impacts</el-button>
-                  </div>
-                </template>
-
-                <template v-else>
-                  <div class="period-pair">
-                    <div class="combo-wrap period-select">
-                      <el-input
-                        v-model="impactPeriodSearch"
-                        :placeholder="formData.impactPeriod ? periodToMonth(formData.impactPeriod) : 'Select period'"
-                        :class="{ 'has-selected-value': !!formData.impactPeriod && !impactPeriodSearch, 'force-focus': impactPeriodOpen }"
-                        :disabled="hasChildImpacts"
-                        @focus="impactPeriodOpen = true"
-                        @blur="onImpactPeriodBlur"
-                        @input="impactPeriodOpen = true"
-                        clearable
-                        @clear="formData.impactPeriod = ''; impactPeriodSearch = ''"
-                      >
-                        <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
-                      </el-input>
-                      <div v-if="impactPeriodOpen && !hasChildImpacts" class="combo-dropdown">
-                        <div v-for="p in filteredImpactPeriods" :key="p" class="combo-item" @mousedown.prevent="formData.impactPeriod = p; impactPeriodSearch = ''; impactPeriodOpen = false">{{ periodToMonth(p) }}</div>
-                      </div>
-                    </div>
-
-                    <div class="combo-wrap year-select">
-                      <el-input
-                        v-model="impactYearSearch"
-                        :placeholder="formData.impactYear || 'Select year'"
-                        :class="{ 'has-selected-value': !!formData.impactYear && !impactYearSearch, 'force-focus': impactYearOpen }"
-                        :disabled="hasChildImpacts"
-                        @focus="impactYearOpen = true"
-                        @blur="onImpactYearBlur"
-                        @input="impactYearOpen = true"
-                        clearable
-                        @clear="formData.impactYear = ''; impactYearSearch = ''"
-                      >
-                        <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
-                      </el-input>
-                      <div v-if="impactYearOpen && !hasChildImpacts" class="combo-dropdown">
-                        <div v-for="y in filteredImpactYears" :key="y" class="combo-item" @mousedown.prevent="formData.impactYear = y; impactYearSearch = ''; impactYearOpen = false">{{ y }}</div>
-                      </div>
-                    </div>
-                  </div>
-                  <div v-if="!hasChildImpacts" class="period-range-check mt-2">
-                    <el-checkbox v-model="usePeriodRange">Use Period Range</el-checkbox>
-                  </div>
-                </template>
-              </el-form-item>
-            </el-col>
-
-            <el-col :span="12">
-              <div class="impact-section-subtitle">Financial Impact</div>
-              <el-form-item class="mt-2">
-                <template #label>
-                  {{ getfinancialImpactTypeLabel(formData.financialImpactType) }} <span class="impact-required">*</span>
-                </template>
-                <div class="input-with-dropdown">
+          <el-row :gutter="16">
+              <el-col :span="formData.financialImpactType === 'NSV' ? 4 : 4">
+                <div class="sub-label">Start Period</div>
+                <div class="combo-wrap mt-1">
                   <el-input
-                    :model-value="formData.impactValue"
-                    :disabled="hasChildImpacts"
-                    :placeholder="financialImpactPlaceholder"
-                    @input="formData.impactValue = enforceSign($event as string)"
-                    @blur="formData.impactValue = formatNumStr(formData.impactValue)"
-                    @focus="formData.impactValue = enforceSign(formData.impactValue)"
-                  />
-                  <el-dropdown trigger="click" @command="formData.financialImpactType = $event">
-                    <el-button type="primary" class="black-dropdown-btn">
-                      {{ formData.financialImpactType }}
-                      <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-                    </el-button>
-                    <template #dropdown>
-                      <el-dropdown-menu>
-                        <el-dropdown-item command="NSV">NSV</el-dropdown-item>
-                        <el-dropdown-item command="COGS">COGS</el-dropdown-item>
-                        <el-dropdown-item command="LOGS">LOGS</el-dropdown-item>
-                        <el-dropdown-item command="GP">GP</el-dropdown-item>
-                        <el-dropdown-item command="OI">OI</el-dropdown-item>
-                      </el-dropdown-menu>
-                    </template>
-                  </el-dropdown>
+                    v-model="prStartPeriodSearch"
+                    :placeholder="periodRangeStart.period && periodRangeStart.year ? `${periodToMonth(periodRangeStart.period)} ${periodRangeStart.year}` : 'Select start period'"
+                    :class="{ 'has-selected-value': !!periodRangeStart.period && !prStartPeriodSearch, 'force-focus': prStartPeriodOpen }"
+                    @focus="prStartPeriodOpen = true"
+                    @blur="onPrStartPeriodBlur"
+                    @input="prStartPeriodOpen = true"
+                    clearable
+                    @clear="periodRangeStart.period = ''; periodRangeStart.year = ''; prStartPeriodSearch = ''"
+                  >
+                    <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
+                  </el-input>
+                  <div v-if="prStartPeriodOpen" class="combo-dropdown">
+                    <div v-for="opt in filteredPrStartCombined" :key="opt.label" class="combo-item" @mousedown.prevent="periodRangeStart.period = opt.period; periodRangeStart.year = opt.year; prStartPeriodSearch = ''; prStartPeriodOpen = false">
+                      {{ opt.label }}
+                    </div>
+                  </div>
                 </div>
-              </el-form-item>
-
-              <template v-if="formData.financialImpactType === 'NSV'">
-                <div class="ratio-lock-block mt-2">
-                  <el-checkbox v-model="formData.lockNsvGpRatio" @change="onLockNsvGpChange">Lock NSV/GP ratio</el-checkbox>
-                  <span v-if="formData.lockNsvGpRatio" class="ratio-value">{{ calculatedNsvGpRatio }}</span>
+              </el-col>
+              <el-col :span="formData.financialImpactType === 'NSV' ? 4 : 4">
+                <div class="sub-label">End Period</div>
+                <div class="combo-wrap mt-1">
+                  <el-input
+                    v-model="prEndPeriodSearch"
+                    :placeholder="periodRangeEnd.period && periodRangeEnd.year ? `${periodToMonth(periodRangeEnd.period)} ${periodRangeEnd.year}` : 'Select end period'"
+                    :class="{ 'has-selected-value': !!periodRangeEnd.period && !prEndPeriodSearch, 'force-focus': prEndPeriodOpen }"
+                    @focus="prEndPeriodOpen = true"
+                    @blur="onPrEndPeriodBlur"
+                    @input="prEndPeriodOpen = true"
+                    clearable
+                    @clear="periodRangeEnd.period = ''; periodRangeEnd.year = ''; prEndPeriodSearch = ''"
+                  >
+                    <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
+                  </el-input>
+                  <div v-if="prEndPeriodOpen" class="combo-dropdown">
+                    <div v-for="opt in filteredPrEndCombined" :key="opt.label" class="combo-item" @mousedown.prevent="periodRangeEnd.period = opt.period; periodRangeEnd.year = opt.year; prEndPeriodSearch = ''; prEndPeriodOpen = false">
+                      {{ opt.label }}
+                    </div>
+                  </div>
                 </div>
+              </el-col>
 
-                <el-form-item class="mt-2">
-                  <template #label>
-                    GP ({{ currencyCode }})
+            <el-col :span="formData.financialImpactType === 'NSV' ? 6 : 8">
+              <div class="sub-label">{{ getfinancialImpactTypeLabel(formData.financialImpactType) }} <span class="impact-required">*</span></div>
+              <div class="input-with-dropdown mt-1">
+                <el-input
+                  :model-value="formData.impactValue"
+                  :disabled="hasChildImpacts"
+                  :placeholder="financialImpactPlaceholder"
+                  @input="formData.impactValue = enforceSign($event as string)"
+                  @blur="formData.impactValue = formatNumStr(formData.impactValue)"
+                  @focus="formData.impactValue = enforceSign(formData.impactValue)"
+                />
+                <el-dropdown trigger="click" @command="formData.financialImpactType = $event">
+                  <el-button type="primary" class="black-dropdown-btn">
+                    {{ formData.financialImpactType }}
+                    <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                  </el-button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="NSV">NSV</el-dropdown-item>
+                      <el-dropdown-item command="COGS">COGS</el-dropdown-item>
+                      <el-dropdown-item command="LOGS">LOGS</el-dropdown-item>
+                      <el-dropdown-item command="GP">GP</el-dropdown-item>
+                      <el-dropdown-item command="OI">OI</el-dropdown-item>
+                    </el-dropdown-menu>
                   </template>
-                  <div class="input-with-dropdown">
-                    <el-input
-                      :model-value="formData.netFinancialImpactValue"
-                      :disabled="hasChildImpacts"
-                      :placeholder="`Enter financial impact in GP (${currencyCode})`"
-                      @input="formData.netFinancialImpactValue = enforceSign($event as string)"
-                      @blur="formData.netFinancialImpactValue = formatNumStr(formData.netFinancialImpactValue)"
-                      @focus="formData.netFinancialImpactValue = enforceSign(formData.netFinancialImpactValue)"
-                    />
-                    <el-button type="primary" class="black-dropdown-btn" style="pointer-events: none;">GP</el-button>
-                  </div>
-                </el-form-item>
-              </template>
-
-              <div class="impact-section-subtitle mt-4">Volume Impact</div>
-              <el-form-item class="mt-2">
-                <template #label>Volume ({{ formData.volumeImpactType }})</template>
-                <div class="input-with-dropdown">
-                  <el-input
-                    :model-value="formData.secondaryValue"
-                    :disabled="hasChildImpacts"
-                    :placeholder="volumeImpactPlaceholder"
-                    @input="formData.secondaryValue = cleanNumStr($event as string)"
-                    @blur="formData.secondaryValue = formatNumStr(formData.secondaryValue)"
-                    @focus="formData.secondaryValue = cleanNumStr(formData.secondaryValue)"
-                  />
-                  <el-dropdown trigger="click" @command="formData.volumeImpactType = $event">
-                    <el-button type="primary" class="black-dropdown-btn">
-                      {{ formData.volumeImpactType }}
-                      <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-                    </el-button>
-                    <template #dropdown>
-                      <el-dropdown-menu>
-                        <el-dropdown-item command="Cases">Cases</el-dropdown-item>
-                        <el-dropdown-item command="9LE">9LE</el-dropdown-item>
-                      </el-dropdown-menu>
-                    </template>
-                  </el-dropdown>
-                </div>
-              </el-form-item>
-
-              <template v-if="formData.financialImpactType === 'NSV'">
-                <div class="ratio-lock-block mt-2">
-                  <el-checkbox v-model="formData.lockNsvVolRatio" @change="onLockNsvVolChange">Lock NSV/Volume ratio</el-checkbox>
-                  <span v-if="formData.lockNsvVolRatio" class="ratio-value">
-                    <template v-if="calculatedNsvVolRatio">
-                      {{ currencyCode }} / {{ formData.volumeImpactType }}: {{ calculatedNsvVolRatio }}
-                    </template>
-                  </span>
-                </div>
-              </template>
-              
-              <div class="add-impact-row">
-                <el-button class="add-impact-btn" size="small" @click="addChild">
-                  <el-icon><Plus /></el-icon> Add Impact
-                </el-button>
+                </el-dropdown>
               </div>
             </el-col>
+
+            <el-col v-if="formData.financialImpactType === 'NSV'" :span="4">
+              <div class="sub-label">GP ({{ currencyCode }}) <span class="impact-required">*</span></div>
+              <div class="input-with-dropdown mt-1">
+                <el-input
+                  :model-value="formData.netFinancialImpactValue"
+                  :disabled="hasChildImpacts"
+                  :placeholder="`GP (${currencyCode})`"
+                  @input="formData.netFinancialImpactValue = enforceSign($event as string)"
+                  @blur="formData.netFinancialImpactValue = formatNumStr(formData.netFinancialImpactValue)"
+                  @focus="formData.netFinancialImpactValue = enforceSign(formData.netFinancialImpactValue)"
+                />
+                <el-button type="primary" class="black-dropdown-btn" style="pointer-events: none;">GP</el-button>
+              </div>
+              
+              <div class="ratio-lock-block mt-2">
+                <el-checkbox v-model="formData.lockNsvGpRatio" @change="onLockNsvGpChange">Lock NSV/GP</el-checkbox>
+                <span v-if="formData.lockNsvGpRatio" class="ratio-value">{{ calculatedNsvGpRatio }}</span>
+              </div>
+            </el-col>
+
+            <el-col :span="formData.financialImpactType === 'NSV' ? 6 : 8">
+              <div class="sub-label">Volume ({{ formData.volumeImpactType }})</div>
+              <div class="input-with-dropdown mt-1">
+                <el-input
+                  :model-value="formData.secondaryValue"
+                  :disabled="hasChildImpacts"
+                  :placeholder="volumeImpactPlaceholder"
+                  @input="formData.secondaryValue = cleanNumStr($event as string)"
+                  @blur="formData.secondaryValue = formatNumStr(formData.secondaryValue)"
+                  @focus="formData.secondaryValue = cleanNumStr(formData.secondaryValue)"
+                />
+                <el-dropdown trigger="click" @command="formData.volumeImpactType = $event">
+                  <el-button type="primary" class="black-dropdown-btn">
+                    {{ formData.volumeImpactType }}
+                    <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                  </el-button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="Cases">Cases</el-dropdown-item>
+                      <el-dropdown-item command="9LE">9LE</el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </div>
+              
+              <div v-if="formData.financialImpactType === 'NSV'" class="ratio-lock-block mt-2">
+                <el-checkbox v-model="formData.lockNsvVolRatio" @change="onLockNsvVolChange">Lock NSV/Vol</el-checkbox>
+                <span v-if="formData.lockNsvVolRatio" class="ratio-value">
+                  <template v-if="calculatedNsvVolRatio">
+                    {{ calculatedNsvVolRatio }}
+                  </template>
+                </span>
+              </div>
+            </el-col>
+
           </el-row>
+          
+          <div v-if="!hasChildImpacts" class="add-impact-row mt-3">
+            <el-button class="add-impact-btn" size="small" @click="addChild">
+              <el-icon><Plus /></el-icon> Add Impact
+            </el-button>
+          </div>
         </div>
 
         <div v-for="(child, idx) in formData.childImpacts" :key="idx" class="impact-child-card">
           <el-row :gutter="16" align="middle">
-            <el-col :span="formData.financialImpactType === 'NSV' ? 4 : 6">
+            <el-col :span="formData.financialImpactType === 'NSV' ? 6 : 8">
               <div class="sub-label">Period <span class="impact-required">*</span></div>
               <div class="combo-wrap" style="margin-top: 6px">
                 <el-input
                   v-model="child._periodSearch"
-                  :placeholder="child.impactPeriod ? periodToMonth(child.impactPeriod) : 'Select period'"
-                  :class="{ 'has-selected-value': !!child.impactPeriod && !child._periodSearch, 'force-focus': child._periodOpen }"
+                  :placeholder="child.impactPeriod && child.impactYear ? `${periodToMonth(child.impactPeriod)} ${child.impactYear}` : 'Select period'"
+                  :class="{ 'has-selected-value': !!child.impactPeriod && !!child.impactYear && !child._periodSearch, 'force-focus': child._periodOpen }"
                   @focus="child._periodOpen = true"
                   @blur="onChildPeriodBlur(child)"
                   @input="child._periodOpen = true"
                   clearable
-                  @clear="child.impactPeriod = ''; child._periodSearch = ''"
+                  @clear="child.impactPeriod = ''; child.impactYear = ''; child._periodSearch = ''"
                 >
                   <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
                 </el-input>
                 <div v-if="child._periodOpen" class="combo-dropdown">
-                  <div v-for="p in getFilteredChildPeriods(child._periodSearch)" :key="p" class="combo-item" @mousedown.prevent="child.impactPeriod = p; child._periodSearch = ''; child._periodOpen = false">{{ periodToMonth(p) }}</div>
+                  <div v-for="opt in getFilteredChildCombined(child._periodSearch)" :key="opt.label" class="combo-item" @mousedown.prevent="child.impactPeriod = opt.period; child.impactYear = opt.year; child._periodSearch = ''; child._periodOpen = false">
+                    {{ opt.label }}
+                  </div>
                 </div>
               </div>
             </el-col>
-            <el-col :span="formData.financialImpactType === 'NSV' ? 4 : 6">
-              <div class="sub-label">Year <span class="impact-required">*</span></div>
-              <div class="combo-wrap" style="margin-top: 6px">
-                <el-input
-                  v-model="child._yearSearch"
-                  :placeholder="child.impactYear || 'Select year'"
-                  :class="{ 'has-selected-value': !!child.impactYear && !child._yearSearch, 'force-focus': child._yearOpen }"
-                  @focus="child._yearOpen = true"
-                  @blur="onChildYearBlur(child)"
-                  @input="child._yearOpen = true"
-                  clearable
-                  @clear="child.impactYear = ''; child._yearSearch = ''"
-                >
-                  <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
-                </el-input>
-                <div v-if="child._yearOpen" class="combo-dropdown">
-                  <div v-for="y in getFilteredChildYears(child._yearSearch)" :key="y" class="combo-item" @mousedown.prevent="child.impactYear = y; child._yearSearch = ''; child._yearOpen = false">{{ y }}</div>
-                </div>
-              </div>
-            </el-col>
-            <el-col :span="formData.financialImpactType === 'NSV' ? 5 : 6">
+            
+            <el-col :span="formData.financialImpactType === 'NSV' ? 6 : 8">
               <div class="sub-label">{{ getfinancialImpactTypeLabel(formData.financialImpactType) }} <span class="impact-required">*</span></div>
               <el-input
                 :model-value="child.impactValue"
@@ -776,7 +650,7 @@
                 @focus="child.impactValue = enforceSign(child.impactValue)"
               />
             </el-col>
-            <el-col v-if="formData.financialImpactType === 'NSV'" :span="5">
+            <el-col v-if="formData.financialImpactType === 'NSV'" :span="6">
               <div class="sub-label">GP ({{ currencyCode }}) <span class="impact-required">*</span></div>
               <el-input
                 :model-value="child.netFinancialImpactValue"
@@ -787,7 +661,7 @@
                 @focus="child.netFinancialImpactValue = enforceSign(child.netFinancialImpactValue)"
               />
             </el-col>
-            <el-col :span="formData.financialImpactType === 'NSV' ? 6 : 6">
+            <el-col :span="formData.financialImpactType === 'NSV' ? 6 : 8">
               <div class="sub-label">
                 Volume ({{ formData.volumeImpactType }})
               </div>
@@ -1030,18 +904,13 @@ const atfbPeriodOpen = ref(false);
 const atfbPeriodSearch = ref("");
 const atfbYearOpen = ref(false);
 const atfbYearSearch = ref("");
+
 const prStartPeriodOpen = ref(false);
 const prStartPeriodSearch = ref("");
-const prStartYearOpen = ref(false);
-const prStartYearSearch = ref("");
 const prEndPeriodOpen = ref(false);
 const prEndPeriodSearch = ref("");
-const prEndYearOpen = ref(false);
-const prEndYearSearch = ref("");
 const impactPeriodOpen = ref(false);
 const impactPeriodSearch = ref("");
-const impactYearOpen = ref(false);
-const impactYearSearch = ref("");
 
 function handleBrandFamilyClickOutside() { brandFamilyOpen.value = false; }
 function handleBrandClickOutside()       { brandOpen.value = false; }
@@ -1065,22 +934,14 @@ const userIbpSteps = computed(() => {
   return ibpStepOptions.value;
 });
 
-const userCountries = computed(() => {
-  const cnts = ensureObject((entryStore.currentUser as any)?.country);
-  return Object.values(cnts);
-});
-
 const availableCountryOptions = computed(() => countryOptions.value);
 
-// This computed property is specifically for auto-selecting a division if the user is restricted to only one.
-// It returns an empty array if the user has no specific division restriction or multiple divisions.
 const userDivisionsForAutoSelect = computed(() => {
   const divs = (entryStore.currentUser as any)?.division;
   if (divs && Array.isArray(divs) && divs.length > 0) return divs;
   return [];
 });
 const filteredIbpSteps = computed(() => userIbpSteps.value.filter(d => d.toLowerCase().includes(ibpStepSearch.value.toLowerCase())));
-// The division dropdown should always show all available divisions, regardless of user's assigned divisions.
 const filteredDivs = computed(() => divisionOptions.value.filter(d => d.toLowerCase().includes(divSearch.value.toLowerCase())));
 const filteredCountries = computed(() => availableCountryOptions.value.filter(c => c.label.toLowerCase().includes(countrySearch.value.toLowerCase())));
 
@@ -1089,15 +950,43 @@ const filteredCreationYears = computed(() => yearOptions.map(String).filter(y =>
 const filteredAtfbPeriods   = computed(() => PERIODS.filter(p => p.toLowerCase().includes(atfbPeriodSearch.value.toLowerCase())));
 const filteredAtfbYears     = computed(() => yearOptions.map(String).filter(y => y.includes(atfbYearSearch.value)));
 
-const filteredPrStartPeriods = computed(() => PERIODS.filter(p => periodToMonth(p).toLowerCase().includes(prStartPeriodSearch.value.toLowerCase()) || p.toLowerCase().includes(prStartPeriodSearch.value.toLowerCase())));
-const filteredPrStartYears = computed(() => yearOptions.map(String).filter(y => y.includes(prStartYearSearch.value)));
-const filteredPrEndPeriods = computed(() => PERIODS.filter(p => periodToMonth(p).toLowerCase().includes(prEndPeriodSearch.value.toLowerCase()) || p.toLowerCase().includes(prEndPeriodSearch.value.toLowerCase())));
-const filteredPrEndYears = computed(() => yearOptions.map(String).filter(y => y.includes(prEndYearSearch.value)));
-const filteredImpactPeriods = computed(() => PERIODS.filter(p => periodToMonth(p).toLowerCase().includes(impactPeriodSearch.value.toLowerCase()) || p.toLowerCase().includes(impactPeriodSearch.value.toLowerCase())));
-const filteredImpactYears = computed(() => yearOptions.map(String).filter(y => y.includes(impactYearSearch.value)));
+// Combined Period Data
+const combinedPeriodOptions = computed(() => {
+  const opts: { label: string; period: string; year: string }[] = [];
+  yearOptions.forEach(y => {
+    PERIODS.forEach(p => {
+      opts.push({
+        label: `${periodToMonth(p)} ${y}`,
+        period: p,
+        year: String(y)
+      });
+    });
+  });
+  return opts;
+});
 
-const getFilteredChildPeriods = (search?: string) => PERIODS.filter(p => periodToMonth(p).toLowerCase().includes((search || '').toLowerCase()) || p.toLowerCase().includes((search || '').toLowerCase()));
-const getFilteredChildYears = (search?: string) => yearOptions.map(String).filter(y => y.includes(search || ''));
+const filteredImpactCombined = computed(() => {
+  const search = impactPeriodSearch.value.toLowerCase();
+  return combinedPeriodOptions.value.filter(o => o.label.toLowerCase().includes(search));
+});
+const filteredPrStartCombined = computed(() => {
+  const search = prStartPeriodSearch.value.toLowerCase();
+  return combinedPeriodOptions.value.filter(o =>
+    (parseInt(o.year) > currentYear || (parseInt(o.year) === currentYear && parseInt(o.period.replace('F','')) >= currentMonth)) &&
+    o.label.toLowerCase().includes(search)
+  );
+});
+const filteredPrEndCombined = computed(() => {
+  const search = prEndPeriodSearch.value.toLowerCase();
+  return combinedPeriodOptions.value.filter(o =>
+    (parseInt(o.year) > currentYear || (parseInt(o.year) === currentYear && parseInt(o.period.replace('F','')) >= currentMonth)) &&
+    o.label.toLowerCase().includes(search)
+  );
+});
+const getFilteredChildCombined = (search?: string) => {
+  const s = (search || '').toLowerCase();
+  return combinedPeriodOptions.value.filter(o => o.label.toLowerCase().includes(s));
+};
 
 const allBrandFamiliesSelected = computed(() => brandFamilyOptions.value.length > 0 && brandFamilyOptions.value.every(f => !!formData.value.brandFamily[f.value]));
 const allBrandsSelected = computed(() => filteredBrands.value.length > 0 && filteredBrands.value.every(b => !!formData.value.brand[b.value]));
@@ -1293,34 +1182,6 @@ async function syncBrandFromBrandFamilies() {
   }
 }
 
-async function syncBrandFamiliesFromBrand() {
-  const brandCodes = Object.keys(formData.value.brand);
-  const countryName = Object.values(formData.value.country)[0];
-  if (!formData.value.division || !countryName) return;
-
-  const newBrandFamilies: Record<string, string> = {};
-  isReverseAction.value = true;
-
-  try {
-    const results = await Promise.all(
-      brandCodes.map(code => lookupApi.getBrandFamiliesByBrand(formData.value.division, code, countryName))
-    );
-
-    results.forEach(data => {
-      data.options.forEach(option => {
-        newBrandFamilies[option.value] = option.label;
-      });
-    });
-
-    formData.value.brandFamily = newBrandFamilies;
-  } catch (e) {
-    console.error("Error syncing brand families from brands:", e);
-  } finally {
-    await nextTick();
-    isReverseAction.value = false;
-  }
-}
-
 function onDeptBlur()       { setTimeout(() => { deptOpen.value = false; }, 120); }
 function onDivBlur()        { setTimeout(() => { divOpen.value = false; }, 120); }
 function onCountryBlur()    { setTimeout(() => { countryOpen.value = false; }, 120); }
@@ -1329,13 +1190,9 @@ function onCreationYearBlur()   { setTimeout(() => { creationYearOpen.value = fa
 function onAtfbPeriodBlur()     { setTimeout(() => { atfbPeriodOpen.value = false; }, 120); }
 function onAtfbYearBlur()       { setTimeout(() => { atfbYearOpen.value = false; }, 120); }
 function onPrStartPeriodBlur() { setTimeout(() => { prStartPeriodOpen.value = false; }, 120); }
-function onPrStartYearBlur()   { setTimeout(() => { prStartYearOpen.value = false; }, 120); }
 function onPrEndPeriodBlur()   { setTimeout(() => { prEndPeriodOpen.value = false; }, 120); }
-function onPrEndYearBlur()     { setTimeout(() => { prEndYearOpen.value = false; }, 120); }
 function onImpactPeriodBlur()  { setTimeout(() => { impactPeriodOpen.value = false; }, 120); }
-function onImpactYearBlur()    { setTimeout(() => { impactYearOpen.value = false; }, 120); }
 function onChildPeriodBlur(child: ChildImpactForm) { setTimeout(() => { child._periodOpen = false; }, 120); }
-function onChildYearBlur(child: ChildImpactForm)   { setTimeout(() => { child._yearOpen = false; }, 120); }
 
 async function toggleBrand(code: string, name: string) {
   if (formData.value.brand[code]) {
@@ -1585,11 +1442,9 @@ interface ChildImpactForm {
   secondaryValue: string;
   secondaryUnit:  string;
   _periodOpen?:   boolean;
-  volumeImpactValue?: string; // Added for child impacts
-  netFinancialImpactValue?: string; // Added for GP child tracking
+  volumeImpactValue?: string;
+  netFinancialImpactValue?: string;
   _periodSearch?: string;
-  _yearOpen?:     boolean;
-  _yearSearch?:   string;
 }
 
 interface FormData {
@@ -1624,7 +1479,7 @@ interface FormData {
   detailedDescription:   string;
   childImpacts:          ChildImpactForm[];
   
-  // NEW RATIO FIELDS
+  // RATIO FIELDS
   fixedNsvGpRatio: string;
   fixedNsvVolRatio: string;
   netFinancialImpactValue: string;
@@ -1645,16 +1500,8 @@ const currentMonth  = new Date().getMonth() + 1;
 const currentPeriod = `F${String(currentMonth).padStart(2, "0")}`;
 const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
-const usePeriodRange   = ref(false);
 const periodRangeStart = ref({ period: currentPeriod, year: String(currentYear) });
 const periodRangeEnd   = ref({ period: currentPeriod, year: String(currentYear) });
-
-function onCancelPeriodRange(val: boolean) {
-  if (!val) {
-    periodRangeStart.value = { period: currentPeriod, year: String(currentYear) };
-    periodRangeEnd.value   = { period: currentPeriod, year: String(currentYear) };
-  }
-}
 
 const formRef       = ref<FormInstance>();
 function periodToMonth(period: string): string {
@@ -1682,7 +1529,7 @@ function defaultForm(): FormData {
     owner:           email, creator:         email, status:          "Open",
     shortDescription:    "", detailedDescription: "", childImpacts:    [],
     
-    // NEW RATIO FIELDS
+    // RATIO FIELDS
     fixedNsvGpRatio: "", fixedNsvVolRatio: "", netFinancialImpactValue: "",
     lockNsvGpRatio: false, lockNsvVolRatio: false,
   };
@@ -1692,7 +1539,28 @@ const formData = ref<FormData>(defaultForm());
 const isLoadingEntry  = ref(false);
 const hasChildImpacts = computed(() => formData.value.childImpacts.length > 0);
 
-// NEW RATIO COMPUTED PROPERTIES AND HANDLERS
+watch(periodRangeEnd, (end) => {
+  if (!end.period || !end.year) return;
+  const { period: sp, year: sy } = periodRangeStart.value;
+  if (!sp || !sy) return;
+  if (end.period === sp && end.year === sy) {
+    formData.value.childImpacts = [];
+  } else {
+    createChildImpactsFromRange(true);
+  }
+}, { deep: true });
+
+watch(periodRangeStart, (start) => {
+  if (!start.period || !start.year) return;
+  const { period: ep, year: ey } = periodRangeEnd.value;
+  if (!ep || !ey) return;
+  if (start.period === ep && start.year === ey) {
+    formData.value.childImpacts = [];
+  } else {
+    createChildImpactsFromRange(true);
+  }
+}, { deep: true });
+
 const calculatedNsvGpRatio = computed(() => {
   const nsv = parseFloat(cleanNumStr(formData.value.impactValue));
   const gp = parseFloat(cleanNumStr(formData.value.netFinancialImpactValue));
@@ -1845,7 +1713,6 @@ watch(() => formData.value.division, async (division) => {
     formData.value.brandFamily = {};
     brandSelectionPriority.value = null;
 
-    // Use case-insensitive matching to ensure the default logic always fires
     const div = (division || "").toLowerCase();
     if (div.includes("alcohol") && !div.includes("non-alcohol")) {
       formData.value.volumeImpactType = "9LE";
@@ -2126,12 +1993,10 @@ watch(() => formData.value.ibpStep, (val) => {
     formData.value.financialImpactType = "COGS";
   } else if (val === "A&P (Pre-Exec)" || val === "Overheads (Pre-Exec)") {
     formData.value.financialImpactType = "OI";
-  } else if (!val) { // If IBP Step is cleared, revert to initial default
+  } else if (!val) {
     formData.value.financialImpactType = defaultForm().financialImpactType;
   }
 });
-
-// Removed the aggressive watch on categorisation that was prematurely triggering brand/brandFamily validation
 
 watch(() => formData.value.rAndO, (val) => {
   if (isInitialLoadRef.value) return;
@@ -2209,10 +2074,9 @@ watch(() => props.entry, async (entry) => {
           impactValue: formatNumStr(primary === "NZD" ? (ci.nsvNzd || "") : primary === "Volume" ? (ci.volumeImpactValue || fromStorage("Volume", ci.volumeLitres || "")) : (ci.nsvAud || "")),
           secondaryUnit:  sec.unit, secondaryValue: formatNumStr(sec.val),
           netFinancialImpactValue: formatNumStr(primary === "NZD" ? (ci.gpNzd || "") : (ci.gpAud || "")),
-          _periodOpen: false, _periodSearch: "", _yearOpen: false, _yearSearch: ""
+          _periodOpen: false, _periodSearch: ""
         };
       }),
-      // NEW RATIO FIELDS POPULATION
       netFinancialImpactValue: formatNumStr((entry as any).netFinancialImpactValue || ""),
       fixedNsvGpRatio: (entry as any).fixedNsvGpRatio || "",
       fixedNsvVolRatio: (entry as any).fixedNsvVolRatio || "",
@@ -2228,11 +2092,10 @@ watch(() => props.entry, async (entry) => {
   } else {
     formData.value = defaultForm();
     ownerSameAsCreator.value = true;
-    usePeriodRange.value     = false;
     periodRangeStart.value   = { period: currentPeriod, year: String(currentYear) };
     periodRangeEnd.value     = { period: currentPeriod, year: String(currentYear) };
     isLoadingEntry.value = false;
-    isInitialLoadRef.value = false; // Ensure flag is cleared for new entries
+    isInitialLoadRef.value = false;
   }
 }, { immediate: true });
 
@@ -2245,7 +2108,6 @@ const rules: FormRules = {
   channel: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
   subChannel: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
   account: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
-  // Removed `trigger: "change"` to restrict validation only to form submission
   brand: [{ validator: (_rule: any, value: any, callback: any) => { if (formData.value.categorisation !== 'NPD' && !Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); } }],
   brandFamily: [{ validator: (_rule: any, value: any, callback: any) => { if (formData.value.categorisation !== 'NPD' && !Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); } }],
   rAndO: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
@@ -2262,11 +2124,12 @@ function addChild() {
     const count = 2;
     for (let i = 0; i < count; i++) {
       formData.value.childImpacts.push({
-        impactYear: String(currentYear), impactPeriod: i === 0 ? (formData.value.impactPeriod || "") : "",
+        impactYear: i === 0 ? (formData.value.impactYear || String(currentYear)) : String(currentYear), 
+        impactPeriod: i === 0 ? (formData.value.impactPeriod || "") : "",
         impactValue: i === 0 ? formData.value.impactValue : "", impactUnit: formData.value.primaryImpact,
         secondaryValue: i === 0 ? formData.value.secondaryValue : "", secondaryUnit: formData.value.secondaryUnit,
         netFinancialImpactValue: i === 0 ? formData.value.netFinancialImpactValue : "",
-        _periodOpen: false, _periodSearch: "", _yearOpen: false, _yearSearch: ""
+        _periodOpen: false, _periodSearch: ""
       });
     }
     formData.value.impactPeriod = ""; formData.value.impactYear = ""; formData.value.impactValue = ""; formData.value.secondaryValue = ""; formData.value.netFinancialImpactValue = "";
@@ -2275,7 +2138,7 @@ function addChild() {
       impactYear: String(currentYear), impactPeriod: "", impactValue: "", impactUnit: formData.value.primaryImpact,
       secondaryValue: "", secondaryUnit: formData.value.secondaryUnit,
       netFinancialImpactValue: "",
-      _periodOpen: false, _periodSearch: "", _yearOpen: false, _yearSearch: ""
+      _periodOpen: false, _periodSearch: ""
     });
   }
 }
@@ -2316,11 +2179,11 @@ function generatePeriodRange(sp: string, sy: string, ep: string, ey: string) {
   return result;
 }
 
-function createChildImpactsFromRange() {
+function createChildImpactsFromRange(silent = false) {
   const { period: sp, year: sy } = periodRangeStart.value; const { period: ep, year: ey } = periodRangeEnd.value;
-  if (!sp || !sy || !ep || !ey) { ElMessage.error("Please select both start and end periods for the range"); return; }
-  if (!isPeriodAfterOrEqual(ep, ey, sp, sy)) { ElMessage.error("End period must be after or equal to start period"); return; }
-  if (!isPeriodAfter(sp, sy, formData.value.addToForecastByPeriod, formData.value.addToForecastByYear)) { ElMessage.error("Start period must be after Add to Forecast By period"); return; }
+  if (!sp || !sy || !ep || !ey) { if (!silent) ElMessage.error("Please select both start and end periods for the range"); return; }
+  if (!isPeriodAfterOrEqual(ep, ey, sp, sy)) { if (!silent) ElMessage.error("End period must be after or equal to start period"); return; }
+  if (!isPeriodAfter(sp, sy, formData.value.addToForecastByPeriod, formData.value.addToForecastByYear)) { if (!silent) ElMessage.error("Start period must be after Add to Forecast By period"); return; }
   const periods = generatePeriodRange(sp, sy, ep, ey);
   if (!periods.length) { ElMessage.error("No periods in range"); return; }
   const totalPrimary = parseFloat(cleanNumStr(formData.value.impactValue)) || 0; 
@@ -2331,10 +2194,9 @@ function createChildImpactsFromRange() {
     impactYear: year, impactPeriod: period, impactValue: String(totalPrimary / periods.length), impactUnit: formData.value.primaryImpact,
     secondaryValue: String(totalSecondary / periods.length), secondaryUnit: formData.value.secondaryUnit,
     netFinancialImpactValue: String(totalGp / periods.length),
-    _periodOpen: false, _periodSearch: "", _yearOpen: false, _yearSearch: ""
+    _periodOpen: false, _periodSearch: ""
   }));
-  formData.value.impactPeriod = ""; formData.value.impactValue = ""; formData.value.secondaryValue = ""; formData.value.netFinancialImpactValue = "";
-  usePeriodRange.value = false; periodRangeStart.value = { period: currentPeriod, year: String(currentYear) }; periodRangeEnd.value = { period: currentPeriod, year: String(currentYear) };
+  formData.value.impactPeriod = ""; formData.value.impactYear = ""; formData.value.impactValue = ""; formData.value.secondaryValue = ""; formData.value.netFinancialImpactValue = "";
   ElMessage.success(`Created ${periods.length} child impacts with prorated values`);
 }
 
@@ -2410,8 +2272,8 @@ async function validate() {
         ci.impactValue = cleanNumStr(ci.impactValue); ci.secondaryValue = cleanNumStr(ci.secondaryValue);
       }
     } else {
-      if (!formData.value.impactPeriod && !usePeriodRange.value) { ElMessage.error("Impact Period is required."); return null; }
-      if (!formData.value.impactYear && !usePeriodRange.value) { ElMessage.error("Impact Year is required."); return null; }
+      if (!formData.value.impactPeriod) { ElMessage.error("Impact Period is required."); return null; }
+      if (!formData.value.impactYear) { ElMessage.error("Impact Year is required."); return null; }
       if (!formData.value.impactValue.trim()) { ElMessage.error("Primary Impact value is required."); return null; }
       if (!isValidNum(formData.value.impactValue)) { ElMessage.error("Primary Impact must be a valid number."); return null; }
       if (formData.value.secondaryValue.trim() && !isValidNum(formData.value.secondaryValue)) { ElMessage.error("Secondary Impact must be a valid number."); return null; }
@@ -2422,7 +2284,7 @@ async function validate() {
         formData.value.netFinancialImpactValue = cleanNumStr(formData.value.netFinancialImpactValue);
       }
 
-      if (!usePeriodRange.value && !isPeriodAfter(formData.value.impactPeriod, formData.value.impactYear, formData.value.addToForecastByPeriod, formData.value.addToForecastByYear)) { ElMessage.error("Primary Impact Period must be after Add to Forecast By period"); return null; }
+      if (!isPeriodAfter(formData.value.impactPeriod, formData.value.impactYear, formData.value.addToForecastByPeriod, formData.value.addToForecastByYear)) { ElMessage.error("Primary Impact Period must be after Add to Forecast By period"); return null; }
       formData.value.impactValue = cleanNumStr(formData.value.impactValue); formData.value.secondaryValue = cleanNumStr(formData.value.secondaryValue);
     }
 
@@ -2430,10 +2292,7 @@ async function validate() {
 
     return {
       ...formData.value,
-      // Ensure volumeImpactValue is correctly set for the parent entry
       volumeImpactValue: cleanNumStr(volumeImpactValue),
-      
-      // EXPORT NEW FIELDS
       fixedNsvGpRatio: formData.value.lockNsvGpRatio ? calculatedNsvGpRatio.value : null,
       fixedNsvVolRatio: formData.value.lockNsvVolRatio ? calculatedNsvVolRatio.value : null,
       netFinancialImpactValue: (formData.value.financialImpactType === 'NSV') ? cleanNumStr(formData.value.netFinancialImpactValue) : null,
@@ -2463,7 +2322,6 @@ function reset() {
   formData.value = defaultForm(); ownerSameAsCreator.value = true;
   selectionPriority.value = null;
   brandSelectionPriority.value = null;
-  usePeriodRange.value = false;
   periodRangeStart.value = { period: currentPeriod, year: String(currentYear) };
   periodRangeEnd.value   = { period: currentPeriod, year: String(currentYear) };
   formRef.value?.clearValidate();
@@ -2534,15 +2392,12 @@ defineExpose({ validate, reset });
   background-color: #ededf0;
 }
 
-/* Targeted Multi-Dropdown Styling
-  Increases the shade of the dropdown grey color to ensure Channel, 
-  Sub Channel, Account, Brand, and Brand Family perfectly match each other 
-*/
+/* Targeted Multi-Dropdown Styling */
 :deep(.multi-dropdown-trigger .el-input__wrapper) {
-  background-color: #f4f5f7 !important; /* Noticeably deeper grey */
+  background-color: #f4f5f7 !important;
 }
 :deep(.multi-dropdown-trigger .el-input__wrapper:hover) {
-  background-color: #dcdfe4 !important; /* Deeper hover */
+  background-color: #dcdfe4 !important;
 }
 :deep(.multi-dropdown-trigger.force-focus .el-input__wrapper) {
   background-color: #fff !important;
@@ -2552,8 +2407,7 @@ defineExpose({ validate, reset });
   background-color: #f4f5f7 !important;
 }
 
-
-/* Force Focus styling applied universally when regular dropdowns are open */
+/* Force Focus styling */
 :deep(.el-input__wrapper.is-focus),
 :deep(.el-textarea__inner:focus),
 :deep(.el-select .el-input__wrapper.is-focus),
@@ -2593,13 +2447,12 @@ defineExpose({ validate, reset });
   opacity: 1;
 }
 
-/* Unify Placeholder Styling for populated combo boxes to match actual text color */
+/* Unify Placeholder Styling for populated combo boxes */
 .has-selected-value :deep(input::placeholder) {
   color: #000 !important;
   opacity: 1;
 }
 
-/* Pointer interactions for multi-select dropdown triggers */
 .pointer-input :deep(.el-input__wrapper),
 .pointer-input :deep(.el-input__inner) {
   cursor: pointer !important;
@@ -2616,7 +2469,6 @@ defineExpose({ validate, reset });
 :deep(.el-input.is-disabled input::placeholder) {
   color: #a8a8a8 !important;
 }
-/* Exception for Creator (keep it muted since it's disabled) */
 :deep(.el-form-item[prop="creator"] .el-input.is-disabled .el-input__inner) {
   color: #a8a8a8 !important;
 }
@@ -2724,7 +2576,7 @@ defineExpose({ validate, reset });
 .input-with-dropdown {
   display: flex;
   align-items: stretch;
-  gap: 12px;
+  gap: 4px;
   width: 100%;
 }
 .black-dropdown-btn {
@@ -2807,7 +2659,6 @@ defineExpose({ validate, reset });
   color: #fff;
   height: 30px;
   font-weight: 600;
-  margin-top: 24px;
   border-radius: 6px;
 }
 .prorate-btn:hover:not(:disabled) {
@@ -2818,7 +2669,6 @@ defineExpose({ validate, reset });
 .add-impact-row {
   display: flex;
   justify-content: flex-end;
-  margin-top: 16px;
 }
 .add-impact-btn {
   border-radius: 6px;
@@ -2857,15 +2707,16 @@ defineExpose({ validate, reset });
 .mt-2 { margin-top: 8px; }
 .mt-3 { margin-top: 12px; }
 .mt-4 { margin-top: 24px; }
+.mb-2 { margin-bottom: 8px; }
 
 /* Ratio Locks */
 .ratio-lock-block {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 .ratio-value {
-  font-size: 13px;
+  font-size: 12px;
   color: #8c8c8c;
   font-weight: 500;
 }
