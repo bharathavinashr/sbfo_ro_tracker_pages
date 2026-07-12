@@ -2038,14 +2038,14 @@ watch(() => props.entry, async (entry) => {
       creationDateYear:      entry.creationDateYear    || String(currentYear),
       addToForecastByPeriod: entry.addToForecastByPeriod || currentPeriod,
       addToForecastByYear:   entry.addToForecastByYear   || String(currentYear),
-      division:       entry.division      || "", ibpStep:         entry.ibpStep       || "",
-      country:        ensureObject(entry.country),
-      channel:        ensureObject(entry.channel),
-      subChannel:     ensureObject(entry.subChannel),
-      account:        ensureObject(entry.account),
-      brand:          ensureObject(entry.brand),
-      brandFamily:    ensureObject(entry.brandFamily),
-      rAndO:          entry.rAndO         || "Risk", probability:     entry.probability   || "",
+      division:        entry.division      || "", ibpStep:         entry.ibpStep       || "",
+      country:         ensureObject(entry.country),
+      channel:         ensureObject(entry.channel),
+      subChannel:      ensureObject(entry.subChannel),
+      account:         ensureObject(entry.account),
+      brand:           ensureObject(entry.brand),
+      brandFamily:     ensureObject(entry.brandFamily),
+      rAndO:          entry.rAndO          || "Risk", probability:     entry.probability   || "",
       categorisation: entry.categorisation|| "", impactPeriod:   entry.impactPeriod  || "",
       impactYear:     entry.impactYear    || (entry.childImpacts?.length ? "" : String(currentYear)),
       primaryImpact:  entry.primaryImpact || "AUD", financialImpactType:     entry.financialImpactType    || "OI",
@@ -2156,16 +2156,12 @@ function removeChild(idx: number) {
   }
 }
 
-function isPeriodAfter(p1: string, y1: string, p2: string, y2: string): boolean {
-  const Y1 = parseInt(y1), Y2 = parseInt(y2);
-  if (Y1 > Y2) return true; if (Y1 < Y2) return false;
-  return parseInt(p1.replace("F","")) > parseInt(p2.replace("F",""));
-}
 function isPeriodAfterOrEqual(p1: string, y1: string, p2: string, y2: string): boolean {
   const Y1 = parseInt(y1), Y2 = parseInt(y2);
   if (Y1 > Y2) return true; if (Y1 < Y2) return false;
   return parseInt(p1.replace("F","")) >= parseInt(p2.replace("F",""));
 }
+
 function generatePeriodRange(sp: string, sy: string, ep: string, ey: string) {
   const result: { period: string; year: string }[] = [];
   let cp = parseInt(sp.replace("F","")), cy = parseInt(sy);
@@ -2183,7 +2179,7 @@ function createChildImpactsFromRange(silent = false) {
   const { period: sp, year: sy } = periodRangeStart.value; const { period: ep, year: ey } = periodRangeEnd.value;
   if (!sp || !sy || !ep || !ey) { if (!silent) ElMessage.error("Please select both start and end periods for the range"); return; }
   if (!isPeriodAfterOrEqual(ep, ey, sp, sy)) { if (!silent) ElMessage.error("End period must be after or equal to start period"); return; }
-  if (!isPeriodAfter(sp, sy, formData.value.addToForecastByPeriod, formData.value.addToForecastByYear)) { if (!silent) ElMessage.error("Start period must be after Add to Forecast By period"); return; }
+  if (!isPeriodAfterOrEqual(sp, sy, formData.value.addToForecastByPeriod, formData.value.addToForecastByYear)) { if (!silent) ElMessage.error("Start period must be on or after Add to Forecast By period"); return; }
   const periods = generatePeriodRange(sp, sy, ep, ey);
   if (!periods.length) { ElMessage.error("No periods in range"); return; }
   const totalPrimary = parseFloat(cleanNumStr(formData.value.impactValue)) || 0; 
@@ -2268,7 +2264,7 @@ async function validate() {
           ci.netFinancialImpactValue = cleanNumStr(ci.netFinancialImpactValue);
         }
 
-        if (!isPeriodAfter(ci.impactPeriod, ci.impactYear, formData.value.addToForecastByPeriod, formData.value.addToForecastByYear)) { ElMessage.error(`Row ${i+1}: Impact Period must be after Add to Forecast By period`); return null; }
+        if (!isPeriodAfterOrEqual(ci.impactPeriod, ci.impactYear, formData.value.addToForecastByPeriod, formData.value.addToForecastByYear)) { ElMessage.error(`Row ${i+1}: Impact Period must be on or after Add to Forecast By period`); return null; }
         ci.impactValue = cleanNumStr(ci.impactValue); ci.secondaryValue = cleanNumStr(ci.secondaryValue);
       }
     } else {
@@ -2284,7 +2280,7 @@ async function validate() {
         formData.value.netFinancialImpactValue = cleanNumStr(formData.value.netFinancialImpactValue);
       }
 
-      if (!isPeriodAfter(formData.value.impactPeriod, formData.value.impactYear, formData.value.addToForecastByPeriod, formData.value.addToForecastByYear)) { ElMessage.error("Primary Impact Period must be after Add to Forecast By period"); return null; }
+      if (!isPeriodAfterOrEqual(formData.value.impactPeriod, formData.value.impactYear, formData.value.addToForecastByPeriod, formData.value.addToForecastByYear)) { ElMessage.error("Primary Impact Period must be on or after Add to Forecast By period"); return null; }
       formData.value.impactValue = cleanNumStr(formData.value.impactValue); formData.value.secondaryValue = cleanNumStr(formData.value.secondaryValue);
     }
 
