@@ -162,22 +162,26 @@
         </el-col>
         <el-col :span="12">
           <el-form-item label="Division" prop="division">
-            <div class="combo-wrap">
+            <div class="combo-wrap" ref="divRef" v-click-outside="handleDivClickOutside">
               <el-input
-                v-model="divSearch"
-                :placeholder="formData.division || 'Select division'"
-                :class="{ 'has-selected-value': !!formData.division && !divSearch, 'force-focus': divOpen }"
-                @focus="divOpen = true"
-                @blur="onDivBlur"
-                @input="divOpen = true"
-                clearable
-                @clear="formData.division = ''; divSearch = ''"
+                readonly
+                :placeholder="Object.keys(formData.division).length ? Object.values(formData.division).join(', ') : 'Select one or more divisions'"
+                class="multi-dropdown-trigger"
+                :class="{ 'has-selected-value': Object.keys(formData.division).length > 0, 'pointer-input': true, 'force-focus': divOpen }"
+                @click="divOpen = !divOpen"
               >
                 <template #suffix><el-icon class="combo-arrow"><ArrowDown /></el-icon></template>
               </el-input>
-              <div v-if="divOpen" class="combo-dropdown">
-                <div v-for="d in filteredDivs" :key="d" class="combo-item" @mousedown.prevent="formData.division = d; divSearch = ''; divOpen = false">{{ d }}</div>
-                <div v-if="filteredDivs.length === 0 && divSearch" class="combo-custom" @mousedown.prevent="formData.division = divSearch; divOpen = false">Use custom value: "{{ divSearch }}"</div>
+              <div v-if="divOpen" class="combo-dropdown brand-family-dropdown">
+                <el-input v-model="divSearch" placeholder="Type to search..." class="bf-search" />
+                <div class="combo-item combo-check-item bf-select-all" @mousedown.prevent="toggleAllDivisions">
+                  <el-checkbox :model-value="allDivisionsSelected" />
+                  <span class="bf-select-all-label">Select All Suggestions</span>
+                </div>
+                <div v-for="d in filteredDivs" :key="d" class="combo-item combo-check-item" @mousedown.prevent="toggleDivision(d)">
+                  <el-checkbox :model-value="!!formData.division[d]" />
+                  <span>{{ d }}</span>
+                </div>
               </div>
             </div>
           </el-form-item>
@@ -738,6 +742,27 @@ function ensureObject(v: any): Record<string, string> {
   } catch { return {}; }
 }
 
+function parseMap(v: unknown): Record<string, string> {
+  if (!v) return {};
+  if (typeof v === 'object' && !Array.isArray(v)) {
+    return Object.fromEntries(Object.entries(v as Record<string, string>).filter(([k, value]) => Boolean(k) && Boolean(value)));
+  }
+  if (Array.isArray(v)) {
+    return Object.fromEntries(v.filter(Boolean).map(item => [String(item), String(item)]));
+  }
+  if (typeof v === 'string') {
+    try {
+      const parsed = JSON.parse(v);
+      if (Array.isArray(parsed)) return Object.fromEntries(parsed.filter(Boolean).map(item => [String(item), String(item)]));
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return Object.fromEntries(Object.entries(parsed as Record<string, string>).filter(([k, value]) => Boolean(k) && Boolean(value)));
+      }
+    } catch {}
+    return Object.fromEntries(v.split(',').map(item => item.trim()).filter(Boolean).map(item => [item, item]));
+  }
+  return {};
+}
+
 function ensureValues(v: any): string[] {
   if (!v) return [];
   if (Array.isArray(v)) return v;
@@ -799,7 +824,7 @@ onMounted(async () => {
     // Auto-select division if the user is restricted to exactly one division.
     if (userDivisionsForAutoSelect.value.length === 1) {
       const div = userDivisionsForAutoSelect.value[0];
-      formData.value.division = div;
+      formData.value.division = { [div]: div };
       
       // Ensure volume impact default is set even for auto-selected divisions
       if (div && div.toLowerCase().includes("alcohol") && !div.toLowerCase().includes("non-alcohol")) {
@@ -827,7 +852,7 @@ const probabilityOptions = computed(() => lookupStore.getCached("probability"));
 const CATEG_ACTIVE_IBP_STEPS = ["Portfolio Review", "Demand Review", "Supply Review", "A&P (Pre-Exec)", "Overheads (Pre-Exec)"];
 const categActive = computed(() => CATEG_ACTIVE_IBP_STEPS.includes(formData.value.ibpStep));
 
-const countryDivisionActive = computed(() => Object.keys(formData.value.country).length > 0 && !!formData.value.division);
+const countryDivisionActive = computed(() => Object.keys(formData.value.country).length > 0 && Object.keys(formData.value.division).length > 0);
 const countryActive = computed(() => Object.keys(formData.value.country).length > 0);
 const channelDisabledMessage = "Please select Country";
 const channelSubChannelAccountBrandMessage = "Please select Country and Division";
@@ -838,11 +863,13 @@ const overheadsCategorisations = ["People Costs", "Other People Costs", "Total P
 const alcoholCategorisations   = ["Customer SOH", "Ranging", "Phasing", "Excise", "Rate", "Allocations"];
 const baseCategorisations      = ["Baseline/Run Rates", "Brand Activations", "Deletions", "Long Term Forecast", "NPD", "New Business", "OOS", "Promotional Pricing", "Strategic/MTP/Trading Terms"];
 
+const selectedDivisions = computed(() => Object.keys(formData.value.division || {}));
 const categOptions = computed(() => {
   if (formData.value.ibpStep === "Supply Review") return supplyCategorisations;
   if (formData.value.ibpStep === "Overheads (Pre-Exec)" || formData.value.ibpStep === "A&P (Pre-Exec)") return overheadsCategorisations;
+  const divisionText = selectedDivisions.value.join(" ").toLowerCase();
   if (
-    formData.value.division === "Alcohol" &&
+    divisionText.includes("alcohol") && !divisionText.includes("non-alcohol") &&
     (formData.value.ibpStep === "Portfolio Review" || formData.value.ibpStep === "Demand Review")
   ) return [...baseCategorisations, ...alcoholCategorisations];
   return baseCategorisations;
@@ -860,6 +887,7 @@ const subChannelRef     = ref<HTMLElement | null>(null);
 const accountRef        = ref<HTMLElement | null>(null);
 const brandSearch       = ref("");
 const brandFamilyOpen   = ref(false);
+const divRef            = ref<HTMLElement | null>(null);
 const brandFamilySearch = ref("");
 const accountOpen       = ref(false);
 const channelOpen       = ref(false);
@@ -917,6 +945,7 @@ function handleBrandClickOutside()       { brandOpen.value = false; }
 function handleChannelClickOutside()     { channelOpen.value = false; }
 function handleSubChannelClickOutside()  { subChannelOpen.value = false; }
 function handleAccountClickOutside()     { accountOpen.value = false; }
+function handleDivClickOutside()         { divOpen.value = false; }
 
 const currentYear   = new Date().getFullYear();
 const yearOptions   = Array.from({ length: 10 }, (_, i) => currentYear - 2 + i);
@@ -944,6 +973,21 @@ const userDivisionsForAutoSelect = computed(() => {
 const filteredIbpSteps = computed(() => userIbpSteps.value.filter(d => d.toLowerCase().includes(ibpStepSearch.value.toLowerCase())));
 const filteredDivs = computed(() => divisionOptions.value.filter(d => d.toLowerCase().includes(divSearch.value.toLowerCase())));
 const filteredCountries = computed(() => availableCountryOptions.value.filter(c => c.label.toLowerCase().includes(countrySearch.value.toLowerCase())));
+const allDivisionsSelected = computed(() => filteredDivs.value.length > 0 && filteredDivs.value.every(d => !!formData.value.division[d]));
+
+function toggleDivision(val: string) {
+  if (formData.value.division[val]) delete formData.value.division[val];
+  else formData.value.division[val] = val;
+}
+
+function toggleAllDivisions() {
+  const suggestions = filteredDivs.value;
+  if (allDivisionsSelected.value) {
+    suggestions.forEach(d => delete formData.value.division[d]);
+  } else {
+    suggestions.forEach(d => formData.value.division[d] = d);
+  }
+}
 
 const filteredCreationPeriods = computed(() => PERIODS.filter(p => periodToMonth(p).toLowerCase().includes(creationPeriodSearch.value.toLowerCase()) || p.toLowerCase().includes(creationPeriodSearch.value.toLowerCase())));
 const filteredCreationYears = computed(() => yearOptions.map(String).filter(y => y.includes(creationYearSearch.value)));
@@ -1157,14 +1201,15 @@ async function handleAccountToggle(code: string, name: string) {
 async function syncBrandFromBrandFamilies() {
   const brandFamilyCodes = Object.keys(formData.value.brandFamily);
   const countryName = Object.values(formData.value.country)[0];
-  if (!formData.value.division || !countryName) return;
+  const division = Object.keys(formData.value.division || {})[0] || "";
+  if (!division || !countryName) return;
 
   const newBrands: Record<string, string> = {};
   isReverseAction.value = true;
 
   try {
     const results = await Promise.all(
-      brandFamilyCodes.map(code => lookupApi.getBrandFamilyDetails(formData.value.division, code, countryName))
+      brandFamilyCodes.map(code => lookupApi.getBrandFamilyDetails(division, code, countryName))
     );
 
     results.forEach(details => {
@@ -1200,7 +1245,7 @@ async function toggleBrand(code: string, name: string) {
 
     if (brandSelectionPriority.value === 'brandFamily') {
       const countryName = Object.values(formData.value.country)[0];
-      const division = formData.value.division;
+      const division = Object.keys(formData.value.division || {})[0] || "";
       
       const bfCodes = Object.keys(formData.value.brandFamily);
       for (const bfCode of bfCodes) {
@@ -1234,7 +1279,7 @@ async function toggleAllBrands() {
   if (allBrandsSelected.value) {
     if (brandSelectionPriority.value === 'brandFamily') {
       const countryName = Object.values(formData.value.country)[0];
-      const division = formData.value.division;
+      const division = Object.keys(formData.value.division || {})[0] || "";
       const codesToRemove = suggestions.map(b => b.value);
 
       const bfCodes = Object.keys(formData.value.brandFamily);
@@ -1452,7 +1497,7 @@ interface FormData {
   creationDateYear:      string;
   addToForecastByPeriod: string;
   addToForecastByYear:   string;
-  division:              string;
+  division:              Record<string, string>;
   ibpStep:               string;
   country:               Record<string, string>;
   channel:               Record<string, string>;
@@ -1518,7 +1563,7 @@ function defaultForm(): FormData {
     creationDateYear:      String(currentYear),
     addToForecastByPeriod: currentPeriod,
     addToForecastByYear:   String(currentYear),
-    division:        "", ibpStep:         "", country:         {},
+    division:        {} as Record<string, string>, ibpStep:         "", country:         {},
     channel:         {}, subChannel:      {}, account:         {},
     brand:           {}, brandFamily:     {}, rAndO:           "Risk",
     probability:     "", categorisation:  "", impactPeriod:    currentPeriod,
@@ -1600,7 +1645,7 @@ function getUnitOptions(countryDict: Record<string, string>): string[] {
 const unitOptions = computed(() => getUnitOptions(formData.value.country));
 
 const isAlcohol = computed(() => {
-  const d = formData.value.division.toLowerCase();
+  const d = Object.keys(formData.value.division).join(" ").toLowerCase();
   return d.includes("alcohol") && !d.includes("non-alcohol");
 });
 
@@ -1713,7 +1758,7 @@ watch(() => formData.value.division, async (division) => {
     formData.value.brandFamily = {};
     brandSelectionPriority.value = null;
 
-    const div = (division || "").toLowerCase();
+    const div = Object.keys(division || {}).join(" ").toLowerCase();
     if (div.includes("alcohol") && !div.includes("non-alcohol")) {
       formData.value.volumeImpactType = "9LE";
     } else if (div.includes("non-alcohol")) {
@@ -1721,8 +1766,8 @@ watch(() => formData.value.division, async (division) => {
     }
   }
 
-  if (division && Object.keys(formData.value.country).length > 0) {
-    await loadCountryBasedLookups(formData.value.country, division);
+  if (Object.keys(division || {}).length && Object.keys(formData.value.country).length > 0) {
+    await loadCountryBasedLookups(formData.value.country, division as Record<string, string>);
   }
 }, { immediate: true });
 
@@ -1740,9 +1785,10 @@ watch(() => formData.value.country, async (country) => {
   await loadCountryBasedLookups(country, formData.value.division);
 });
 
-async function loadCountryBasedLookups(country: Record<string, string>, division: string) {
+async function loadCountryBasedLookups(country: Record<string, string>, divisionSelection: Record<string, string>) {
   const countryName = Object.values(country)[0];
   const hasCountry = Object.keys(country).length > 0;
+  const division = Object.keys(divisionSelection || {})[0] || "";
 
   if (hasCountry) {
     try {
@@ -1868,7 +1914,8 @@ watch(() => formData.value.brand, async (brandMap) => {
   }
 
   const countryName = Object.values(formData.value.country)[0];
-  if (!formData.value.division || !countryName) {
+  const division = Object.keys(formData.value.division || {})[0] || "";
+  if (!division || !countryName) {
     brandFamilyOptions.value = [];
     return;
   }
@@ -1877,7 +1924,7 @@ watch(() => formData.value.brand, async (brandMap) => {
     try {
       const allBrands = brandOptions.value.map(b => b.label);
       if (allBrands.length > 0) {
-        const data = await lookupApi.getBrandFamilies(allBrands, countryName, formData.value.division);
+        const data = await lookupApi.getBrandFamilies(allBrands, countryName, division);
         brandFamilyOptions.value = data.options;
       } else {
         brandFamilyOptions.value = [];
@@ -1892,7 +1939,7 @@ watch(() => formData.value.brand, async (brandMap) => {
       const brandFamiliesMap = new Map<string, {value: string, label: string}>();
       for (const brandCode of brandCodes) {
         if (brandCode) {
-          const data = await lookupApi.getBrandFamiliesByBrand(formData.value.division, brandCode, countryName);
+          const data = await lookupApi.getBrandFamiliesByBrand(division, brandCode, countryName);
           data.options.forEach(opt => brandFamiliesMap.set(opt.value, opt));
         }
       }
@@ -1901,7 +1948,7 @@ watch(() => formData.value.brand, async (brandMap) => {
       try {
         const allBrands = brandOptions.value.map(b => b.label);
         if (allBrands.length > 0) {
-          const data = await lookupApi.getBrandFamilies(allBrands, countryName, formData.value.division);
+          const data = await lookupApi.getBrandFamilies(allBrands, countryName, division);
           brandFamilyOptions.value = data.options;
         } else {
           brandFamilyOptions.value = [];
@@ -1928,11 +1975,12 @@ watch(brandFamilyOpen, async (isOpen) => {
     
     if (brandFamilyOptions.value.length === 0) {
       const countryName = Object.values(formData.value.country)[0];
-      if (formData.value.division && countryName) {
+      const division = Object.keys(formData.value.division || {})[0] || "";
+      if (division && countryName) {
         try {
           const allBrands = brandOptions.value.map(b => b.label);
           if (allBrands.length > 0) {
-            const data = await lookupApi.getBrandFamilies(allBrands, countryName, formData.value.division);
+            const data = await lookupApi.getBrandFamilies(allBrands, countryName, division);
             brandFamilyOptions.value = data.options;
           }
         } catch (e) {
@@ -2022,8 +2070,12 @@ watch(() => props.entry, async (entry) => {
   brandSelectionPriority.value = null;
   if (entry) {
     isInitialLoadRef.value = true;
-    const _d = (entry.division || "").toLowerCase();
-    const entryIsAlcohol = _d.includes("alcohol") && !_d.includes("non-alcohol");
+    const divisionText = Array.isArray(entry.division)
+      ? entry.division.join(" ")
+      : typeof entry.division === "object"
+        ? Object.values(entry.division as Record<string, string>).join(" ")
+        : String(entry.division ?? "");
+    const entryIsAlcohol = divisionText.toLowerCase().includes("alcohol") && !divisionText.toLowerCase().includes("non-alcohol");
     const fromStorage = (unit: string, val: string): string => {
       if (!val || unit !== "Volume" || !entryIsAlcohol) return val;
       const n = parseFloat(val); return isNaN(n) ? val : String(n / 9);
@@ -2038,14 +2090,14 @@ watch(() => props.entry, async (entry) => {
       creationDateYear:      entry.creationDateYear    || String(currentYear),
       addToForecastByPeriod: entry.addToForecastByPeriod || currentPeriod,
       addToForecastByYear:   entry.addToForecastByYear   || String(currentYear),
-      division:        entry.division      || "", ibpStep:         entry.ibpStep       || "",
-      country:         ensureObject(entry.country),
-      channel:         ensureObject(entry.channel),
-      subChannel:      ensureObject(entry.subChannel),
-      account:         ensureObject(entry.account),
-      brand:           ensureObject(entry.brand),
-      brandFamily:     ensureObject(entry.brandFamily),
-      rAndO:          entry.rAndO          || "Risk", probability:     entry.probability   || "",
+      division:       parseMap(entry.division), ibpStep:         entry.ibpStep       || "",
+      country:        ensureObject(entry.country),
+      channel:        ensureObject(entry.channel),
+      subChannel:     ensureObject(entry.subChannel),
+      account:        ensureObject(entry.account),
+      brand:          ensureObject(entry.brand),
+      brandFamily:    ensureObject(entry.brandFamily),
+      rAndO:          entry.rAndO         || "Risk", probability:     entry.probability   || "",
       categorisation: entry.categorisation|| "", impactPeriod:   entry.impactPeriod  || "",
       impactYear:     entry.impactYear    || (entry.childImpacts?.length ? "" : String(currentYear)),
       primaryImpact:  entry.primaryImpact || "AUD", financialImpactType:     entry.financialImpactType    || "OI",
@@ -2102,7 +2154,7 @@ watch(() => props.entry, async (entry) => {
 const rules: FormRules = {
   creationDatePeriod: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
   creationDateYear: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
-  division: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
+  division: [{ validator: (_rule: unknown, _value: unknown, callback: (e?: Error) => void) => { if (Object.keys(formData.value.division).length === 0) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
   ibpStep: [{ required: true, message: "Please fill out this field.", trigger: "change" }],
   country: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
   channel: [{ validator: (_rule: any, value: any, callback: any) => { if (!Object.keys(value || {}).length) callback(new Error("Please fill out this field.")); else callback(); }, trigger: "change" }],
@@ -2288,6 +2340,7 @@ async function validate() {
 
     return {
       ...formData.value,
+      division: Object.keys(formData.value.division),
       volumeImpactValue: cleanNumStr(volumeImpactValue),
       fixedNsvGpRatio: formData.value.lockNsvGpRatio ? calculatedNsvGpRatio.value : null,
       fixedNsvVolRatio: formData.value.lockNsvVolRatio ? calculatedNsvVolRatio.value : null,

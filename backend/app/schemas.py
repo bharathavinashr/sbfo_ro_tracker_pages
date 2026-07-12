@@ -1,6 +1,28 @@
-from pydantic import BaseModel
-from typing import Optional, List, Any, Dict
+import json
+from pydantic import BaseModel, field_validator
+from typing import Optional, List, Any, Dict, Union
 from datetime import datetime
+
+
+def normalize_division_value(value: Any) -> Any:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    if isinstance(value, tuple):
+        return [str(item).strip() for item in value if str(item).strip()]
+    if isinstance(value, str):
+        return value.strip() or []
+    if isinstance(value, dict):
+        return [str(item).strip() for item in value.values() if str(item).strip()]
+    return [str(value).strip()] if str(value).strip() else []
+
+
+def serialize_division_value(value: Any) -> Any:
+    normalized = normalize_division_value(value)
+    if isinstance(normalized, list):
+        return json.dumps(normalized, separators=(",", ":")) if len(normalized) > 1 else (normalized[0] if normalized else [])
+    return normalized
 
 
 class ChildImpactBase(BaseModel):
@@ -26,7 +48,7 @@ class EntryBase(BaseModel):
     creation_date_year: Optional[str] = None
     add_to_forecast_by_period: Optional[str] = None
     add_to_forecast_by_year: Optional[str] = None
-    division: str
+    division: Union[str, List[str], Dict[str, str]]
     ibp_step: Optional[str] = None
     country: Dict[str, str]  # Map: {company_code: country_name}
     channel: Dict[str, str]  # Map: {channel_code: channel_name}
@@ -57,6 +79,11 @@ class EntryBase(BaseModel):
     fixed_nsv_gp_ratio: Optional[str] = None
     fixed_nsv_vol_ratio: Optional[str] = None
     net_financial_impact_value: Optional[str] = None
+
+    @field_validator("division", mode="before")
+    @classmethod
+    def validate_division(cls, value: Any) -> Any:
+        return normalize_division_value(value)
 
 
 class EntryCreate(EntryBase):

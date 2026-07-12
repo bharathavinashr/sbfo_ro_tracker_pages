@@ -1,3 +1,4 @@
+import json
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, ForeignKey
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
@@ -20,7 +21,7 @@ class Entry(Base):
     add_to_forecast_by_period = Column(String(5), nullable=True)
     add_to_forecast_by_year = Column(String(4), nullable=True)
 
-    division = Column(String(255), nullable=False)
+    division = Column(JSONB, nullable=False)
     ibp_step = Column(String(255), nullable=True)
     country = Column(JSONB, nullable=False)  # Map: {company_code: country_name}
 

@@ -56,6 +56,16 @@ def _entry_to_dict(entry, child_impacts) -> dict:
     impact_value, impact_currency, vol_impact_value, gp_value = _calculate_impact(entry, child_impacts)
     primary_impact = entry.primary_impact or ""
     
+    division_value = entry.division
+    if isinstance(division_value, (list, tuple)):
+        division_display = list(division_value)
+    elif isinstance(division_value, dict):
+        division_display = list(division_value.values())
+    elif isinstance(division_value, str):
+        division_display = division_value
+    else:
+        division_display = division_value
+
     return {
         "id": entry.id,
         "originalEntryId": entry.original_entry_id,
@@ -65,7 +75,7 @@ def _entry_to_dict(entry, child_impacts) -> dict:
         "creationDateYear": entry.creation_date_year,
         "addToForecastByPeriod": entry.add_to_forecast_by_period,
         "addToForecastByYear": entry.add_to_forecast_by_year,
-        "division": entry.division,
+        "division": division_display,
         "ibpStep": entry.ibp_step,
         "country": entry.country,
         "channel": entry.channel,

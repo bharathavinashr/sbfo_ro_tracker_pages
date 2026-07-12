@@ -127,8 +127,8 @@
                 </td>
 
                 <td v-if="visibleColumns.division">
-                  <div>{{ row.division }}</div>
-                  <div v-if="row.changeStatus === 'Modified' && row.previousValues?.division && row.previousValues.division !== row.division" class="prev-value">{{ row.previousValues.division }}</div>
+                  <div>{{ formatValue(row.division) }}</div>
+                  <div v-if="row.changeStatus === 'Modified' && row.previousValues?.division && formatValue(row.previousValues.division) !== formatValue(row.division)" class="prev-value">{{ formatValue(row.previousValues.division) }}</div>
                 </td>
 
                 <td v-if="visibleColumns.country">

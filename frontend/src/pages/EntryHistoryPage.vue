@@ -20,7 +20,7 @@
           <el-row :gutter="16">
             <el-col :span="3">
               <label class="info-label">Division</label>
-              <div class="info-value">{{ latestVersion?.division }}</div>
+              <div class="info-value">{{ formatValue(latestVersion?.division) }}</div>
             </el-col>
             <el-col :span="3">
               <label class="info-label">Country</label>
@@ -100,7 +100,7 @@
 
       <el-table-column label="Division" width="100">
         <template #default="{ row, $index }">
-          {{ row.division }}
+          {{ formatValue(row.division) }}
           <el-tag v-if="hasChanged($index, 'division')" type="warning" size="small" style="margin-left:4px">Updated</el-tag>
         </template>
       </el-table-column>

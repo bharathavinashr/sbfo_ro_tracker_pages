@@ -76,6 +76,16 @@ def _generate_entry_data_for_snapshot(entry, child_impacts, impact_value, vol_im
                 "volume_impact_value": ci.volume_impact_value,
             })
 
+    division_value = entry.division
+    if isinstance(division_value, (list, tuple)):
+        division_display = list(division_value)
+    elif isinstance(division_value, dict):
+        division_display = list(division_value.values())
+    elif isinstance(division_value, str):
+        division_display = division_value
+    else:
+        division_display = division_value
+
     return {
         "id": entry.id,
         "original_entry_id": entry.original_entry_id,
@@ -83,7 +93,7 @@ def _generate_entry_data_for_snapshot(entry, child_impacts, impact_value, vol_im
         "creation_date": entry.creation_date,
         "creation_date_period": entry.creation_date_period,
         "creation_date_year": entry.creation_date_year,
-        "division": entry.division,
+        "division": division_display,
         "ibp_step": entry.ibp_step,
         "country": entry.country,
         "channel": entry.channel,

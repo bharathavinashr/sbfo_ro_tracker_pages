@@ -348,7 +348,7 @@
                       </button>
                     </td>
                     <td v-else-if="col.id === 'ibpStep'">{{ row.ibpStep || '-' }}</td>
-                    <td v-else-if="col.id === 'division'">{{ row.division }}</td>
+                    <td v-else-if="col.id === 'division'">{{ formatValue(row.division) }}</td>
                     <td v-else-if="col.id === 'country'">{{ formatCountry(row.country) }}</td>
                     <td v-else-if="col.id === 'categorisation'">{{ row.categorisation }}</td>
                     <td v-else-if="col.id === 'description'">{{ row.shortDescription || row.description || '-' }}</td>
@@ -423,7 +423,7 @@
                     <template v-for="col in visibleColumns" :key="col.id">
                       <td v-if="col.type === 'expand'" class="col-expand"></td>
                       <td v-else-if="col.id === 'ibpStep'" class="cell-muted">{{ row.ibpStep || '-' }}</td>
-                      <td v-else-if="col.id === 'division'" class="cell-muted">{{ row.division }}</td>
+                      <td v-else-if="col.id === 'division'" class="cell-muted">{{ formatValue(row.division) || '-' }}</td>
                       <td v-else-if="col.id === 'country'" class="cell-muted">{{ formatCountry(row.country) }}</td>
                       <td v-else-if="col.id === 'categorisation'" class="cell-muted">{{ row.categorisation }}</td>
                       <td v-else-if="col.id === 'description'" class="cell-muted">{{ row.shortDescription || '-' }}</td>
@@ -499,7 +499,7 @@
                   </button>
                 </td>
                 <td v-else-if="col.id === 'ibpStep'">{{ row.ibpStep || '-' }}</td>
-                <td v-else-if="col.id === 'division'">{{ row.division }}</td>
+                <td v-else-if="col.id === 'division'">{{ formatValue(row.division) }}</td>
                 <td v-else-if="col.id === 'country'">{{ formatCountry(row.country) }}</td>
                 <td v-else-if="col.id === 'categorisation'">{{ row.categorisation }}</td>
                 <td v-else-if="col.id === 'description'">{{ row.shortDescription || row.description || '-' }}</td>
@@ -575,7 +575,7 @@
                 <template v-for="col in visibleColumns" :key="col.id">
                   <td v-if="col.type === 'expand'" class="col-expand"></td>
                   <td v-else-if="col.id === 'ibpStep'" class="cell-muted">{{ row.ibpStep || '-' }}</td>
-                  <td v-else-if="col.id === 'division'" class="cell-muted">{{ row.division }}</td>
+                  <td v-else-if="col.id === 'division'" class="cell-muted">{{ formatValue(row.division) || '-' }}</td>
                   <td v-else-if="col.id === 'country'" class="cell-muted">{{ formatCountry(row.country) }}</td>
                   <td v-else-if="col.id === 'categorisation'" class="cell-muted">{{ row.categorisation }}</td>
                   <td v-else-if="col.id === 'description'" class="cell-muted">{{ row.shortDescription || '-' }}</td>
@@ -672,8 +672,8 @@ function applyUserDefaults() {
   }
   if (store.filters.division.length === 0 && Array.isArray(divs) && divs.length > 0) {
     const availableDivs = divisionOptions.value || [];
-    let toApply = Array.isArray(availableDivs) && availableDivs.length > 0
-      ? divs.filter((d: string) => availableDivs.includes(d))
+    let toApply = Array.isArray(availableDivs) && availableDivs.length > 0 
+      ? divs.filter((d: string) => availableDivs.includes(d)) 
       : divs;
     if (toApply.length === 0) {
       toApply = [...divs];
@@ -717,8 +717,8 @@ function applyUserDefaults() {
   }
   if (store.filters.ibp_step.length === 0 && Array.isArray(steps) && steps.length > 0) {
     const availableSteps = lookupStore.getCached("ibp_step") || [];
-    let toApply = Array.isArray(availableSteps) && availableSteps.length > 0
-      ? steps.filter((s: string) => availableSteps.includes(s))
+    let toApply = Array.isArray(availableSteps) && availableSteps.length > 0 
+      ? steps.filter((s: string) => availableSteps.includes(s)) 
       : steps;
     if (toApply.length === 0) {
       toApply = [...steps];
@@ -726,7 +726,7 @@ function applyUserDefaults() {
     store.filters.ibp_step = [...toApply];
     changed = true;
   }
-
+  
   return changed;
 }
 
@@ -1018,11 +1018,41 @@ async function onBrandFilterChange() {
 }
 
 // ─── Filtered entries (client-side quick filters) ─────────────────────────────
+function matchesDivisionFilter(entryDivision: unknown, selectedDivisions: string[]): boolean {
+  let values: string[] = [];
+
+  if (Array.isArray(entryDivision)) {
+    values = entryDivision.map(String);
+  } else if (typeof entryDivision === "object" && entryDivision !== null) {
+    values = Object.values(entryDivision as Record<string, string>).map(String);
+  } else if (typeof entryDivision === "string") {
+    try {
+      const parsed = JSON.parse(entryDivision);
+      if (Array.isArray(parsed)) {
+        values = parsed.map(String);
+      } else if (typeof parsed === "object" && parsed !== null) {
+        values = Object.values(parsed as Record<string, string>).map(String);
+      } else {
+        values = [entryDivision];
+      }
+    } catch {
+      if (entryDivision.includes(',')) {
+        values = entryDivision.split(',').map(s => s.trim());
+      } else {
+        values = [entryDivision];
+      }
+    }
+  }
+
+  values = values.map(v => v.trim()).filter(Boolean);
+  return values.some(v => selectedDivisions.includes(v));
+}
+
 const filteredEntries = computed(() => {
   let r = props.entries;
 
   if (store.filters.division && store.filters.division.length > 0) {
-    r = r.filter(e => store.filters.division.includes(e.division));
+    r = r.filter(e => matchesDivisionFilter(e.division, store.filters.division));
   }
 
   if (store.filters.country && store.filters.country.length > 0) {
@@ -1177,7 +1207,7 @@ const groupedEntries = computed(() => {
         try {
           countryObj = JSON.parse(val);
         } catch {
-          return val;
+          return val as string;
         }
       }
       if (typeof countryObj === "object") {
@@ -1185,6 +1215,9 @@ const groupedEntries = computed(() => {
         return countryName || "—";
       }
       return String(val);
+    }
+    if (d === "division") {
+        return formatValue(val);
     }
     return String(val);
   };
@@ -1649,16 +1682,41 @@ function formatCountry(c?: string | Record<string, string>): string {
   return String(c) || "—";
 }
 
+function formatValue(v?: unknown): string {
+  if (!v) return "";
+  if (Array.isArray(v)) return v.join(", ");
+  if (typeof v === "object") return Object.values(v as Record<string, string>).join(", ");
+  try {
+    const p = JSON.parse(String(v));
+    if (Array.isArray(p)) return p.join(", ");
+    if (p && typeof p === "object") return Object.values(p as Record<string, string>).join(", ");
+    return String(v);
+  } catch { return String(v); }
+}
+
+// function matchesDivisionFilter(entryDivision: unknown, selectedDivisions: string[]): boolean {
+//   const values = (Array.isArray(entryDivision)
+//     ? entryDivision
+//     : typeof entryDivision === "object"
+//       ? Object.values(entryDivision as Record<string, string>)
+//       : typeof entryDivision === "string"
+//         ? [entryDivision]
+//         : []
+//   ).map(v => String(v).trim()).filter(Boolean);
+
+//   return values.some(v => selectedDivisions.includes(v));
+// }
+
 function formatBrandFamily(v?: string | string[] | Record<string, string>): string {
   if (!v) return "";
   if (Array.isArray(v)) return v.join(", ");
   if (typeof v === "object") return Object.values(v).join(", ");
   try {
-    const p = JSON.parse(v);
+    const p = JSON.parse(v as string);
     if (Array.isArray(p)) return p.join(", ");
     if (p && typeof p === "object") return Object.values(p).join(", ");
-    return v;
-  } catch { return v; }
+    return v as string;
+  } catch { return v as string; }
 }
 
 // ─── CSV Export ───────────────────────────────────────────────────────────────
@@ -1679,7 +1737,7 @@ function exportToCSV(rows: Entry[], filename = `entries_${new Date().toISOString
     const r: string[] = [];
     activeHeaders.forEach(col => {
       if (col.id === 'ibpStep') r.push(escapeCSV(e.ibpStep || ""));
-      else if (col.id === 'division') r.push(escapeCSV(e.division || ""));
+      else if (col.id === 'division') r.push(escapeCSV(formatValue(e.division) || ""));
       else if (col.id === 'country') r.push(escapeCSV(formatCountry(e.country) || ""));
       else if (col.id === 'categorisation') r.push(escapeCSV(e.categorisation || ""));
       else if (col.id === 'description') r.push(escapeCSV((e as any).shortDescription || e.description || ""));

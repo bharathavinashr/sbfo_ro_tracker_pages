@@ -4,6 +4,33 @@ from . import models, schemas
 from typing import Optional
 
 
+def normalize_division_for_storage(value):
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    if isinstance(value, tuple):
+        return [str(item).strip() for item in value if str(item).strip()]
+    if isinstance(value, str):
+        return [value.strip()] if value.strip() else []
+    if isinstance(value, dict):
+        return [str(item).strip() for item in value.values() if str(item).strip()]
+    return [str(value).strip()] if str(value).strip() else []
+
+
+def _matches_division_filter(entry, selected_divisions: list) -> bool:
+    if not selected_divisions:
+        return True
+    values = []
+    if isinstance(entry.division, (list, tuple)):
+        values.extend([str(v).strip() for v in entry.division if str(v).strip()])
+    elif isinstance(entry.division, dict):
+        values.extend([str(v).strip() for v in entry.division.values() if str(v).strip()])
+    elif isinstance(entry.division, str):
+        values.append(entry.division.strip())
+    return any(v in selected_divisions for v in values)
+
+
 def get_latest_entries(db: Session, filters: dict = None, include_deleted: bool = False, ibp_step_in: list = None):
     """Return latest version of each entry (max version per original_entry_id)."""
     subq = (
@@ -24,6 +51,9 @@ def get_latest_entries(db: Session, filters: dict = None, include_deleted: bool 
     if filters:
         for field, value in filters.items():
             if not value:
+                continue
+
+            if field == "division":
                 continue
             
             column = getattr(models.Entry, field)
@@ -50,7 +80,12 @@ def get_latest_entries(db: Session, filters: dict = None, include_deleted: bool 
     # IBP Step Approver restriction: filter by allowed IBP Steps
     if ibp_step_in:
         query = query.filter(models.Entry.ibp_step.in_(ibp_step_in))
-    return query.order_by(models.Entry.last_modified.desc()).all()
+
+    entries = query.order_by(models.Entry.last_modified.desc()).all()
+    if filters and filters.get("division"):
+        selected_divisions = [str(v).strip() for v in filters["division"] if str(v).strip()]
+        entries = [entry for entry in entries if _matches_division_filter(entry, selected_divisions)]
+    return entries
 
 
 def get_all_entries_for_period_year(db: Session, period: str, year: str):
@@ -92,6 +127,7 @@ def get_child_impacts(db: Session, entry_id: int):
 def create_entry(db: Session, data: schemas.EntryCreate):
     child_impacts_data = data.child_impacts or []
     entry_data = data.model_dump(exclude={"child_impacts"})
+    entry_data["division"] = normalize_division_for_storage(entry_data.get("division"))
     entry = models.Entry(**entry_data, version=1)
     db.add(entry)
     db.flush()
@@ -119,6 +155,7 @@ def update_entry(db: Session, entry_id: int, data: schemas.EntryUpdate):
 
     child_impacts_data = data.child_impacts or []
     entry_data = data.model_dump(exclude={"child_impacts"})
+    entry_data["division"] = normalize_division_for_storage(entry_data.get("division"))
     new_entry = models.Entry(
         original_entry_id=current.original_entry_id,
         version=max_version + 1,

@@ -23,7 +23,7 @@ export interface Entry {
   creationDateYear?: string;
   addToForecastByPeriod?: string;
   addToForecastByYear?: string;
-  division: string;
+  division: string | string[] | Record<string, string>;
   ibpStep?: string;
   country: Record<string, string>;  // {company_code: country_name}
   channel: string;
