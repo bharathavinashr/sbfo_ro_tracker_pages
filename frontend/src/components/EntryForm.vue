@@ -1692,36 +1692,38 @@ function onParentFinancialInput(val: string) {
   formData.value.impactValue = enforceSign(val);
   if (hasChildImpacts.value) {
     skipChildWatcher = true;
-    const totalNsv = parseFloat(cleanNumStr(formData.value.impactValue)) || 0;
+    const newTotalNsv = parseFloat(cleanNumStr(formData.value.impactValue)) || 0;
     const currentTotalNsv = formData.value.childImpacts.reduce((sum, ci) => sum + (parseFloat(cleanNumStr(ci.impactValue)) || 0), 0);
     const count = formData.value.childImpacts.length;
 
-    const parentGp = parseFloat(cleanNumStr(formData.value.netFinancialImpactValue)) || 0;
-    const parentVol = parseFloat(cleanNumStr(formData.value.secondaryValue)) || 0;
+    if (formData.value.lockNsvGpRatio && formData.value.fixedNsvGpRatio !== null && Number(formData.value.fixedNsvGpRatio) !== 0) {
+      formData.value.netFinancialImpactValue = String(newTotalNsv / Number(formData.value.fixedNsvGpRatio));
+    }
+    if (formData.value.lockNsvVolRatio && formData.value.fixedNsvVolRatio !== null && Number(formData.value.fixedNsvVolRatio) !== 0) {
+      formData.value.secondaryValue = String(newTotalNsv / Number(formData.value.fixedNsvVolRatio));
+    }
+
+    const newTotalGp = parseFloat(cleanNumStr(formData.value.netFinancialImpactValue)) || 0;
+    const newTotalVol = parseFloat(cleanNumStr(formData.value.secondaryValue)) || 0;
 
     formData.value.childImpacts.forEach((ci) => {
       const ciNsv = parseFloat(cleanNumStr(ci.impactValue)) || 0;
       const weight = currentTotalNsv !== 0 ? ciNsv / currentTotalNsv : 1 / count;
-      
-      ci.impactValue = String(totalNsv * weight);
-      
-      // If locked, distribute the fixed parent GP/Vol using the NSV weights.
-      if (formData.value.lockNsvGpRatio) {
-        ci.netFinancialImpactValue = String(parentGp * weight);
-      }
-      if (formData.value.lockNsvVolRatio) {
-        ci.secondaryValue = String(parentVol * weight);
-      }
+
+      ci.impactValue = String(newTotalNsv * weight);
+      ci.netFinancialImpactValue = String(newTotalGp * weight);
+      ci.secondaryValue = String(newTotalVol * weight);
     });
 
-    if (formData.value.lockNsvGpRatio) {
-      formData.value.fixedNsvGpRatio = calculatedNsvGpRatio.value;
-    }
-    if (formData.value.lockNsvVolRatio) {
-      formData.value.fixedNsvVolRatio = calculatedNsvVolRatio.value;
-    }
-
     nextTick(() => { skipChildWatcher = false; });
+  } else {
+    const newTotalNsv = parseFloat(cleanNumStr(formData.value.impactValue)) || 0;
+    if (formData.value.lockNsvGpRatio && formData.value.fixedNsvGpRatio !== null && Number(formData.value.fixedNsvGpRatio) !== 0) {
+      formData.value.netFinancialImpactValue = String(newTotalNsv / Number(formData.value.fixedNsvGpRatio));
+    }
+    if (formData.value.lockNsvVolRatio && formData.value.fixedNsvVolRatio !== null && Number(formData.value.fixedNsvVolRatio) !== 0) {
+      formData.value.secondaryValue = String(newTotalNsv / Number(formData.value.fixedNsvVolRatio));
+    }
   }
 }
 
@@ -1729,20 +1731,39 @@ function onParentGpInput(val: string) {
   formData.value.netFinancialImpactValue = enforceSign(val);
   if (hasChildImpacts.value) {
     skipChildWatcher = true;
-    const totalGp = parseFloat(cleanNumStr(formData.value.netFinancialImpactValue)) || 0;
-    const currentTotalNsv = parseFloat(cleanNumStr(formData.value.impactValue)) || 0;
+    const newTotalGp = parseFloat(cleanNumStr(formData.value.netFinancialImpactValue)) || 0;
+    const currentTotalGp = formData.value.childImpacts.reduce((sum, ci) => sum + (parseFloat(cleanNumStr(ci.netFinancialImpactValue)) || 0), 0);
     const count = formData.value.childImpacts.length;
 
-    formData.value.childImpacts.forEach(ci => {
-      const ciNsv = parseFloat(cleanNumStr(ci.impactValue)) || 0;
-      const weight = currentTotalNsv !== 0 ? ciNsv / currentTotalNsv : 1 / count;
-      ci.netFinancialImpactValue = String(totalGp * weight);
+    if (formData.value.lockNsvGpRatio && formData.value.fixedNsvGpRatio !== null && Number(formData.value.fixedNsvGpRatio) !== 0) {
+       formData.value.impactValue = String(newTotalGp * Number(formData.value.fixedNsvGpRatio));
+    }
+    
+    const newTotalNsv = parseFloat(cleanNumStr(formData.value.impactValue)) || 0;
+    if (formData.value.lockNsvVolRatio && formData.value.fixedNsvVolRatio !== null && Number(formData.value.fixedNsvVolRatio) !== 0) {
+       formData.value.secondaryValue = String(newTotalNsv / Number(formData.value.fixedNsvVolRatio));
+    }
+    const newTotalVol = parseFloat(cleanNumStr(formData.value.secondaryValue)) || 0;
+
+    formData.value.childImpacts.forEach((ci) => {
+      const ciGp = parseFloat(cleanNumStr(ci.netFinancialImpactValue)) || 0;
+      const weight = currentTotalGp !== 0 ? ciGp / currentTotalGp : 1 / count;
+
+      ci.netFinancialImpactValue = String(newTotalGp * weight);
+      ci.impactValue = String(newTotalNsv * weight);
+      ci.secondaryValue = String(newTotalVol * weight);
     });
 
-    if (formData.value.lockNsvGpRatio) {
-      formData.value.fixedNsvGpRatio = calculatedNsvGpRatio.value;
-    }
     nextTick(() => { skipChildWatcher = false; });
+  } else {
+    const newTotalGp = parseFloat(cleanNumStr(formData.value.netFinancialImpactValue)) || 0;
+    if (formData.value.lockNsvGpRatio && formData.value.fixedNsvGpRatio !== null && Number(formData.value.fixedNsvGpRatio) !== 0) {
+       formData.value.impactValue = String(newTotalGp * Number(formData.value.fixedNsvGpRatio));
+    }
+    const newTotalNsv = parseFloat(cleanNumStr(formData.value.impactValue)) || 0;
+    if (formData.value.lockNsvVolRatio && formData.value.fixedNsvVolRatio !== null && Number(formData.value.fixedNsvVolRatio) !== 0) {
+       formData.value.secondaryValue = String(newTotalNsv / Number(formData.value.fixedNsvVolRatio));
+    }
   }
 }
 
@@ -1750,79 +1771,74 @@ function onParentVolInput(val: string) {
   formData.value.secondaryValue = cleanNumStr(val);
   if (hasChildImpacts.value) {
     skipChildWatcher = true;
-    const totalVol = parseFloat(cleanNumStr(formData.value.secondaryValue)) || 0;
-    const currentTotalNsv = parseFloat(cleanNumStr(formData.value.impactValue)) || 0;
+    const newTotalVol = parseFloat(cleanNumStr(formData.value.secondaryValue)) || 0;
+    const currentTotalVol = formData.value.childImpacts.reduce((sum, ci) => sum + (parseFloat(cleanNumStr(ci.secondaryValue)) || 0), 0);
     const count = formData.value.childImpacts.length;
 
-    formData.value.childImpacts.forEach(ci => {
-      const ciNsv = parseFloat(cleanNumStr(ci.impactValue)) || 0;
-      const weight = currentTotalNsv !== 0 ? ciNsv / currentTotalNsv : 1 / count;
-      ci.secondaryValue = String(totalVol * weight);
+    if (formData.value.lockNsvVolRatio && formData.value.fixedNsvVolRatio !== null && Number(formData.value.fixedNsvVolRatio) !== 0) {
+       formData.value.impactValue = String(newTotalVol * Number(formData.value.fixedNsvVolRatio));
+    }
+
+    const newTotalNsv = parseFloat(cleanNumStr(formData.value.impactValue)) || 0;
+    if (formData.value.lockNsvGpRatio && formData.value.fixedNsvGpRatio !== null && Number(formData.value.fixedNsvGpRatio) !== 0) {
+       formData.value.netFinancialImpactValue = String(newTotalNsv / Number(formData.value.fixedNsvGpRatio));
+    }
+    const newTotalGp = parseFloat(cleanNumStr(formData.value.netFinancialImpactValue)) || 0;
+
+    formData.value.childImpacts.forEach((ci) => {
+      const ciVol = parseFloat(cleanNumStr(ci.secondaryValue)) || 0;
+      const weight = currentTotalVol !== 0 ? ciVol / currentTotalVol : 1 / count;
+
+      ci.secondaryValue = String(newTotalVol * weight);
+      ci.impactValue = String(newTotalNsv * weight);
+      ci.netFinancialImpactValue = String(newTotalGp * weight);
     });
 
-    if (formData.value.lockNsvVolRatio) {
-      formData.value.fixedNsvVolRatio = calculatedNsvVolRatio.value;
-    }
     nextTick(() => { skipChildWatcher = false; });
+  } else {
+    const newTotalVol = parseFloat(cleanNumStr(formData.value.secondaryValue)) || 0;
+    if (formData.value.lockNsvVolRatio && formData.value.fixedNsvVolRatio !== null && Number(formData.value.fixedNsvVolRatio) !== 0) {
+       formData.value.impactValue = String(newTotalVol * Number(formData.value.fixedNsvVolRatio));
+    }
+    const newTotalNsv = parseFloat(cleanNumStr(formData.value.impactValue)) || 0;
+    if (formData.value.lockNsvGpRatio && formData.value.fixedNsvGpRatio !== null && Number(formData.value.fixedNsvGpRatio) !== 0) {
+       formData.value.netFinancialImpactValue = String(newTotalNsv / Number(formData.value.fixedNsvGpRatio));
+    }
   }
 }
 
 // ─── Child Input Handlers (Recalculate Parent) ──────────────────────────────
 function onChildFinancialChange(idx: number) {
-  const parentGp = parseFloat(cleanNumStr(formData.value.netFinancialImpactValue)) || 0;
-  const parentVol = parseFloat(cleanNumStr(formData.value.secondaryValue)) || 0;
-  
-  const newTotalNsv = formData.value.childImpacts.reduce((sum, item) => sum + (parseFloat(cleanNumStr(item.impactValue)) || 0), 0);
-  const count = formData.value.childImpacts.length;
+  const ci = formData.value.childImpacts[idx];
+  const nsv = parseFloat(cleanNumStr(ci.impactValue)) || 0;
 
-  skipChildWatcher = true;
-  
-  formData.value.childImpacts.forEach((item) => {
-    const itemNsv = parseFloat(cleanNumStr(item.impactValue)) || 0;
-    const weight = newTotalNsv !== 0 ? itemNsv / newTotalNsv : 1 / count;
-
-    if (formData.value.lockNsvGpRatio) {
-      item.netFinancialImpactValue = String(parentGp * weight);
-    }
-    if (formData.value.lockNsvVolRatio) {
-      item.secondaryValue = String(parentVol * weight);
-    }
-  });
-
-  formData.value.impactValue = formatNumStr(String(newTotalNsv));
-
-  if (formData.value.lockNsvGpRatio) {
-    formData.value.fixedNsvGpRatio = calculatedNsvGpRatio.value;
+  if (formData.value.lockNsvGpRatio && formData.value.fixedNsvGpRatio !== null && Number(formData.value.fixedNsvGpRatio) !== 0) {
+    ci.netFinancialImpactValue = String(nsv / Number(formData.value.fixedNsvGpRatio));
   }
-  if (formData.value.lockNsvVolRatio) {
-    formData.value.fixedNsvVolRatio = calculatedNsvVolRatio.value;
+  if (formData.value.lockNsvVolRatio && formData.value.fixedNsvVolRatio !== null && Number(formData.value.fixedNsvVolRatio) !== 0) {
+    ci.secondaryValue = String(nsv / Number(formData.value.fixedNsvVolRatio));
   }
-
-  nextTick(() => { skipChildWatcher = false; });
 }
 
 function onChildGpChange(idx: number) {
-  const newTotalGp = formData.value.childImpacts.reduce((sum, item) => sum + (parseFloat(cleanNumStr(item.netFinancialImpactValue)) || 0), 0);
-  
-  skipChildWatcher = true;
-  formData.value.netFinancialImpactValue = formatNumStr(String(newTotalGp));
-  
-  if (formData.value.lockNsvGpRatio) {
-    formData.value.fixedNsvGpRatio = calculatedNsvGpRatio.value;
+  const ci = formData.value.childImpacts[idx];
+  const gp = parseFloat(cleanNumStr(ci.netFinancialImpactValue)) || 0;
+  if (formData.value.lockNsvGpRatio && formData.value.fixedNsvGpRatio !== null && Number(formData.value.fixedNsvGpRatio) !== 0) {
+    ci.impactValue = String(gp * Number(formData.value.fixedNsvGpRatio));
+    onChildFinancialChange(idx);
   }
-  nextTick(() => { skipChildWatcher = false; });
 }
 
 function onChildVolChange(idx: number) {
-  const newTotalVol = formData.value.childImpacts.reduce((sum, item) => sum + (parseFloat(cleanNumStr(item.secondaryValue)) || 0), 0);
-  
-  skipChildWatcher = true;
-  formData.value.secondaryValue = formatNumStr(String(newTotalVol));
-  
-  if (formData.value.lockNsvVolRatio) {
-    formData.value.fixedNsvVolRatio = calculatedNsvVolRatio.value;
+  const ci = formData.value.childImpacts[idx];
+  const vol = parseFloat(cleanNumStr(ci.secondaryValue)) || 0;
+  if (formData.value.lockNsvVolRatio && formData.value.fixedNsvVolRatio !== null && Number(formData.value.fixedNsvVolRatio) !== 0) {
+    ci.impactValue = String(vol * Number(formData.value.fixedNsvVolRatio));
+    if (formData.value.lockNsvGpRatio && formData.value.fixedNsvGpRatio !== null && Number(formData.value.fixedNsvGpRatio) !== 0) {
+      const nsv = parseFloat(cleanNumStr(ci.impactValue)) || 0;
+      ci.netFinancialImpactValue = String(nsv / Number(formData.value.fixedNsvGpRatio));
+    }
   }
-  nextTick(() => { skipChildWatcher = false; });
 }
 
 // ─── Sync Parent Periods from Children Function ───────────────────────────────
