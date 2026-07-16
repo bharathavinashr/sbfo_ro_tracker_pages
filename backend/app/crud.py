@@ -127,6 +127,11 @@ def get_child_impacts(db: Session, entry_id: int):
 def create_entry(db: Session, data: schemas.EntryCreate):
     child_impacts_data = data.child_impacts or []
     entry_data = data.model_dump(exclude={"child_impacts"})
+    
+    # Prevent explicit `None` overwriting default timestamps
+    entry_data.pop("created_at", None)
+    entry_data.pop("last_modified", None)
+    
     entry_data["division"] = normalize_division_for_storage(entry_data.get("division"))
     entry = models.Entry(**entry_data, version=1)
     db.add(entry)
@@ -155,6 +160,11 @@ def update_entry(db: Session, entry_id: int, data: schemas.EntryUpdate):
 
     child_impacts_data = data.child_impacts or []
     entry_data = data.model_dump(exclude={"child_impacts"})
+    
+    # Prevent explicit `None` overwriting default timestamps for the new version
+    entry_data.pop("created_at", None)
+    entry_data.pop("last_modified", None)
+    
     entry_data["division"] = normalize_division_for_storage(entry_data.get("division"))
     new_entry = models.Entry(
         original_entry_id=current.original_entry_id,

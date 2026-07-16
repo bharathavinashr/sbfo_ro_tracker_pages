@@ -1168,7 +1168,12 @@ const filteredEntries = computed(() => {
     r = r.filter(e => e.probability === 'High' || e.probability === 'Very High' || e.probability === 'Medium');
   }
 
-  return r;
+  // Sort by last modified (latest at top)
+  return [...r].sort((a, b) => {
+    const timeA = a.lastModified ? new Date(a.lastModified).getTime() : 0;
+    const timeB = b.lastModified ? new Date(b.lastModified).getTime() : 0;
+    return timeB - timeA;
+  });
 });
 
 // ─── Split / group by ─────────────────────────────────────────────────────────
