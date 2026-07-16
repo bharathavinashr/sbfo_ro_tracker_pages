@@ -554,15 +554,24 @@
             </el-col>
 
             <el-col v-if="formData.financialImpactType === 'NSV'" :span="4">
-              <div class="sub-label">GP ({{ currencyCode }}) <span class="impact-required">*</span></div>
+              <div class="sub-label">GP ({{ currencyCode }})</div>
               <div class="input-with-dropdown mt-1">
-                <el-input
-                  :model-value="formData._gpFocus ? formData.netFinancialImpactValue : formatDisplayNumStr(formData.netFinancialImpactValue)"
-                  :placeholder="`GP (${currencyCode})`"
-                  @input="onParentGpInput($event as string)"
-                  @blur="formData._gpFocus = false"
-                  @focus="formData._gpFocus = true; formData.netFinancialImpactValue = enforceSign(formData.netFinancialImpactValue)"
-                />
+                <el-tooltip
+                  content="Uncheck Lock NSV/GP to update GP"
+                  placement="top"
+                  :disabled="!formData.lockNsvGpRatio"
+                >
+                  <div style="width: 100%;">
+                    <el-input
+                      :model-value="formData._gpFocus ? formData.netFinancialImpactValue : formatDisplayNumStr(formData.netFinancialImpactValue)"
+                      :placeholder="`GP (${currencyCode})`"
+                      :disabled="formData.lockNsvGpRatio"
+                      @input="onParentGpInput($event as string)"
+                      @blur="formData._gpFocus = false"
+                      @focus="formData._gpFocus = true; formData.netFinancialImpactValue = enforceSign(formData.netFinancialImpactValue)"
+                    />
+                  </div>
+                </el-tooltip>
                 <el-button type="primary" class="black-dropdown-btn" style="pointer-events: none;">GP</el-button>
               </div>
               
@@ -575,13 +584,22 @@
             <el-col :span="formData.financialImpactType === 'NSV' ? 6 : 8">
               <div class="sub-label">Volume ({{ formData.volumeImpactType }})</div>
               <div class="input-with-dropdown mt-1">
-                <el-input
-                  :model-value="formData._volFocus ? formData.secondaryValue : formatDisplayNumStr(formData.secondaryValue)"
-                  :placeholder="volumeImpactPlaceholder"
-                  @input="onParentVolInput($event as string)"
-                  @blur="formData._volFocus = false"
-                  @focus="formData._volFocus = true; formData.secondaryValue = cleanNumStr(formData.secondaryValue)"
-                />
+                <el-tooltip
+                  content="Uncheck Lock NSV/Vol to update Volume"
+                  placement="top"
+                  :disabled="!formData.lockNsvVolRatio"
+                >
+                  <div style="width: 100%;">
+                    <el-input
+                      :model-value="formData._volFocus ? formData.secondaryValue : formatDisplayNumStr(formData.secondaryValue)"
+                      :placeholder="volumeImpactPlaceholder"
+                      :disabled="formData.lockNsvVolRatio"
+                      @input="onParentVolInput($event as string)"
+                      @blur="formData._volFocus = false"
+                      @focus="formData._volFocus = true; formData.secondaryValue = cleanNumStr(formData.secondaryValue)"
+                    />
+                  </div>
+                </el-tooltip>
                 <el-dropdown trigger="click" @command="formData.volumeImpactType = $event">
                   <el-button type="primary" class="black-dropdown-btn">
                     {{ formData.volumeImpactType }}
@@ -652,28 +670,46 @@
               />
             </el-col>
             <el-col v-if="formData.financialImpactType === 'NSV'" :span="6">
-              <div class="sub-label">GP ({{ currencyCode }}) <span class="impact-required">*</span></div>
-              <el-input
-                :model-value="child._gpFocus ? child.netFinancialImpactValue : formatDisplayNumStr(child.netFinancialImpactValue)"
-                :placeholder="`GP (${currencyCode})`"
-                style="margin-top: 6px"
-                @input="child.netFinancialImpactValue = enforceSign($event as string); onChildGpChange(idx)"
-                @blur="child._gpFocus = false"
-                @focus="child._gpFocus = true; child.netFinancialImpactValue = enforceSign(child.netFinancialImpactValue)"
-              />
+              <div class="sub-label">GP ({{ currencyCode }})</div>
+              <el-tooltip
+                content="Uncheck Lock NSV/GP to update GP"
+                placement="top"
+                :disabled="!formData.lockNsvGpRatio"
+              >
+                <div style="width: 100%;">
+                  <el-input
+                    :model-value="child._gpFocus ? child.netFinancialImpactValue : formatDisplayNumStr(child.netFinancialImpactValue)"
+                    :placeholder="`GP (${currencyCode})`"
+                    :disabled="formData.lockNsvGpRatio"
+                    style="margin-top: 6px"
+                    @input="child.netFinancialImpactValue = enforceSign($event as string); onChildGpChange(idx)"
+                    @blur="child._gpFocus = false"
+                    @focus="child._gpFocus = true; child.netFinancialImpactValue = enforceSign(child.netFinancialImpactValue)"
+                  />
+                </div>
+              </el-tooltip>
             </el-col>
             <el-col :span="formData.financialImpactType === 'NSV' ? 6 : 8">
               <div class="sub-label">
                 Volume ({{ formData.volumeImpactType }})
               </div>
-              <el-input
-                :model-value="child._volFocus ? child.secondaryValue : formatDisplayNumStr(child.secondaryValue)"
-                :placeholder="childVolumeImpactPlaceholder"
-                style="margin-top: 6px"
-                @input="child.secondaryValue = cleanNumStr($event as string); onChildVolChange(idx)"
-                @blur="child._volFocus = false"
-                @focus="child._volFocus = true; child.secondaryValue = cleanNumStr(child.secondaryValue)"
-              />
+              <el-tooltip
+                content="Uncheck Lock NSV/Vol to update Volume"
+                placement="top"
+                :disabled="!formData.lockNsvVolRatio"
+              >
+                <div style="width: 100%;">
+                  <el-input
+                    :model-value="child._volFocus ? child.secondaryValue : formatDisplayNumStr(child.secondaryValue)"
+                    :placeholder="childVolumeImpactPlaceholder"
+                    :disabled="formData.lockNsvVolRatio"
+                    style="margin-top: 6px"
+                    @input="child.secondaryValue = cleanNumStr($event as string); onChildVolChange(idx)"
+                    @blur="child._volFocus = false"
+                    @focus="child._volFocus = true; child.secondaryValue = cleanNumStr(child.secondaryValue)"
+                  />
+                </div>
+              </el-tooltip>
             </el-col>
           </el-row>
           <div class="child-remove-row">
@@ -1573,7 +1609,7 @@ function defaultForm(): FormData {
     brand:           {}, brandFamily:     {}, rAndO:           "Risk",
     probability:     "", categorisation:  "", impactPeriod:    currentPeriod,
     impactYear:      String(currentYear), impactValue:     "", primaryImpact:   "AUD",
-    secondaryValue:  "", secondaryUnit:   "Volume", financialImpactType:      "NSV",
+    secondaryValue:  "", secondaryUnit:   "Volume", financialImpactType:       "NSV",
     volumeImpactType: "Cases",
     volumeImpactValue: "",
     owner:           email, creator:         email, status:          "Open",
@@ -1636,13 +1672,17 @@ const calculatedNsvVolRatio = computed(() => {
 });
 
 function onLockNsvGpChange(val: boolean) {
-  if (!val) {
+  if (val) {
+    formData.value.fixedNsvGpRatio = calculatedNsvGpRatio.value;
+  } else {
     formData.value.fixedNsvGpRatio = "";
   }
 }
 
 function onLockNsvVolChange(val: boolean) {
-  if (!val) {
+  if (val) {
+    formData.value.fixedNsvVolRatio = calculatedNsvVolRatio.value;
+  } else {
     formData.value.fixedNsvVolRatio = "";
   }
 }
@@ -1652,25 +1692,35 @@ function onParentFinancialInput(val: string) {
   formData.value.impactValue = enforceSign(val);
   if (hasChildImpacts.value) {
     skipChildWatcher = true;
-    const total = parseFloat(cleanNumStr(formData.value.impactValue)) || 0;
+    const totalNsv = parseFloat(cleanNumStr(formData.value.impactValue)) || 0;
+    const currentTotalNsv = formData.value.childImpacts.reduce((sum, ci) => sum + (parseFloat(cleanNumStr(ci.impactValue)) || 0), 0);
     const count = formData.value.childImpacts.length;
-    const prorated = total / count;
+
+    const parentGp = parseFloat(cleanNumStr(formData.value.netFinancialImpactValue)) || 0;
+    const parentVol = parseFloat(cleanNumStr(formData.value.secondaryValue)) || 0;
+
     formData.value.childImpacts.forEach((ci) => {
-      ci.impactValue = String(prorated);
-      if (formData.value.lockNsvGpRatio && formData.value.fixedNsvGpRatio !== null) {
-        ci.netFinancialImpactValue = String(prorated * Number(formData.value.fixedNsvGpRatio));
+      const ciNsv = parseFloat(cleanNumStr(ci.impactValue)) || 0;
+      const weight = currentTotalNsv !== 0 ? ciNsv / currentTotalNsv : 1 / count;
+      
+      ci.impactValue = String(totalNsv * weight);
+      
+      // If locked, distribute the fixed parent GP/Vol using the NSV weights.
+      if (formData.value.lockNsvGpRatio) {
+        ci.netFinancialImpactValue = String(parentGp * weight);
       }
-      if (formData.value.lockNsvVolRatio && formData.value.fixedNsvVolRatio !== null && Number(formData.value.fixedNsvVolRatio) !== 0) {
-        ci.secondaryValue = String(prorated / Number(formData.value.fixedNsvVolRatio));
+      if (formData.value.lockNsvVolRatio) {
+        ci.secondaryValue = String(parentVol * weight);
       }
     });
-    
-    if (formData.value.lockNsvGpRatio && formData.value.fixedNsvGpRatio !== null) {
-       formData.value.netFinancialImpactValue = String(total * Number(formData.value.fixedNsvGpRatio));
+
+    if (formData.value.lockNsvGpRatio) {
+      formData.value.fixedNsvGpRatio = calculatedNsvGpRatio.value;
     }
-    if (formData.value.lockNsvVolRatio && formData.value.fixedNsvVolRatio !== null && Number(formData.value.fixedNsvVolRatio) !== 0) {
-       formData.value.secondaryValue = String(total / Number(formData.value.fixedNsvVolRatio));
+    if (formData.value.lockNsvVolRatio) {
+      formData.value.fixedNsvVolRatio = calculatedNsvVolRatio.value;
     }
+
     nextTick(() => { skipChildWatcher = false; });
   }
 }
@@ -1680,25 +1730,17 @@ function onParentGpInput(val: string) {
   if (hasChildImpacts.value) {
     skipChildWatcher = true;
     const totalGp = parseFloat(cleanNumStr(formData.value.netFinancialImpactValue)) || 0;
+    const currentTotalNsv = parseFloat(cleanNumStr(formData.value.impactValue)) || 0;
     const count = formData.value.childImpacts.length;
-    const proratedGp = totalGp / count;
+
     formData.value.childImpacts.forEach(ci => {
-      ci.netFinancialImpactValue = String(proratedGp);
-      if (formData.value.lockNsvGpRatio && formData.value.fixedNsvGpRatio !== null && Number(formData.value.fixedNsvGpRatio) !== 0) {
-         const nsv = proratedGp / Number(formData.value.fixedNsvGpRatio);
-         ci.impactValue = String(nsv);
-         if (formData.value.lockNsvVolRatio && formData.value.fixedNsvVolRatio !== null && Number(formData.value.fixedNsvVolRatio) !== 0) {
-            ci.secondaryValue = String(nsv / Number(formData.value.fixedNsvVolRatio));
-         }
-      }
+      const ciNsv = parseFloat(cleanNumStr(ci.impactValue)) || 0;
+      const weight = currentTotalNsv !== 0 ? ciNsv / currentTotalNsv : 1 / count;
+      ci.netFinancialImpactValue = String(totalGp * weight);
     });
 
-    if (formData.value.lockNsvGpRatio && formData.value.fixedNsvGpRatio !== null && Number(formData.value.fixedNsvGpRatio) !== 0) {
-       const totalNsv = totalGp / Number(formData.value.fixedNsvGpRatio);
-       formData.value.impactValue = String(totalNsv);
-       if (formData.value.lockNsvVolRatio && formData.value.fixedNsvVolRatio !== null && Number(formData.value.fixedNsvVolRatio) !== 0) {
-         formData.value.secondaryValue = String(totalNsv / Number(formData.value.fixedNsvVolRatio));
-       }
+    if (formData.value.lockNsvGpRatio) {
+      formData.value.fixedNsvGpRatio = calculatedNsvGpRatio.value;
     }
     nextTick(() => { skipChildWatcher = false; });
   }
@@ -1709,25 +1751,17 @@ function onParentVolInput(val: string) {
   if (hasChildImpacts.value) {
     skipChildWatcher = true;
     const totalVol = parseFloat(cleanNumStr(formData.value.secondaryValue)) || 0;
+    const currentTotalNsv = parseFloat(cleanNumStr(formData.value.impactValue)) || 0;
     const count = formData.value.childImpacts.length;
-    const proratedVol = totalVol / count;
+
     formData.value.childImpacts.forEach(ci => {
-      ci.secondaryValue = String(proratedVol);
-      if (formData.value.lockNsvVolRatio && formData.value.fixedNsvVolRatio !== null) {
-         const nsv = proratedVol * Number(formData.value.fixedNsvVolRatio);
-         ci.impactValue = String(nsv);
-         if (formData.value.lockNsvGpRatio && formData.value.fixedNsvGpRatio !== null) {
-            ci.netFinancialImpactValue = String(nsv * Number(formData.value.fixedNsvGpRatio));
-         }
-      }
+      const ciNsv = parseFloat(cleanNumStr(ci.impactValue)) || 0;
+      const weight = currentTotalNsv !== 0 ? ciNsv / currentTotalNsv : 1 / count;
+      ci.secondaryValue = String(totalVol * weight);
     });
 
-    if (formData.value.lockNsvVolRatio && formData.value.fixedNsvVolRatio !== null) {
-       const totalNsv = totalVol * Number(formData.value.fixedNsvVolRatio);
-       formData.value.impactValue = String(totalNsv);
-       if (formData.value.lockNsvGpRatio && formData.value.fixedNsvGpRatio !== null) {
-         formData.value.netFinancialImpactValue = String(totalNsv * Number(formData.value.fixedNsvGpRatio));
-       }
+    if (formData.value.lockNsvVolRatio) {
+      formData.value.fixedNsvVolRatio = calculatedNsvVolRatio.value;
     }
     nextTick(() => { skipChildWatcher = false; });
   }
@@ -1735,35 +1769,60 @@ function onParentVolInput(val: string) {
 
 // ─── Child Input Handlers (Recalculate Parent) ──────────────────────────────
 function onChildFinancialChange(idx: number) {
-  const ci = formData.value.childImpacts[idx];
-  const nsv = parseFloat(cleanNumStr(ci.impactValue)) || 0;
-  if (formData.value.lockNsvGpRatio && formData.value.fixedNsvGpRatio !== null) {
-    ci.netFinancialImpactValue = String(nsv * Number(formData.value.fixedNsvGpRatio));
+  const parentGp = parseFloat(cleanNumStr(formData.value.netFinancialImpactValue)) || 0;
+  const parentVol = parseFloat(cleanNumStr(formData.value.secondaryValue)) || 0;
+  
+  const newTotalNsv = formData.value.childImpacts.reduce((sum, item) => sum + (parseFloat(cleanNumStr(item.impactValue)) || 0), 0);
+  const count = formData.value.childImpacts.length;
+
+  skipChildWatcher = true;
+  
+  formData.value.childImpacts.forEach((item) => {
+    const itemNsv = parseFloat(cleanNumStr(item.impactValue)) || 0;
+    const weight = newTotalNsv !== 0 ? itemNsv / newTotalNsv : 1 / count;
+
+    if (formData.value.lockNsvGpRatio) {
+      item.netFinancialImpactValue = String(parentGp * weight);
+    }
+    if (formData.value.lockNsvVolRatio) {
+      item.secondaryValue = String(parentVol * weight);
+    }
+  });
+
+  formData.value.impactValue = formatNumStr(String(newTotalNsv));
+
+  if (formData.value.lockNsvGpRatio) {
+    formData.value.fixedNsvGpRatio = calculatedNsvGpRatio.value;
   }
-  if (formData.value.lockNsvVolRatio && formData.value.fixedNsvVolRatio !== null && Number(formData.value.fixedNsvVolRatio) !== 0) {
-    ci.secondaryValue = String(nsv / Number(formData.value.fixedNsvVolRatio));
+  if (formData.value.lockNsvVolRatio) {
+    formData.value.fixedNsvVolRatio = calculatedNsvVolRatio.value;
   }
+
+  nextTick(() => { skipChildWatcher = false; });
 }
 
 function onChildGpChange(idx: number) {
-  const ci = formData.value.childImpacts[idx];
-  const gp = parseFloat(cleanNumStr(ci.netFinancialImpactValue)) || 0;
-  if (formData.value.lockNsvGpRatio && formData.value.fixedNsvGpRatio !== null && Number(formData.value.fixedNsvGpRatio) !== 0) {
-    ci.impactValue = String(gp / Number(formData.value.fixedNsvGpRatio));
-    onChildFinancialChange(idx);
+  const newTotalGp = formData.value.childImpacts.reduce((sum, item) => sum + (parseFloat(cleanNumStr(item.netFinancialImpactValue)) || 0), 0);
+  
+  skipChildWatcher = true;
+  formData.value.netFinancialImpactValue = formatNumStr(String(newTotalGp));
+  
+  if (formData.value.lockNsvGpRatio) {
+    formData.value.fixedNsvGpRatio = calculatedNsvGpRatio.value;
   }
+  nextTick(() => { skipChildWatcher = false; });
 }
 
 function onChildVolChange(idx: number) {
-  const ci = formData.value.childImpacts[idx];
-  const vol = parseFloat(cleanNumStr(ci.secondaryValue)) || 0;
-  if (formData.value.lockNsvVolRatio && formData.value.fixedNsvVolRatio !== null) {
-    ci.impactValue = String(vol * Number(formData.value.fixedNsvVolRatio));
-    if (formData.value.lockNsvGpRatio && formData.value.fixedNsvGpRatio !== null) {
-      const nsv = parseFloat(cleanNumStr(ci.impactValue)) || 0;
-      ci.netFinancialImpactValue = String(nsv * Number(formData.value.fixedNsvGpRatio));
-    }
+  const newTotalVol = formData.value.childImpacts.reduce((sum, item) => sum + (parseFloat(cleanNumStr(item.secondaryValue)) || 0), 0);
+  
+  skipChildWatcher = true;
+  formData.value.secondaryValue = formatNumStr(String(newTotalVol));
+  
+  if (formData.value.lockNsvVolRatio) {
+    formData.value.fixedNsvVolRatio = calculatedNsvVolRatio.value;
   }
+  nextTick(() => { skipChildWatcher = false; });
 }
 
 // ─── Sync Parent Periods from Children Function ───────────────────────────────
@@ -2514,8 +2573,7 @@ async function validate() {
         if (!isValidNum(ci.impactValue)) { ElMessage.error(`Row ${i+1}: Primary Impact must be a valid number.`); return null; }
         if (ci.secondaryValue.trim() && !isValidNum(ci.secondaryValue)) { ElMessage.error(`Row ${i+1}: Secondary Impact must be a valid number.`); return null; }
         
-        if (formData.value.financialImpactType === 'NSV') {
-          if (!ci.netFinancialImpactValue?.trim()) { ElMessage.error(`Row ${i+1}: GP value is required.`); return null; }
+        if (formData.value.financialImpactType === 'NSV' && ci.netFinancialImpactValue?.trim()) {
           if (!isValidNum(ci.netFinancialImpactValue)) { ElMessage.error(`Row ${i+1}: GP must be a valid number.`); return null; }
           ci.netFinancialImpactValue = cleanNumStr(ci.netFinancialImpactValue);
         }
@@ -2530,8 +2588,7 @@ async function validate() {
       if (!isValidNum(formData.value.impactValue)) { ElMessage.error("Primary Impact must be a valid number."); return null; }
       if (formData.value.secondaryValue.trim() && !isValidNum(formData.value.secondaryValue)) { ElMessage.error("Secondary Impact must be a valid number."); return null; }
       
-      if (formData.value.financialImpactType === 'NSV') {
-        if (!formData.value.netFinancialImpactValue.trim()) { ElMessage.error("GP value is required."); return null; }
+      if (formData.value.financialImpactType === 'NSV' && formData.value.netFinancialImpactValue.trim()) {
         if (!isValidNum(formData.value.netFinancialImpactValue)) { ElMessage.error("GP must be a valid number."); return null; }
         formData.value.netFinancialImpactValue = cleanNumStr(formData.value.netFinancialImpactValue);
       }
@@ -2719,11 +2776,13 @@ defineExpose({ validate, reset });
 
 /* Disabled State overrides */
 :deep(.el-input.is-disabled:not(.multi-dropdown-trigger) .el-input__wrapper) {
-  background-color: #f9f9f9 !important;
+  background-color: #e8e8eb !important;
   border-color: transparent !important;
+  cursor: not-allowed !important;
 }
 :deep(.el-input.is-disabled .el-input__inner) {
-  color: #a8a8a8 !important;
+  color: #666666 !important;
+  cursor: not-allowed !important;
 }
 :deep(.el-input.is-disabled input::placeholder) {
   color: #a8a8a8 !important;
