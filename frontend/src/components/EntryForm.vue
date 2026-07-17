@@ -1009,17 +1009,21 @@ const filteredCountries = computed(() => availableCountryOptions.value.filter(c 
 const allDivisionsSelected = computed(() => filteredDivs.value.length > 0 && filteredDivs.value.every(d => !!formData.value.division[d]));
 
 function toggleDivision(val: string) {
-  if (formData.value.division[val]) delete formData.value.division[val];
-  else formData.value.division[val] = val;
+  const newDiv = { ...formData.value.division };
+  if (newDiv[val]) delete newDiv[val];
+  else newDiv[val] = val;
+  formData.value.division = newDiv;
 }
 
 function toggleAllDivisions() {
   const suggestions = filteredDivs.value;
+  const newDiv = { ...formData.value.division };
   if (allDivisionsSelected.value) {
-    suggestions.forEach(d => delete formData.value.division[d]);
+    suggestions.forEach(d => delete newDiv[d]);
   } else {
-    suggestions.forEach(d => formData.value.division[d] = d);
+    suggestions.forEach(d => newDiv[d] = d);
   }
+  formData.value.division = newDiv;
 }
 
 const filteredCreationPeriods = computed(() => PERIODS.filter(p => periodToMonth(p).toLowerCase().includes(creationPeriodSearch.value.toLowerCase()) || p.toLowerCase().includes(creationPeriodSearch.value.toLowerCase())));
@@ -1604,11 +1608,11 @@ function defaultForm(): FormData {
     creationDateYear:      String(currentYear),
     addToForecastByPeriod: currentPeriod,
     addToForecastByYear:   String(currentYear),
-    division:        {} as Record<string, string>, ibpStep:         "", country:         {},
-    channel:         {}, subChannel:      {}, account:         {},
-    brand:           {}, brandFamily:     {}, rAndO:           "Risk",
+    division:        {} as Record<string, string>, ibpStep:        "", country:          {},
+    channel:         {}, subChannel:      {}, account:          {},
+    brand:           {}, brandFamily:     {}, rAndO:            "Risk",
     probability:     "", categorisation:  "", impactPeriod:    currentPeriod,
-    impactYear:      String(currentYear), impactValue:     "", primaryImpact:   "AUD",
+    impactYear:      String(currentYear), impactValue:      "", primaryImpact:   "AUD",
     secondaryValue:  "", secondaryUnit:   "Volume", financialImpactType:       "NSV",
     volumeImpactType: "Cases",
     volumeImpactValue: "",
@@ -2143,7 +2147,7 @@ watch(() => formData.value.country, (country) => {
     const cs = opts.filter(u => u !== ci.impactUnit);
     if (!cs.includes(ci.secondaryUnit)) ci.secondaryUnit = cs[0] ?? "";
   });
-});
+}, { deep: true });
 
 watch(() => formData.value.primaryImpact, (newUnit, oldUnit) => {
   if (!oldUnit || newUnit === oldUnit || isLoadingEntry.value) return;
@@ -2189,7 +2193,7 @@ watch(() => formData.value.division, async (division) => {
   if (Object.keys(division || {}).length && Object.keys(formData.value.country).length > 0) {
     await loadCountryBasedLookups(formData.value.country, division as Record<string, string>);
   }
-}, { immediate: true });
+}, { immediate: true, deep: true });
 
 watch(() => formData.value.country, async (country) => {
   if (!isLoadingEntry.value) {
@@ -2203,7 +2207,7 @@ watch(() => formData.value.country, async (country) => {
   }
 
   await loadCountryBasedLookups(country, formData.value.division);
-});
+}, { deep: true });
 
 async function loadCountryBasedLookups(country: Record<string, string>, divisionSelection: Record<string, string>) {
   const countryName = Object.values(country)[0];
