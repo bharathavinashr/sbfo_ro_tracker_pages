@@ -396,9 +396,24 @@ def get_snapshot_by_id(snapshot_id: str, db: Session = Depends(get_db)):
                 "volumeImpactValue": ci.volume_impact_value,
                 "impact": ci.nsv_aud if (entry.primary_impact == "AUD" and ci.nsv_aud) else (ci.nsv_nzd if (entry.primary_impact == "NZD" and ci.nsv_nzd) else None),
                 "impactCurrency": entry.primary_impact if entry.primary_impact in ["AUD", "NZD"] else None,
+                "gpAud": ci.gp_aud,
+                "gpNzd": ci.gp_nzd,
             })
         
         impact_value, vol_impact_value = _calculate_entry_impacts(entry, child_impacts)
+
+        gp_value = None
+        if child_impacts:
+            total_gp = 0
+            for ci in child_impacts:
+                gp_col = ci.gp_nzd if entry.primary_impact == "NZD" else ci.gp_aud
+                if gp_col:
+                    try: total_gp += float(gp_col)
+                    except (ValueError, TypeError): pass
+            if total_gp != 0:
+                gp_value = str(total_gp)
+        else:
+            gp_value = entry.net_financial_impact_value
 
         entries_data.append({
             "id": entry.id,
@@ -438,6 +453,7 @@ def get_snapshot_by_id(snapshot_id: str, db: Session = Depends(get_db)):
             "volumeImpactType": entry.volume_impact_type,
             "volumeImpactValue": vol_impact_value,
             "financialImpactType": entry.financial_impact_type,
+            "netFinancialImpactValue": gp_value,
             "lastModified": entry.last_modified.isoformat() if entry.last_modified else None,
             "childImpacts": child_impacts_data,
         })

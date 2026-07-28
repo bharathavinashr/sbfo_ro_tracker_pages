@@ -568,7 +568,7 @@
                       :disabled="formData.lockNsvGpRatio"
                       @input="onParentGpInput($event as string)"
                       @blur="formData._gpFocus = false"
-                      @focus="formData._gpFocus = true; formData.netFinancialImpactValue = enforceSign(formData.netFinancialImpactValue)"
+                      @focus="formData._gpFocus = true; formData.netFinancialImpactValue = cleanNumStr(formData.netFinancialImpactValue)"
                     />
                   </div>
                 </el-tooltip>
@@ -682,9 +682,9 @@
                     :placeholder="`GP (${currencyCode})`"
                     :disabled="formData.lockNsvGpRatio"
                     style="margin-top: 6px"
-                    @input="child.netFinancialImpactValue = enforceSign($event as string); onChildGpChange(idx)"
+                    @input="child.netFinancialImpactValue = cleanNumStr($event as string); onChildGpChange(idx)"
                     @blur="child._gpFocus = false"
-                    @focus="child._gpFocus = true; child.netFinancialImpactValue = enforceSign(child.netFinancialImpactValue)"
+                    @focus="child._gpFocus = true; child.netFinancialImpactValue = cleanNumStr(child.netFinancialImpactValue)"
                   />
                 </div>
               </el-tooltip>
@@ -1797,7 +1797,7 @@ function onParentFinancialInput(val: string) {
 }
 
 function onParentGpInput(val: string) {
-  formData.value.netFinancialImpactValue = enforceSign(val);
+  formData.value.netFinancialImpactValue = cleanNumStr(val);
   if (hasChildImpacts.value) {
     skipChildWatcher = true;
     const newTotalGp = parseFloat(cleanNumStr(formData.value.netFinancialImpactValue)) || 0;
@@ -2478,13 +2478,9 @@ watch(() => formData.value.rAndO, (val) => {
   }
   const neg = val === "Risk";
   formData.value.impactValue = applySign(formData.value.impactValue, neg);
-  formData.value.netFinancialImpactValue = applySign(formData.value.netFinancialImpactValue, neg);
-  
-  formData.value.childImpacts.forEach(ci => { 
-    ci.impactValue = applySign(ci.impactValue, neg); 
-    if (ci.netFinancialImpactValue) {
-      ci.netFinancialImpactValue = applySign(ci.netFinancialImpactValue, neg);
-    }
+
+  formData.value.childImpacts.forEach(ci => {
+    ci.impactValue = applySign(ci.impactValue, neg);
   });
 });
 

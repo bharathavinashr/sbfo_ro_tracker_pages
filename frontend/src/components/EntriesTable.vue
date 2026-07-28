@@ -192,6 +192,15 @@
           </template>
           <div class="column-selector-container">
             <p class="column-selector-title">Toggle Columns</p>
+            <label class="gbd-item gbd-all">
+              <el-checkbox
+                :model-value="allColsSelected"
+                :indeterminate="someColsSelected && !allColsSelected"
+                @change="toggleAllColumns"
+              />
+              <span class="gbd-label-bold">Select All</span>
+            </label>
+            <div class="gbd-divider" />
             <div class="column-selector-list">
               <el-checkbox v-model="colVisible.ibpStep">IBP Step</el-checkbox>
               <el-checkbox v-model="colVisible.division">Division</el-checkbox>
@@ -207,6 +216,8 @@
               <el-checkbox v-model="colVisible.financialImpactType">Financial Impact Type</el-checkbox>
               <el-checkbox v-model="colVisible.currency">Financial Impact Currency</el-checkbox>
               <el-checkbox v-model="colVisible.impact">Financial Impact Value</el-checkbox>
+              <el-checkbox v-model="colVisible.netFinancialImpactType">Net Financial Impact Type</el-checkbox>
+              <el-checkbox v-model="colVisible.netFinancialImpactValue">Net Financial Impact Value</el-checkbox>
               <el-checkbox v-model="colVisible.volumeCases">Volume (Cases)</el-checkbox>
               <el-checkbox v-model="colVisible.volumeImpactType">Volume Impact Type</el-checkbox>
               <el-checkbox v-model="colVisible.volumeImpactValue">Volume Impact Value</el-checkbox>
@@ -351,17 +362,17 @@
                     <td v-else-if="col.id === 'division'">{{ formatValue(row.division) }}</td>
                     <td v-else-if="col.id === 'country'">{{ formatCountry(row.country) }}</td>
                     <td v-else-if="col.id === 'categorisation'">{{ row.categorisation }}</td>
-                    <td v-else-if="col.id === 'description'">{{ row.shortDescription || row.description || '-' }}</td>
-                    <td v-else-if="col.id === 'detailedDescription'">{{ row.description || '-' }}</td>
-                    <td v-else-if="col.id === 'customer'">
-                      <div v-if="row.account">{{ formatBrandFamily(row.account) }}</div>
-                      <div v-if="row.subChannel" class="cell-sub">{{ formatBrandFamily(row.subChannel) }}</div>
-                      <div v-if="row.channel" class="cell-sub italic">{{ formatBrandFamily(row.channel) }}</div>
+                    <td v-else-if="col.id === 'description'" :class="col.class" :title="row.shortDescription || row.description || ''">{{ row.shortDescription || row.description || '-' }}</td>
+                    <td v-else-if="col.id === 'detailedDescription'" :class="col.class" :title="row.description || ''">{{ row.description || '-' }}</td>
+                    <td v-else-if="col.id === 'customer'" :class="col.class">
+                      <div v-if="row.account" :title="formatBrandFamily(row.account)">{{ formatBrandFamily(row.account) }}</div>
+                      <div v-if="row.subChannel" class="cell-sub" :title="formatBrandFamily(row.subChannel)">{{ formatBrandFamily(row.subChannel) }}</div>
+                      <div v-if="row.channel" class="cell-sub italic" :title="formatBrandFamily(row.channel)">{{ formatBrandFamily(row.channel) }}</div>
                       <span v-if="!row.account && !row.subChannel && !row.channel">-</span>
                     </td>
-                    <td v-else-if="col.id === 'product'">
-                      <div v-if="row.brand">{{ formatBrandFamily(row.brand) }}</div>
-                      <div v-if="row.brandFamily" class="cell-sub italic">{{ formatBrandFamily(row.brandFamily) }}</div>
+                    <td v-else-if="col.id === 'product'" :class="col.class">
+                      <div v-if="row.brand" :title="formatBrandFamily(row.brand)">{{ formatBrandFamily(row.brand) }}</div>
+                      <div v-if="row.brandFamily" class="cell-sub italic" :title="formatBrandFamily(row.brandFamily)">{{ formatBrandFamily(row.brandFamily) }}</div>
                       <span v-if="!row.brand && !row.brandFamily">-</span>
                     </td>
                     <td v-else-if="col.id === 'rAndO'">{{ row.rAndO }}</td>
@@ -385,6 +396,8 @@
                     <td v-else-if="col.id === 'financialImpactType'">{{ row.financialImpactType || '-' }}</td>
                     <td v-else-if="col.id === 'currency'">{{ row.impactCurrency || '-' }}</td>
                     <td v-else-if="col.id === 'impact'" :class="['tr', 'fw', { 'text-red': row.rAndO === 'Risk' }]">{{ row.impact ? Number(row.impact).toLocaleString() : '-' }}</td>
+                    <td v-else-if="col.id === 'netFinancialImpactType'">{{ row.netFinancialImpactValue ? 'GP' : '-' }}</td>
+                    <td v-else-if="col.id === 'netFinancialImpactValue'" :class="['tr', 'fw', { 'text-red': row.rAndO === 'Risk' }]">{{ row.netFinancialImpactValue ? Number(row.netFinancialImpactValue).toLocaleString() : '-' }}</td>
                     <td v-else-if="col.id === 'volumeCases'" :class="['tr', { 'text-red': row.rAndO === 'Risk' }]">
                       {{ (row as any).volumeCases ? Number((row as any).volumeCases).toLocaleString() : '-' }}
                       <div v-if="(row as any).volumeImpactValue" class="cell-sub">({{ (row as any).volumeImpactType }})</div>
@@ -426,14 +439,14 @@
                       <td v-else-if="col.id === 'division'" class="cell-muted">{{ formatValue(row.division) || '-' }}</td>
                       <td v-else-if="col.id === 'country'" class="cell-muted">{{ formatCountry(row.country) }}</td>
                       <td v-else-if="col.id === 'categorisation'" class="cell-muted">{{ row.categorisation }}</td>
-                      <td v-else-if="col.id === 'description'" class="cell-muted">{{ row.shortDescription || '-' }}</td>
-                      <td v-else-if="col.id === 'detailedDescription'" class="cell-muted">{{ row.description || '-' }}</td>
-                      <td v-else-if="col.id === 'customer'" class="cell-muted">
-                        <div v-if="row.account">{{ formatBrandFamily(row.account) }}</div>
-                        <div v-if="row.subChannel" class="cell-sub">{{ formatBrandFamily(row.subChannel) }}</div>
+                      <td v-else-if="col.id === 'description'" :class="['cell-muted', col.class]" :title="row.shortDescription || ''">{{ row.shortDescription || '-' }}</td>
+                      <td v-else-if="col.id === 'detailedDescription'" :class="['cell-muted', col.class]" :title="row.description || ''">{{ row.description || '-' }}</td>
+                      <td v-else-if="col.id === 'customer'" :class="['cell-muted', col.class]">
+                        <div v-if="row.account" :title="formatBrandFamily(row.account)">{{ formatBrandFamily(row.account) }}</div>
+                        <div v-if="row.subChannel" class="cell-sub" :title="formatBrandFamily(row.subChannel)">{{ formatBrandFamily(row.subChannel) }}</div>
                       </td>
-                      <td v-else-if="col.id === 'product'" class="cell-muted">
-                        <div v-if="row.brand">{{ formatBrandFamily(row.brand) }}</div>
+                      <td v-else-if="col.id === 'product'" :class="['cell-muted', col.class]">
+                        <div v-if="row.brand" :title="formatBrandFamily(row.brand)">{{ formatBrandFamily(row.brand) }}</div>
                       </td>
                       <td v-else-if="col.id === 'rAndO'" class="cell-muted">{{ row.rAndO }}</td>
                       <td v-else-if="col.id === 'probability'" class="tc cell-muted">
@@ -449,6 +462,8 @@
                       <td v-else-if="col.id === 'financialImpactType'" class="cell-muted">{{ row.financialImpactType || '-' }}</td>
                       <td v-else-if="col.id === 'currency'" class="cell-muted">{{ ci.impactCurrency || '-' }}</td>
                       <td v-else-if="col.id === 'impact'" :class="['tr', 'fw', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ ci.impact ? Number(ci.impact).toLocaleString() : '-' }}</td>
+                      <td v-else-if="col.id === 'netFinancialImpactType'" class="cell-muted">{{ childGpValue(row, ci) ? 'GP' : '-' }}</td>
+                      <td v-else-if="col.id === 'netFinancialImpactValue'" :class="['tr', 'fw', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ childGpValue(row, ci) ? Number(childGpValue(row, ci)!).toLocaleString() : '-' }}</td>
                       <td v-else-if="col.id === 'volumeCases'" :class="['tr', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ ci.volumeCases ? Number(ci.volumeCases).toLocaleString() : '-' }}</td>
                       <td v-else-if="col.id === 'volumeImpactType'" class="cell-muted">{{ row.volumeImpactType || '-' }}</td>
                       <td v-else-if="col.id === 'volumeImpactValue'" :class="['tr', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ ci.volumeImpactValue ? Number(ci.volumeImpactValue).toLocaleString() : '-' }}</td>
@@ -465,6 +480,9 @@
               </template>
             </tbody>
           </table>
+        </div>
+        <div v-if="group.subtotals.length" class="subtotal-bar">
+          <span v-for="st in group.subtotals" :key="st.type" class="subtotal-item">{{ formatSubtotalLine(st) }}</span>
         </div>
       </div>
     </template>
@@ -502,17 +520,17 @@
                 <td v-else-if="col.id === 'division'">{{ formatValue(row.division) }}</td>
                 <td v-else-if="col.id === 'country'">{{ formatCountry(row.country) }}</td>
                 <td v-else-if="col.id === 'categorisation'">{{ row.categorisation }}</td>
-                <td v-else-if="col.id === 'description'">{{ row.shortDescription || row.description || '-' }}</td>
-                <td v-else-if="col.id === 'detailedDescription'">{{ row.description || '-' }}</td>
-                <td v-else-if="col.id === 'customer'">
-                  <div v-if="row.account">{{ formatBrandFamily(row.account) }}</div>
-                  <div v-if="row.subChannel" class="cell-sub">{{ formatBrandFamily(row.subChannel) }}</div>
-                  <div v-if="row.channel" class="cell-sub italic">{{ formatBrandFamily(row.channel) }}</div>
+                <td v-else-if="col.id === 'description'" :class="col.class" :title="row.shortDescription || row.description || ''">{{ row.shortDescription || row.description || '-' }}</td>
+                <td v-else-if="col.id === 'detailedDescription'" :class="col.class" :title="row.description || ''">{{ row.description || '-' }}</td>
+                <td v-else-if="col.id === 'customer'" :class="col.class">
+                  <div v-if="row.account" :title="formatBrandFamily(row.account)">{{ formatBrandFamily(row.account) }}</div>
+                  <div v-if="row.subChannel" class="cell-sub" :title="formatBrandFamily(row.subChannel)">{{ formatBrandFamily(row.subChannel) }}</div>
+                  <div v-if="row.channel" class="cell-sub italic" :title="formatBrandFamily(row.channel)">{{ formatBrandFamily(row.channel) }}</div>
                   <span v-if="!row.account && !row.subChannel && !row.channel">-</span>
                 </td>
-                <td v-else-if="col.id === 'product'">
-                  <div v-if="row.brand">{{ formatBrandFamily(row.brand) }}</div>
-                  <div v-if="row.brandFamily" class="cell-sub italic">{{ formatBrandFamily(row.brandFamily) }}</div>
+                <td v-else-if="col.id === 'product'" :class="col.class">
+                  <div v-if="row.brand" :title="formatBrandFamily(row.brand)">{{ formatBrandFamily(row.brand) }}</div>
+                  <div v-if="row.brandFamily" class="cell-sub italic" :title="formatBrandFamily(row.brandFamily)">{{ formatBrandFamily(row.brandFamily) }}</div>
                   <span v-if="!row.brand && !row.brandFamily">-</span>
                 </td>
                 <td v-else-if="col.id === 'rAndO'">{{ row.rAndO }}</td>
@@ -536,6 +554,8 @@
                 <td v-else-if="col.id === 'financialImpactType'">{{ row.financialImpactType || '-' }}</td>
                 <td v-else-if="col.id === 'currency'">{{ row.impactCurrency || '-' }}</td>
                 <td v-else-if="col.id === 'impact'" :class="['tr', 'fw', { 'text-red': row.rAndO === 'Risk' }]">{{ row.impact ? Number(row.impact).toLocaleString() : '-' }}</td>
+                <td v-else-if="col.id === 'netFinancialImpactType'">{{ row.netFinancialImpactValue ? 'GP' : '-' }}</td>
+                <td v-else-if="col.id === 'netFinancialImpactValue'" :class="['tr', 'fw', { 'text-red': row.rAndO === 'Risk' }]">{{ row.netFinancialImpactValue ? Number(row.netFinancialImpactValue).toLocaleString() : '-' }}</td>
                 <td v-else-if="col.id === 'volumeCases'" :class="['tr', { 'text-red': row.rAndO === 'Risk' }]">
                   {{ (row as any).volumeCases ? Number((row as any).volumeCases).toLocaleString() : '-' }}
                   <div v-if="(row as any).volumeImpactValue" class="cell-sub">({{ (row as any).volumeImpactType }})</div>
@@ -578,14 +598,14 @@
                   <td v-else-if="col.id === 'division'" class="cell-muted">{{ formatValue(row.division) || '-' }}</td>
                   <td v-else-if="col.id === 'country'" class="cell-muted">{{ formatCountry(row.country) }}</td>
                   <td v-else-if="col.id === 'categorisation'" class="cell-muted">{{ row.categorisation }}</td>
-                  <td v-else-if="col.id === 'description'" class="cell-muted">{{ row.shortDescription || '-' }}</td>
-                  <td v-else-if="col.id === 'detailedDescription'" class="cell-muted">{{ row.description || '-' }}</td>
-                  <td v-else-if="col.id === 'customer'" class="cell-muted">
-                    <div v-if="row.account">{{ formatBrandFamily(row.account) }}</div>
-                    <div v-if="row.subChannel" class="cell-sub">{{ formatBrandFamily(row.subChannel) }}</div>
+                  <td v-else-if="col.id === 'description'" :class="['cell-muted', col.class]" :title="row.shortDescription || ''">{{ row.shortDescription || '-' }}</td>
+                  <td v-else-if="col.id === 'detailedDescription'" :class="['cell-muted', col.class]" :title="row.description || ''">{{ row.description || '-' }}</td>
+                  <td v-else-if="col.id === 'customer'" :class="['cell-muted', col.class]">
+                    <div v-if="row.account" :title="formatBrandFamily(row.account)">{{ formatBrandFamily(row.account) }}</div>
+                    <div v-if="row.subChannel" class="cell-sub" :title="formatBrandFamily(row.subChannel)">{{ formatBrandFamily(row.subChannel) }}</div>
                   </td>
-                  <td v-else-if="col.id === 'product'" class="cell-muted">
-                    <div v-if="row.brand">{{ formatBrandFamily(row.brand) }}</div>
+                  <td v-else-if="col.id === 'product'" :class="['cell-muted', col.class]">
+                    <div v-if="row.brand" :title="formatBrandFamily(row.brand)">{{ formatBrandFamily(row.brand) }}</div>
                   </td>
                   <td v-else-if="col.id === 'rAndO'" class="cell-muted">{{ row.rAndO }}</td>
                   <td v-else-if="col.id === 'probability'" class="tc cell-muted">
@@ -601,6 +621,8 @@
                   <td v-else-if="col.id === 'financialImpactType'" class="cell-muted">{{ row.financialImpactType || '-' }}</td>
                   <td v-else-if="col.id === 'currency'" class="cell-muted">{{ ci.impactCurrency || '-' }}</td>
                   <td v-else-if="col.id === 'impact'" :class="['tr', 'fw', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ ci.impact ? Number(ci.impact).toLocaleString() : '-' }}</td>
+                  <td v-else-if="col.id === 'netFinancialImpactType'" class="cell-muted">{{ childGpValue(row, ci) ? 'GP' : '-' }}</td>
+                  <td v-else-if="col.id === 'netFinancialImpactValue'" :class="['tr', 'fw', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ childGpValue(row, ci) ? Number(childGpValue(row, ci)!).toLocaleString() : '-' }}</td>
                   <td v-else-if="col.id === 'volumeCases'" :class="['tr', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ ci.volumeCases ? Number(ci.volumeCases).toLocaleString() : '-' }}</td>
                   <td v-else-if="col.id === 'volumeImpactType'" class="cell-muted">{{ row.volumeImpactType || '-' }}</td>
                   <td v-else-if="col.id === 'volumeImpactValue'" :class="['tr', 'cell-muted', { 'text-red': row.rAndO === 'Risk' }]">{{ ci.volumeImpactValue ? Number(ci.volumeImpactValue).toLocaleString() : '-' }}</td>
@@ -617,6 +639,10 @@
           </template>
         </tbody>
       </table>
+    </div>
+    <div v-if="overallSubtotals.length" class="subtotal-bar">
+      <span class="subtotal-label">Grand Total :</span>
+      <span v-for="st in overallSubtotals" :key="st.type" class="subtotal-item">{{ formatSubtotalLine(st) }}</span>
     </div>
   </div>
 </template>
@@ -1245,8 +1271,59 @@ const groupedEntries = computed(() => {
         val: vals[i],
       })),
       entries,
+      subtotals: computeSubtotals(entries),
     }));
 });
+
+// ─── Financial impact subtotals ───────────────────────────────────────────────
+interface SubtotalItem { type: string; aud: number | null; nzd: number | null; }
+
+const IMPACT_TYPE_ORDER = ['NSV', 'COGS', 'LOGS', 'GP', 'OI'];
+
+function computeSubtotals(entries: Entry[]): SubtotalItem[] {
+  const totals = new Map<string, { aud: number; nzd: number; hasAud: boolean; hasNzd: boolean }>();
+
+  function add(type: string, currency: string | undefined, val: string | undefined) {
+    if (!type || (currency !== 'AUD' && currency !== 'NZD')) return;
+    const n = parseFloat(String(val ?? '').replace(/,/g, ''));
+    if (isNaN(n)) return;
+    if (!totals.has(type)) totals.set(type, { aud: 0, nzd: 0, hasAud: false, hasNzd: false });
+    const t = totals.get(type)!;
+    if (currency === 'AUD') { t.aud += n; t.hasAud = true; }
+    else { t.nzd += n; t.hasNzd = true; }
+  }
+
+  for (const e of entries) {
+    const type = e.financialImpactType || '';
+    add(type, e.impactCurrency, e.impact);
+    // NSV entries carry a companion GP value in the same currency as the NSV impact
+    if (type === 'NSV' && e.netFinancialImpactValue && e.netFinancialImpactValue.trim()) {
+      add('GP', e.impactCurrency, e.netFinancialImpactValue);
+    }
+  }
+
+  const seen = Array.from(totals.keys());
+  const ordered = IMPACT_TYPE_ORDER.filter(t => seen.includes(t));
+  const extra = seen.filter(t => !IMPACT_TYPE_ORDER.includes(t)).sort();
+
+  return [...ordered, ...extra].map(type => {
+    const v = totals.get(type)!;
+    return { type, aud: v.hasAud ? v.aud : null, nzd: v.hasNzd ? v.nzd : null };
+  });
+}
+
+function formatSubtotalAmount(n: number): string {
+  return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}
+
+function formatSubtotalLine(item: SubtotalItem): string {
+  const parts: string[] = [];
+  if (item.aud !== null) parts.push(`AUD ${formatSubtotalAmount(item.aud)}`);
+  if (item.nzd !== null) parts.push(`NZD ${formatSubtotalAmount(item.nzd)}`);
+  return `${item.type}: ${parts.join(' + ')}`;
+}
+
+const overallSubtotals = computed(() => computeSubtotals(filteredEntries.value));
 
 // ─── Column visibility ────────────────────────────────────────────────────────
 const colVisible = ref<Record<string, boolean>>({
@@ -1264,6 +1341,8 @@ const colVisible = ref<Record<string, boolean>>({
   financialImpactType:     false,
   currency:       false,
   impact:         false,
+  netFinancialImpactType:  false,
+  netFinancialImpactValue: false,
   volumeCases:    false,
   volumeImpactType: false,
   volumeImpactValue: false,
@@ -1276,6 +1355,13 @@ const colVisible = ref<Record<string, boolean>>({
   status:         true,
   lastModified:   false,
 });
+
+const colVisibleKeys = Object.keys(colVisible.value);
+const allColsSelected = computed(() => colVisibleKeys.every(k => colVisible.value[k]));
+const someColsSelected = computed(() => colVisibleKeys.some(k => colVisible.value[k]));
+function toggleAllColumns(checked: boolean) {
+  colVisibleKeys.forEach(k => { colVisible.value[k] = checked; });
+}
 
 // ─── Column Definitions & Dynamic Reordering (Drag and Drop) ───────────────────
 interface VisibleCol {
@@ -1294,8 +1380,8 @@ const columnDefinitions = [
   { key: 'categorisation', label: 'Categorisation', class: 'col-lg' },
   { key: 'description', label: 'Short Description', class: 'col-xl' },
   { key: 'detailedDescription', label: 'Detailed Description', class: 'col-xl' },
-  { key: 'customer', label: 'Customer(s)', class: 'col-lg' },
-  { key: 'product', label: 'Product', class: 'col-lg' },
+  { key: 'customer', label: 'Customer(s)', class: 'col-xl' },
+  { key: 'product', label: 'Product', class: 'col-xl' },
   { key: 'rAndO', label: 'Risk vs. Opp.', class: 'col-md' },
   { key: 'probability', label: 'Probability', class: 'col-sm tc' },
   { key: 'addToForecastBy', label: 'Add to Forecast By', class: 'col-md' },
@@ -1306,6 +1392,8 @@ const columnDefinitions = [
   { key: 'financialImpactType', label: 'Financial Impact Type', class: 'col-md' },
   { key: 'currency', label: 'Financial Impact Currency', class: 'col-sm' },
   { key: 'impact', label: 'Financial Impact Value', class: 'col-md tr' },
+  { key: 'netFinancialImpactType', label: 'Net Financial Impact Type', class: 'col-md' },
+  { key: 'netFinancialImpactValue', label: 'Net Financial Impact Value', class: 'col-md tr' },
   { key: 'volumeCases', label: 'Volume (Cases)', class: 'col-md tr' },
   { key: 'volumeImpactType', label: 'Volume Impact Type', class: 'col-sm' },
   { key: 'volumeImpactValue', label: 'Volume Impact Value', class: 'col-md tr' },
@@ -1315,7 +1403,8 @@ const columnDefinitions = [
 const columnOrder = ref<string[]>([
   'ibpStep', 'division', 'country', 'categorisation', 'description', 'detailedDescription',
   'customer', 'product', 'rAndO', 'probability', 'addToForecastBy', 'creator', 'owner',
-  'status', 'lastModified', 'financialImpactType', 'currency', 'impact', 'volumeCases',
+  'status', 'lastModified', 'financialImpactType', 'currency', 'impact',
+  'netFinancialImpactType', 'netFinancialImpactValue', 'volumeCases',
   'volumeImpactType', 'volumeImpactValue', 'impactPeriods'
 ]);
 
@@ -1526,6 +1615,11 @@ function getImpactValueForPeriod(row: Entry, period: string, year: string, type:
 
 function getAggregatedImpact(row: Entry, col: PhasedCol): number {
   return col.periods.reduce((sum, p) => sum + getImpactValueForPeriod(row, p, col.year, col.type), 0);
+}
+
+function childGpValue(row: Entry, ci: NonNullable<Entry["childImpacts"]>[number]): string | null {
+  const v = row.primaryImpact === "NZD" ? ci.gpNzd : ci.gpAud;
+  return v || null;
 }
 
 function formatPhasedCell(val: number): string {
@@ -1747,8 +1841,8 @@ function exportToCSV(rows: Entry[], filename = `entries_${new Date().toISOString
       else if (col.id === 'categorisation') r.push(escapeCSV(e.categorisation || ""));
       else if (col.id === 'description') r.push(escapeCSV((e as any).shortDescription || e.description || ""));
       else if (col.id === 'detailedDescription') r.push(escapeCSV(e.description || ""));
-      else if (col.id === 'customer') r.push(escapeCSV([e.account, e.subChannel, e.channel].filter(Boolean).join(" / ")));
-      else if (col.id === 'product') r.push(escapeCSV([e.brand, formatBrandFamily(e.brandFamily)].filter(Boolean).join(" / ")));
+      else if (col.id === 'customer') r.push(escapeCSV([formatBrandFamily(e.account), formatBrandFamily(e.subChannel), formatBrandFamily(e.channel)].filter(Boolean).join(" / ")));
+      else if (col.id === 'product') r.push(escapeCSV([formatBrandFamily(e.brand), formatBrandFamily(e.brandFamily)].filter(Boolean).join(" / ")));
       else if (col.id === 'rAndO') r.push(escapeCSV(e.rAndO || ""));
       else if (col.id === 'probability') r.push(escapeCSV(e.probability || ""));
       else if (col.id === 'addToForecastBy') r.push(escapeCSV(
@@ -1761,6 +1855,8 @@ function exportToCSV(rows: Entry[], filename = `entries_${new Date().toISOString
       else if (col.id === 'financialImpactType') r.push(escapeCSV(e.financialImpactType || ""));
       else if (col.id === 'currency') r.push(escapeCSV(e.impactCurrency || ""));
       else if (col.id === 'impact') r.push(e.impact ? String(parseFloat(e.impact)) : "");
+      else if (col.id === 'netFinancialImpactType') r.push(escapeCSV(e.netFinancialImpactValue ? "GP" : ""));
+      else if (col.id === 'netFinancialImpactValue') r.push(e.netFinancialImpactValue ? String(parseFloat(e.netFinancialImpactValue)) : "");
       else if (col.id === 'volumeCases') r.push((e as any).volumeImpact ? String(parseFloat((e as any).volumeImpact)) : ((e as any).volumeCases ? String(parseFloat((e as any).volumeCases)) : ""));
       else if (col.id === 'volumeImpactType') r.push(escapeCSV((e as any).volumeImpactType || ""));
       else if (col.id === 'volumeImpactValue') r.push((e as any).volumeImpactValue ? String(parseFloat((e as any).volumeImpactValue)) : "");
@@ -1774,7 +1870,7 @@ function exportToCSV(rows: Entry[], filename = `entries_${new Date().toISOString
     return r.join(",");
   });
 
-  const blob = new Blob([[headers.join(","), ...data].join("\n")], { type: "text/csv;charset=utf-8;" });
+  const blob = new Blob(["﻿" + [headers.join(","), ...data].join("\n")], { type: "text/csv;charset=utf-8;" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = filename;
@@ -2059,6 +2155,7 @@ function clearFilters() {
 .col-md      { min-width:120px; }
 .col-lg      { min-width:150px; }
 .col-xl      { min-width:200px; max-width:240px; overflow:hidden; text-overflow:ellipsis; }
+.col-xl div, .col-xl span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .col-phased  { min-width:90px; }
 .col-actions { width:120px; }
 
@@ -2141,4 +2238,21 @@ function clearFilters() {
 .table-scroll-wrap::-webkit-scrollbar-track { background:transparent; }
 .table-scroll-wrap::-webkit-scrollbar-thumb { background:rgba(0,0,0,.22); border-radius:4px; }
 .table-scroll-wrap::-webkit-scrollbar-thumb:hover { background:rgba(0,0,0,.42); }
+
+/* ── Financial impact subtotals ──────────────────────────── */
+.subtotal-bar {
+  display:flex; align-items:center; flex-wrap:wrap; gap:10px 24px;
+  padding:10px 16px;
+  background:#f8f9fc;
+  border-top:1px solid var(--border-color);
+  border-bottom:1px solid var(--border-color);
+}
+.subtotal-item {
+  font-size:13px; font-weight:600; color:#111827;
+  white-space:nowrap;
+}
+.subtotal-label {
+  font-size:13px; font-weight:700; color:#111827;
+  white-space:nowrap;
+}
 </style>
