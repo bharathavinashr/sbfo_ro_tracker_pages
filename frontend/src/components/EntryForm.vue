@@ -1634,15 +1634,24 @@ let skipChildWatcher = false;
 let isSyncingPeriods = false; // <-- Protects against recursive watchers during sync
 
 watch(periodRangeEnd, (end) => {
-  if (isSyncingPeriods || isLoadingEntry.value) return; 
+  if (isSyncingPeriods || isLoadingEntry.value) return;
   if (!end.period || !end.year) return;
   const { period: sp, year: sy } = periodRangeStart.value;
   if (!sp || !sy) return;
   if (end.period === sp && end.year === sy) {
     formData.value.childImpacts = [];
-  } else {
-    createChildImpactsFromRange(true);
+    return;
   }
+  if (!isPeriodAfterOrEqual(end.period, end.year, sp, sy)) {
+    // End moved before Start — snap End up to Start instead of leaving an invalid range
+    isSyncingPeriods = true;
+    periodRangeEnd.value.period = sp;
+    periodRangeEnd.value.year = sy;
+    nextTick(() => { isSyncingPeriods = false; });
+    formData.value.childImpacts = [];
+    return;
+  }
+  createChildImpactsFromRange(true);
 }, { deep: true });
 
 watch(periodRangeStart, (start) => {
@@ -1652,9 +1661,18 @@ watch(periodRangeStart, (start) => {
   if (!ep || !ey) return;
   if (start.period === ep && start.year === ey) {
     formData.value.childImpacts = [];
-  } else {
-    createChildImpactsFromRange(true);
+    return;
   }
+  if (!isPeriodAfterOrEqual(ep, ey, start.period, start.year)) {
+    // Start moved past End — snap End up to Start instead of leaving an invalid range
+    isSyncingPeriods = true;
+    periodRangeEnd.value.period = start.period;
+    periodRangeEnd.value.year = start.year;
+    nextTick(() => { isSyncingPeriods = false; });
+    formData.value.childImpacts = [];
+    return;
+  }
+  createChildImpactsFromRange(true);
 }, { deep: true });
 
 const calculatedNsvGpRatio = computed(() => {
@@ -2032,12 +2050,10 @@ function onChildVolChange(idx: number) {
 // ─── Sync Parent Periods from Children Function ───────────────────────────────
 function syncParentPeriodsFromChildren() {
   if (formData.value.childImpacts.length === 0) {
-    isSyncingPeriods = true;
-    periodRangeStart.value.period = formData.value.impactPeriod || currentPeriod;
-    periodRangeStart.value.year = formData.value.impactYear || String(currentYear);
-    periodRangeEnd.value.period = formData.value.impactPeriod || currentPeriod;
-    periodRangeEnd.value.year = formData.value.impactYear || String(currentYear);
-    nextTick(() => { isSyncingPeriods = false; });
+    // Single period (Start === End): keep the user's selection, just mirror it
+    // into the primary impactPeriod/impactYear fields used on submit.
+    formData.value.impactPeriod = periodRangeStart.value.period || currentPeriod;
+    formData.value.impactYear = periodRangeStart.value.year || String(currentYear);
     return;
   }
 

@@ -8,7 +8,7 @@ SCHEMA = "sbfo_ro"
 
 
 class Entry(Base):
-    __tablename__ = "entries"
+    __tablename__ = "ro_entries"
     __table_args__ = {"schema": SCHEMA}
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -67,13 +67,13 @@ class Entry(Base):
 
 
 class ChildImpact(Base):
-    __tablename__ = "child_impacts"
+    __tablename__ = "ro_child_impacts"
     __table_args__ = {"schema": SCHEMA}
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     entry_id = Column(
         Integer,
-        ForeignKey(f"{SCHEMA}.entries.id", ondelete="CASCADE"),
+        ForeignKey(f"{SCHEMA}.ro_entries.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -89,7 +89,7 @@ class ChildImpact(Base):
 
 
 class AppUser(Base):
-    __tablename__ = "app_users"
+    __tablename__ = "ro_app_users"
     __table_args__ = {"schema": SCHEMA}
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -104,7 +104,7 @@ class AppUser(Base):
 
 
 class LookupOption(Base):
-    __tablename__ = "lookup_options"
+    __tablename__ = "ro_lookup_options"
     __table_args__ = {"schema": SCHEMA}
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -147,7 +147,7 @@ class ROCustomer(Base):
 
 
 class Snapshot(Base):
-    __tablename__ = "snapshots"
+    __tablename__ = "ro_snapshots"
     __table_args__ = {"schema": SCHEMA}
 
     id = Column(Integer, primary_key=True, autoincrement=True)

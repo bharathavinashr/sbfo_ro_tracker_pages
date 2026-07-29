@@ -432,7 +432,7 @@ def get_user_by_id(db: Session, user_id: int):
 def create_user(db: Session, data: schemas.UserCreate):
     # Sync sequence to avoid duplicate key errors from out-of-sync serial
     db.execute(
-        text("SELECT setval(pg_get_serial_sequence('sbfo_ro.app_users', 'id'), COALESCE(MAX(id), 0) + 1, false) FROM sbfo_ro.app_users")
+        text("SELECT setval(pg_get_serial_sequence('sbfo_ro.ro_app_users', 'id'), COALESCE(MAX(id), 0) + 1, false) FROM sbfo_ro.ro_app_users")
     )
     user = models.AppUser(**data.model_dump())
     db.add(user)
