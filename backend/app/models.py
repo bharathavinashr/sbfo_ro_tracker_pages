@@ -54,8 +54,11 @@ class Entry(Base):
     financial_impact_type = Column(String(10), nullable=True, default="NSV")
     volume_cases = Column(String(50), nullable=True)
 
-    last_modified = Column(DateTime, server_default=func.now(), onupdate=func.now())
-    created_at = Column(DateTime, server_default=func.now())
+    # default=func.now() embeds now() directly in the INSERT/UPDATE statement so the
+    # timestamp is set even if the live table's own column default is missing/out of sync
+    # (this project has no migration tool, so server_default alone can silently drift).
+    last_modified = Column(DateTime, default=func.now(), server_default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime, default=func.now(), server_default=func.now())
 
     volume_impact_type = Column(String(20), nullable=True) # Stores "Cases" or "9LE"
     volume_impact_value = Column(String(50), nullable=True)
@@ -157,7 +160,7 @@ class Snapshot(Base):
     year = Column(String(4), nullable=False)
     ibp_step = Column(String(255), nullable=False)
     entry_data = Column(JSONB, nullable=False)
-    created_at = Column(DateTime, server_default=func.now())
+    created_at = Column(DateTime, default=func.now(), server_default=func.now())
     version = Column(Integer, nullable=False, default=1)
     is_final = Column(Boolean, nullable=False, default=False)
     creator = Column(String(200), nullable=True)
