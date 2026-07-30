@@ -243,14 +243,16 @@ function formatPrimaryImpact(row: Entry) {
 }
 
 .page-container {
-  max-width: 1400px;
+  width: 100%;
+  box-sizing: border-box;
   margin: 0 auto;
   padding: 24px;
   /* background-color: #D9F2F2; */
 }
 
 .logo-header {
-  max-width: 1400px;
+  width: 100%;
+  box-sizing: border-box;
   margin: 0 auto;
   padding: 16px 24px;
   background: #00325D;

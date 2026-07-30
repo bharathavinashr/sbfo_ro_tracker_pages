@@ -744,13 +744,15 @@ function getRowClass(row: any) {
 }
 
 .page-container {
-  max-width: 1600px;
+  width: 100%;
+  box-sizing: border-box;
   margin: 0 auto;
   padding: 24px;
 }
 
 .logo-header {
-  max-width: 1600px;
+  width: 100%;
+  box-sizing: border-box;
   margin: 0 auto;
   padding: 16px 24px;
   background: #00325D;
