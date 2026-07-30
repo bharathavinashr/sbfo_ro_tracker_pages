@@ -596,7 +596,7 @@
                       :disabled="formData.lockNsvVolRatio"
                       @input="onParentVolInput($event as string)"
                       @blur="formData._volFocus = false"
-                      @focus="formData._volFocus = true; formData.secondaryValue = cleanNumStr(formData.secondaryValue)"
+                      @focus="formData._volFocus = true; formData.secondaryValue = enforceSign(formData.secondaryValue)"
                     />
                   </div>
                 </el-tooltip>
@@ -704,9 +704,9 @@
                     :placeholder="childVolumeImpactPlaceholder"
                     :disabled="formData.lockNsvVolRatio"
                     style="margin-top: 6px"
-                    @input="child.secondaryValue = cleanNumStr($event as string); onChildVolChange(idx)"
+                    @input="child.secondaryValue = enforceSign($event as string); onChildVolChange(idx)"
                     @blur="child._volFocus = false"
-                    @focus="child._volFocus = true; child.secondaryValue = cleanNumStr(child.secondaryValue)"
+                    @focus="child._volFocus = true; child.secondaryValue = enforceSign(child.secondaryValue)"
                   />
                 </div>
               </el-tooltip>
@@ -1872,7 +1872,7 @@ function onParentGpInput(val: string) {
 }
 
 function onParentVolInput(val: string) {
-  formData.value.secondaryValue = cleanNumStr(val);
+  formData.value.secondaryValue = enforceSign(val);
   if (hasChildImpacts.value) {
     skipChildWatcher = true;
     const newTotalVol = parseFloat(cleanNumStr(formData.value.secondaryValue)) || 0;
@@ -2494,9 +2494,11 @@ watch(() => formData.value.rAndO, (val) => {
   }
   const neg = val === "Risk";
   formData.value.impactValue = applySign(formData.value.impactValue, neg);
+  formData.value.secondaryValue = applySign(formData.value.secondaryValue, neg);
 
   formData.value.childImpacts.forEach(ci => {
     ci.impactValue = applySign(ci.impactValue, neg);
+    ci.secondaryValue = applySign(ci.secondaryValue, neg);
   });
 });
 

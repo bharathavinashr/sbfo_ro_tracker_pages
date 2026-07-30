@@ -409,25 +409,20 @@
                     </td>
                     <td v-else-if="col.id === 'impactPeriods'">{{ formatImpactPeriods(row.childImpacts, row.impactPeriod, row.impactYear) }}</td>
                     
-                    <td v-else-if="col.type === 'actions'" class="tc">
-                      <div class="action-btns">
-                        <button class="action-icon" @click="$emit('history', row)" title="History">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <td v-else-if="col.type === 'actions'" :class="col.class">
+                      <el-dropdown trigger="click" @command="(cmd:string) => handleActionCommand(cmd, row)">
+                        <button class="action-icon" title="Actions">
+                          <el-icon><Setting /></el-icon>
                         </button>
-                        <button v-if="!isReadOnly && store.canCreate" class="action-icon" @click="$emit('duplicate', row)" title="Duplicate">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                        </button>
-                        <button v-if="!isReadOnly && canEditRow(row)" class="action-icon" @click="handleEditClick(row)" title="Edit">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                        </button>
-                        <el-popconfirm v-if="!isReadOnly && canDeleteRow(row)" title="Delete all versions of this entry?" confirm-button-type="danger" @confirm="$emit('delete', row)">
-                          <template #reference>
-                            <button class="action-icon action-icon--danger" title="Delete">
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                            </button>
-                          </template>
-                        </el-popconfirm>
-                      </div>
+                        <template #dropdown>
+                          <el-dropdown-menu>
+                            <el-dropdown-item command="history">History</el-dropdown-item>
+                            <el-dropdown-item v-if="!isReadOnly && store.canCreate" command="duplicate">Duplicate</el-dropdown-item>
+                            <el-dropdown-item v-if="!isReadOnly && canEditRow(row)" command="edit">Edit</el-dropdown-item>
+                            <el-dropdown-item v-if="!isReadOnly && canDeleteRow(row)" command="delete" divided>Delete</el-dropdown-item>
+                          </el-dropdown-menu>
+                        </template>
+                      </el-dropdown>
                     </td>
                   </template>
                 </tr>
@@ -473,7 +468,7 @@
                       <td v-else-if="col.id === 'impactPeriods'" class="cell-muted">
                         {{ ci.impactPeriod && ci.impactYear ? `${periodToMonthAbbr(ci.impactPeriod)} ${ci.impactYear}` : '-' }}
                       </td>
-                      <td v-else-if="col.type === 'actions'" class="cell-muted tc">-</td>
+                      <td v-else-if="col.type === 'actions'" :class="[col.class, 'cell-muted']">-</td>
                     </template>
                   </tr>
                 </template>
@@ -567,25 +562,20 @@
                 </td>
                 <td v-else-if="col.id === 'impactPeriods'">{{ formatImpactPeriods(row.childImpacts, row.impactPeriod, row.impactYear) }}</td>
                 
-                <td v-else-if="col.type === 'actions'" class="tc">
-                  <div class="action-btns">
-                    <button class="action-icon" @click="$emit('history', row)" title="History">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <td v-else-if="col.type === 'actions'" :class="col.class">
+                  <el-dropdown trigger="click" @command="(cmd:string) => handleActionCommand(cmd, row)">
+                    <button class="action-icon" title="Actions">
+                      <el-icon><Setting /></el-icon>
                     </button>
-                    <button v-if="!isReadOnly && store.canCreate" class="action-icon" @click="$emit('duplicate', row)" title="Duplicate">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                    </button>
-                    <button v-if="!isReadOnly && canEditRow(row)" class="action-icon" @click="handleEditClick(row)" title="Edit">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    </button>
-                    <el-popconfirm v-if="!isReadOnly && canDeleteRow(row)" title="Delete all versions of this entry?" confirm-button-type="danger" @confirm="$emit('delete', row)">
-                      <template #reference>
-                        <button class="action-icon action-icon--danger" title="Delete">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                        </button>
-                      </template>
-                    </el-popconfirm>
-                  </div>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item command="history">History</el-dropdown-item>
+                        <el-dropdown-item v-if="!isReadOnly && store.canCreate" command="duplicate">Duplicate</el-dropdown-item>
+                        <el-dropdown-item v-if="!isReadOnly && canEditRow(row)" command="edit">Edit</el-dropdown-item>
+                        <el-dropdown-item v-if="!isReadOnly && canDeleteRow(row)" command="delete" divided>Delete</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
                 </td>
               </template>
             </tr>
@@ -632,7 +622,7 @@
                   <td v-else-if="col.id === 'impactPeriods'" class="cell-muted">
                     {{ ci.impactPeriod && ci.impactYear ? `${periodToMonthAbbr(ci.impactPeriod)} ${ci.impactYear}` : '-' }}
                   </td>
-                  <td v-else-if="col.type === 'actions'" class="cell-muted tc">-</td>
+                  <td v-else-if="col.type === 'actions'" :class="[col.class, 'cell-muted']">-</td>
                 </template>
               </tr>
             </template>
@@ -649,8 +639,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
-import { ElMessage, ClickOutside as vClickOutside } from "element-plus";
-import { Money, MilkTea, Plus, Grid, Download } from "@element-plus/icons-vue";
+import { ElMessage, ElMessageBox, ClickOutside as vClickOutside } from "element-plus";
+import { Money, MilkTea, Plus, Grid, Download, Setting } from "@element-plus/icons-vue";
 import { useEntryStore } from "@/stores/entryStore";
 import { useLookupStore } from "@/stores/lookupStore";
 import { entryApi, lookupApi } from "@/services/api";
@@ -1584,6 +1574,7 @@ watch(phasedColumns, (newCols) => {
 
 const visibleColumns = computed((): VisibleCol[] => {
   const cols: VisibleCol[] = [];
+  cols.push({ id: 'actions', type: 'actions', label: '', class: 'col-actions tc', fixed: true });
   cols.push({ id: 'expand', type: 'expand', class: 'col-expand', fixed: true });
 
   columnOrder.value.forEach(key => {
@@ -1600,7 +1591,6 @@ const visibleColumns = computed((): VisibleCol[] => {
     }
   });
 
-  cols.push({ id: 'actions', type: 'actions', label: 'Actions', class: 'col-actions tc', fixed: true });
   return cols;
 });
 
@@ -1728,6 +1718,28 @@ function canDeleteRow(row: Entry): boolean {
   if (role === "System Admin") return true;
   if (role === "User" || role === "IBP Step Approver") return row.status === "Open";
   return false;
+}
+
+async function handleActionCommand(command: string, row: Entry) {
+  if (command === "history") {
+    emit("history", row);
+  } else if (command === "duplicate") {
+    emit("duplicate", row);
+  } else if (command === "edit") {
+    await handleEditClick(row);
+  } else if (command === "delete") {
+    try {
+      await ElMessageBox.confirm("Delete all versions of this entry?", "Confirm", {
+        confirmButtonText: "Delete",
+        confirmButtonClass: "el-button--danger",
+        cancelButtonText: "Cancel",
+        type: "warning",
+      });
+      emit("delete", row);
+    } catch {
+      // cancelled
+    }
+  }
 }
 
 function canEditStatusRow(row: Entry): boolean {
@@ -2119,7 +2131,7 @@ function clearFilters() {
 
 /* ── Data table ───────────────────────────────────────── */
 .data-table {
-  width:100%; border-collapse:collapse;
+  width:100%; border-collapse:separate; border-spacing:0;
   font-size:13px; color:var(--text-primary);
 }
 .data-table th {
@@ -2157,7 +2169,14 @@ function clearFilters() {
 .col-xl      { min-width:200px; max-width:240px; overflow:hidden; text-overflow:ellipsis; }
 .col-xl div, .col-xl span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .col-phased  { min-width:90px; }
-.col-actions { width:120px; }
+.col-actions {
+  width:44px;
+  position:sticky;
+  left:0;
+  z-index:2;
+  background-color:#fff;
+  box-shadow: 1px 0 0 0 #f0f2f5;
+}
 
 .tc { text-align:center; }
 .tr { text-align:left; }
@@ -2196,7 +2215,6 @@ function clearFilters() {
 .prob-medium { background:#cffafe; color:#0e7490; }
 .prob-low    { background:#e0f2fe; color:#0369a1; }
 
-.action-btns { display:flex; align-items:center; justify-content:center; gap:4px; }
 .action-icon {
   display:inline-flex; align-items:center; justify-content:center;
   width:28px; height:28px; border:none; background:transparent;
