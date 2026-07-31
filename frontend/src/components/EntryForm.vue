@@ -2775,8 +2775,24 @@ function mapToFields(primaryUnit: string, primaryVal: string, secUnit: string, s
   };
 }
 
+function stripBareSign(val: string | undefined): string {
+  return val && val.trim() === "-" ? "" : (val ?? "");
+}
+
 async function validate() {
   try {
+    // A Risk entry auto-inserts "-" on focus; if the user never types a digit and
+    // leaves it, treat that bare sign as blank instead of an invalid number, same
+    // as Opportunity leaves it truly blank.
+    formData.value.impactValue = stripBareSign(formData.value.impactValue);
+    formData.value.netFinancialImpactValue = stripBareSign(formData.value.netFinancialImpactValue);
+    formData.value.secondaryValue = stripBareSign(formData.value.secondaryValue);
+    formData.value.childImpacts.forEach(ci => {
+      ci.impactValue = stripBareSign(ci.impactValue);
+      ci.netFinancialImpactValue = stripBareSign(ci.netFinancialImpactValue);
+      ci.secondaryValue = stripBareSign(ci.secondaryValue);
+    });
+
     await formRef.value!.validate().catch(err => {
       const firstField = Object.keys(err)[0];
       if (firstField) formRef.value!.scrollToField(firstField);
