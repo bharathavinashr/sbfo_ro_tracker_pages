@@ -412,7 +412,7 @@
                     <td v-else-if="col.type === 'actions'" :class="col.class">
                       <el-dropdown trigger="click" @command="(cmd:string) => handleActionCommand(cmd, row)">
                         <button class="action-icon" title="Actions">
-                          <el-icon><Setting /></el-icon>
+                          <svg class="menu-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z"/></svg>
                         </button>
                         <template #dropdown>
                           <el-dropdown-menu>
@@ -565,7 +565,7 @@
                 <td v-else-if="col.type === 'actions'" :class="col.class">
                   <el-dropdown trigger="click" @command="(cmd:string) => handleActionCommand(cmd, row)">
                     <button class="action-icon" title="Actions">
-                      <el-icon><Setting /></el-icon>
+                      <svg class="menu-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z"/></svg>
                     </button>
                     <template #dropdown>
                       <el-dropdown-menu>
@@ -640,7 +640,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
 import { ElMessage, ElMessageBox, ClickOutside as vClickOutside } from "element-plus";
-import { Money, MilkTea, Plus, Grid, Download, Setting } from "@element-plus/icons-vue";
+import { Money, MilkTea, Plus, Grid, Download } from "@element-plus/icons-vue";
 import { useEntryStore } from "@/stores/entryStore";
 import { useLookupStore } from "@/stores/lookupStore";
 import { entryApi, lookupApi } from "@/services/api";
@@ -2222,6 +2222,7 @@ function clearFilters() {
   transition:background 0.15s, color 0.15s; padding:0;
 }
 .action-icon svg { width:15px; height:15px; }
+.menu-icon { width:15px; height:15px; }
 .action-icon:hover { background:#f3f4f6; color:#111827; }
 .action-icon--danger { color:#d4183d; }
 .action-icon--danger:hover { background:#fff1f3; color:#d4183d; }
