@@ -870,7 +870,12 @@ onMounted(async () => {
     // Auto-select if the user has exactly one country in their profile, but allow selection of others.
     const userAssignedCountries = Object.entries(userCountryData);
     if (userAssignedCountries.length === 1) {
-      const [code, name] = userAssignedCountries[0];
+      const [rawCode, name] = userAssignedCountries[0];
+      // ro_app_users.country stores zero-padded codes (e.g. "0014"), but entries
+      // and the country dropdown use the unpadded form (e.g. "14") - strip the
+      // padding so a single-country user's auto-selected value matches what a
+      // manual pick from the dropdown would store.
+      const code = String(rawCode).replace(/^0+/, "") || String(rawCode);
       formData.value.country = { [code]: name as string };
     }
   }

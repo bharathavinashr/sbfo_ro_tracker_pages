@@ -109,7 +109,7 @@ export const CATEGORISATION_OPTIONS = [
   "Other",
 ];
 export const IMPACT_UNITS = ["AUD", "NZD", "Litres"];
-export const STATUS_OPTIONS = ["Open", "Approved", "Dismissed", "Included in Forecast"];
+export const STATUS_OPTIONS = ["Open", "Approved", "Included in Forecast", "Dismissed", "Archived"];
 export const PERIODS = ["F01", "F02", "F03", "F04", "F05", "F06", "F07", "F08", "F09", "F10", "F11", "F12"];
 export const BRANDS = [
   "Suntory", "Jim Beam", "Maker's Mark", "Knob Creek",

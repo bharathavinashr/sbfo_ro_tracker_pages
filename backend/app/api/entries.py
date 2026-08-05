@@ -170,12 +170,11 @@ def list_entries(
         "creation_date_period": creation_date_period,
         "creation_date_year": creation_date_year,
     }
-    include_deleted = (role == "System Admin")
-    # IBP Step Approver: restrict to their allowed IBP Steps (None = all)
+    # Deleted entries are never shown in the main table, regardless of role.
     ibp_step_in = None
     if role == "IBP Step Approver" and user_ibp_steps:
         ibp_step_in = [d.strip() for d in user_ibp_steps.split(",") if d.strip()]
-    entries = crud.get_latest_entries(db, filters, include_deleted=include_deleted, ibp_step_in=ibp_step_in)
+    entries = crud.get_latest_entries(db, filters, include_deleted=False, ibp_step_in=ibp_step_in)
     result = []
     for entry in entries:
         child_impacts = crud.get_child_impacts(db, entry.id)

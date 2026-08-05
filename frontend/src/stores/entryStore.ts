@@ -14,6 +14,10 @@ export const useEntryStore = defineStore("entry", () => {
     currentUser.value != null ? ROLE_MAP[currentUser.value.role] ?? "User" : "User"
   );
 
+  // Dismissed and Archived are excluded from the main table by default;
+  // the user opts into seeing them via the Status quick filter.
+  const DEFAULT_STATUS_FILTER = ["Open", "Approved", "Included in Forecast"];
+
   const filters = ref({
     division: [] as string[],
     department: "",
@@ -26,7 +30,7 @@ export const useEntryStore = defineStore("entry", () => {
     categorisation: "",
     r_and_o: "",
     probability: "",
-    status: [] as string[],
+    status: [...DEFAULT_STATUS_FILTER] as string[],
     owner: "",
     ibp_step: [] as string[],
     creation_date_period: "",
@@ -131,7 +135,7 @@ export const useEntryStore = defineStore("entry", () => {
       categorisation: "",
       r_and_o: "",
       probability: "",
-      status: [],
+      status: [...DEFAULT_STATUS_FILTER],
       owner: "",
       ibp_step: [],
       creation_date_period: "",

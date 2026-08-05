@@ -1,3 +1,4 @@
+import json
 from sqlalchemy.orm import Session
 from sqlalchemy import func, cast, String, Text, text
 from . import models, schemas
@@ -18,16 +19,56 @@ def normalize_division_for_storage(value):
     return [str(value).strip()] if str(value).strip() else []
 
 
+def _decode_division_value(value):
+    """Unwrap a `division` value that may carry extra layers of JSON-string
+    encoding before re-normalizing it.
+
+    The `ro_entries.division` column's live type has drifted from the JSONB
+    type declared on the model (it's actually `character varying`), so
+    reading it back never auto-deserializes it the way the other JSONB
+    columns do. Code paths that re-save a value read straight off the model
+    (e.g. copying a row to create a new version) would otherwise re-encode
+    an already-JSON-encoded string, adding another layer of escaping each
+    time.
+    """
+    seen = set()
+    while isinstance(value, str) and value not in seen:
+        seen.add(value)
+        try:
+            parsed = json.loads(value)
+        except (ValueError, TypeError):
+            break
+        if parsed == value:
+            break
+        value = parsed
+    return normalize_division_for_storage(value)
+
+
+def _division_values(division) -> list:
+    if isinstance(division, (list, tuple)):
+        return [str(v).strip() for v in division if str(v).strip()]
+    if isinstance(division, dict):
+        return [str(v).strip() for v in division.values() if str(v).strip()]
+    if isinstance(division, str):
+        text = division.strip()
+        if not text:
+            return []
+        # The stored value is often JSON-encoded text (e.g. '["Alcohol"]')
+        # rather than a native list, since the live column type doesn't
+        # match the JSONB type declared on the model. Decode it before
+        # comparing, or fall back to the raw string for legacy bare values.
+        try:
+            parsed = json.loads(text)
+        except (ValueError, TypeError):
+            return [text]
+        return _division_values(parsed) or [text]
+    return []
+
+
 def _matches_division_filter(entry, selected_divisions: list) -> bool:
     if not selected_divisions:
         return True
-    values = []
-    if isinstance(entry.division, (list, tuple)):
-        values.extend([str(v).strip() for v in entry.division if str(v).strip()])
-    elif isinstance(entry.division, dict):
-        values.extend([str(v).strip() for v in entry.division.values() if str(v).strip()])
-    elif isinstance(entry.division, str):
-        values.append(entry.division.strip())
+    values = _division_values(entry.division)
     return any(v in selected_divisions for v in values)
 
 
@@ -202,7 +243,8 @@ def _new_version_with_status(db: Session, entry_id: int, new_status: str, modifi
     exclude = {'id', 'version', 'last_modified', 'created_at', 'status', 'modified_user'}
     
     entry_dict = {col: getattr(current, col) for col in columns if col not in exclude}
-    
+    entry_dict['division'] = _decode_division_value(entry_dict.get('division'))
+
     new_entry = models.Entry(
         version=max_version + 1,
         status=new_status,

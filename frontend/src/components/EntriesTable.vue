@@ -43,7 +43,7 @@
         <div class="qf-row">
           <span class="qf-label">Status:</span>
           <div class="qf-buttons">
-            <button v-for="st in ['Open', 'Approved', 'Included in Forecast']" :key="st"
+            <button v-for="st in ['Open', 'Approved', 'Included in Forecast', 'Dismissed', 'Archived']" :key="st"
                     :class="['quick-btn', { active: store.filters.status.includes(st) }]"
                     @click="toggleStatusQuick(st)">{{ st }}</button>
           </div>
@@ -1673,6 +1673,7 @@ function rowClass(row: Entry): string {
     "Approved":             "row-approved",
     "Dismissed":            "row-dismissed",
     "Included in Forecast": "row-forecast",
+    "Archived":             "row-archived",
   };
   return m[row.status ?? ""] ?? "";
 }
@@ -1683,6 +1684,7 @@ function statusClass(status?: string): string {
     "Approved":             "status-approved",
     "Dismissed":            "status-dismissed",
     "Included in Forecast": "status-forecast",
+    "Archived":             "status-archived",
   };
   return m[status ?? ""] ?? "";
 }
@@ -1745,7 +1747,7 @@ async function handleActionCommand(command: string, row: Entry) {
 function canEditStatusRow(row: Entry): boolean {
   const role = store.userRole, status = row.status;
   if (role === "System Admin") return true;
-  if (role === "IBP Step Approver")   return status === "Open" || status === "Approved";
+  if (role === "IBP Step Approver")   return status === "Open" || status === "Approved" || status === "Dismissed";
   if (role === "Finance Approver")    return status === "Approved" || status === "Dismissed" || status === "Included in Forecast";
   return false;
 }
@@ -1755,9 +1757,14 @@ function allowedStatusRow(row: Entry): string[] {
   if (role === "System Admin") return STATUS_OPTIONS;
   if (role === "IBP Step Approver") {
     const isAllowedStep = row.ibpStep ? ibpStepOptions.value.includes(row.ibpStep) : false;
-    if (isAllowedStep && (status === "Open" || status === "Approved")) return ["Open", "Approved"];
+    if (isAllowedStep && (status === "Open" || status === "Approved")) return ["Open", "Approved", "Dismissed"];
+    if (isAllowedStep && status === "Dismissed") return ["Dismissed", "Archived"];
   }
-  if (role === "Finance Approver") return ["Approved","Dismissed","Included in Forecast"];
+  if (role === "Finance Approver") {
+    const options = ["Approved", "Dismissed", "Included in Forecast"];
+    if (status === "Dismissed" || status === "Included in Forecast") options.push("Archived");
+    return options;
+  }
   return [status];
 }
 
@@ -2158,6 +2165,7 @@ function clearFilters() {
 .row-approved td  { background:#f0fdf4 !important; }
 .row-dismissed td { background:#f3f4f6 !important; }
 .row-forecast td  { background:#eff6ff !important; }
+.row-archived td  { background:#f5f5f4 !important; }
 
 .child-row td { background:#fafafa; padding-left:24px; }
 .child-row:hover td { background:#f3f4f6 !important; }
@@ -2204,6 +2212,7 @@ function clearFilters() {
 .status-approved { background:#dcfce7; color:#166534; }
 .status-dismissed{ background:#6b7280; color:#fff; }
 .status-forecast { background:#dbeafe; color:#1e40af; }
+.status-archived { background:#e7e5e4; color:#57534e; }
 .dim { opacity:.5; }
 
 .prob-badge {
