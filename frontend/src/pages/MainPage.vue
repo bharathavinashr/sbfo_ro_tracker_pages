@@ -98,6 +98,20 @@
       </div>
     </div>
 
+    <div class="genie-section">
+      <div class="genie-header">
+        <h2 class="genie-title">Ask Genie</h2>
+      </div>
+      <iframe
+        class="genie-iframe"
+        src="https://adb-2205520462893510.10.azuredatabricks.net/embed/genie/rooms/01f196cfa06f1109bc247c80c34100f5?o=2205520462893510"
+        width="100%"
+        height="600"
+        frameborder="0"
+        allow="clipboard-write"
+      ></iframe>
+    </div>
+
     <EntriesTable
       :entries="store.displayEntries"
       :can-approve="store.canApprove"
@@ -509,5 +523,32 @@ function goToHistory(entry: Entry) {
 .dialog-footer-btns :deep(.el-button--primary:hover) {
   background-color: #333;
   border-color: #333;
+}
+
+.genie-section {
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: calc(var(--radius) + 4px);
+  box-shadow: var(--shadow-sm);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.genie-header {
+  margin-bottom: 12px;
+}
+
+.genie-title {
+  font-family: 'Jost', Arial, sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  margin: 0;
+  color: var(--text-title-heading);
+}
+
+.genie-iframe {
+  width: 100%;
+  border: none;
+  border-radius: var(--radius);
+  display: block;
 }
 </style>
