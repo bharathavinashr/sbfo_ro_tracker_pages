@@ -98,20 +98,6 @@
       </div>
     </div>
 
-    <div class="genie-section">
-      <div class="genie-header">
-        <h2 class="genie-title">Ask Genie</h2>
-      </div>
-      <iframe
-        class="genie-iframe"
-        src="https://adb-2205520462893510.10.azuredatabricks.net/embed/genie/rooms/01f196cfa06f1109bc247c80c34100f5?o=2205520462893510"
-        width="100%"
-        height="600"
-        frameborder="0"
-        allow="clipboard-write"
-      ></iframe>
-    </div>
-
     <EntriesTable
       :entries="store.displayEntries"
       :can-approve="store.canApprove"
@@ -144,6 +130,23 @@
     <LockView v-model="lockViewOpen" />
 
     </div>
+
+    <div v-if="genieOpen" class="genie-popup">
+      <div class="genie-popup-header">
+        <span class="genie-popup-title">Ask Genie</span>
+        <el-icon class="genie-popup-close" @click="genieOpen = false"><Close /></el-icon>
+      </div>
+      <iframe
+        class="genie-iframe"
+        src="https://adb-2205520462893510.10.azuredatabricks.net/embed/genie/rooms/01f196cfa06f1109bc247c80c34100f5?o=2205520462893510"
+        frameborder="0"
+        allow="clipboard-write"
+      ></iframe>
+    </div>
+
+    <button class="genie-fab" :class="{ 'is-open': genieOpen }" @click="genieOpen = !genieOpen" aria-label="Ask Genie">
+      <el-icon :size="26"><component :is="genieOpen ? Close : ChatDotRound" /></el-icon>
+    </button>
   </div>
 </template>
 
@@ -151,7 +154,7 @@
 import { ref, onMounted, watch, computed } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Plus, User, Camera, Search, Setting } from "@element-plus/icons-vue";
+import { Plus, User, Camera, Search, Setting, ChatDotRound, Close } from "@element-plus/icons-vue";
 import { useEntryStore } from "@/stores/entryStore";
 import { authApi, entryApi } from "@/services/api";
 import EntriesTable from "@/components/EntriesTable.vue";
@@ -180,6 +183,7 @@ const authMode = ref<"LOCAL" | "DBX" | "">("");
 const dbxAdminUser = ref<import("@/types").AppUser | null>(null);
 const lockViewOpen = ref(false);
 const formKey = ref(0);
+const genieOpen = ref(false);
 
 onMounted(async () => {
   try {
@@ -525,30 +529,88 @@ function goToHistory(entry: Entry) {
   border-color: #333;
 }
 
-.genie-section {
-  background: rgba(255, 255, 255, 0.5);
+.genie-fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #00325D;
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  z-index: 1000;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.genie-fab:hover {
+  background: #00457f;
+  transform: scale(1.05);
+}
+
+.genie-fab.is-open {
+  background: #000;
+}
+
+.genie-popup {
+  position: fixed;
+  right: 24px;
+  bottom: 92px;
+  width: 500px;
+  max-width: calc(100vw - 48px);
+  height: 600px;
+  max-height: calc(100vh - 140px);
+  background: #fff;
   border-radius: calc(var(--radius) + 4px);
-  box-shadow: var(--shadow-sm);
-  padding: 20px;
-  margin-bottom: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 1000;
 }
 
-.genie-header {
-  margin-bottom: 12px;
+.genie-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #00325D;
+  color: #fff;
 }
 
-.genie-title {
+.genie-popup-title {
   font-family: 'Jost', Arial, sans-serif;
-  font-size: 20px;
+  font-size: 15px;
   font-weight: 500;
-  margin: 0;
-  color: var(--text-title-heading);
+}
+
+.genie-popup-close {
+  cursor: pointer;
 }
 
 .genie-iframe {
   width: 100%;
+  height: 100%;
   border: none;
-  border-radius: var(--radius);
+  flex: 1;
   display: block;
+}
+
+@media (max-width: 480px) {
+  .genie-popup {
+    right: 12px;
+    left: 12px;
+    width: auto;
+  }
+
+  .genie-fab {
+    right: 16px;
+    bottom: 16px;
+  }
 }
 </style>
