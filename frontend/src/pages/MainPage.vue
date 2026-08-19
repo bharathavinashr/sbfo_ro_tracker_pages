@@ -133,7 +133,7 @@
 
     <div v-if="genieOpen" class="genie-popup">
       <div class="genie-popup-header">
-        <span class="genie-popup-title">Ask Genie</span>
+        <span class="genie-popup-title">DataNavi</span>
         <el-icon class="genie-popup-close" @click="genieOpen = false"><Close /></el-icon>
       </div>
       <iframe
@@ -144,7 +144,7 @@
       ></iframe>
     </div>
 
-    <button class="genie-fab" :class="{ 'is-open': genieOpen }" @click="genieOpen = !genieOpen" aria-label="Ask Genie">
+    <button class="genie-fab" :class="{ 'is-open': genieOpen }" @click="genieOpen = !genieOpen" aria-label="DataNavi">
       <el-icon :size="26"><component :is="genieOpen ? Close : ChatDotRound" /></el-icon>
     </button>
   </div>
