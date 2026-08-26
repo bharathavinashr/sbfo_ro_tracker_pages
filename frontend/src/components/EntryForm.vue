@@ -625,12 +625,6 @@
             </el-col>
 
           </el-row>
-          
-          <div v-if="!hasChildImpacts" class="add-impact-row mt-3">
-            <el-button class="add-impact-btn" size="small" @click="addChild">
-              <el-icon><Plus /></el-icon> Add Impact
-            </el-button>
-          </div>
         </div>
 
         <div v-for="(child, idx) in formData.childImpacts" :key="idx" class="impact-child-card">
@@ -715,6 +709,12 @@
           <div class="child-remove-row">
             <el-button type="danger" link @click="removeChild(idx)"><el-icon><Delete /></el-icon> Remove</el-button>
           </div>
+        </div>
+
+        <div class="add-impact-row mt-3">
+          <el-button class="add-impact-btn" size="small" @click="addChild">
+            <el-icon><Plus /></el-icon> Add Impact
+          </el-button>
         </div>
 
         <div v-if="hasChildImpacts" class="totals-bar">
@@ -1951,29 +1951,11 @@ function onChildFinancialChange(idx: number) {
   const newTotalNsv = formData.value.childImpacts.reduce((sum, item) => sum + (parseFloat(cleanNumStr(item.impactValue)) || 0), 0);
   formData.value.impactValue = formatNumStr(String(newTotalNsv));
 
-  if (formData.value.lockNsvGpRatio && formData.value.fixedNsvGpRatio) {
-     const newTotalGp = formData.value.childImpacts.reduce((sum, item) => sum + (parseFloat(cleanNumStr(item.netFinancialImpactValue)) || 0), 0);
-     formData.value.netFinancialImpactValue = formatNumStr(String(newTotalGp));
-  } else {
-     const parentGp = parseFloat(cleanNumStr(formData.value.netFinancialImpactValue)) || 0;
-     formData.value.childImpacts.forEach((item) => {
-        const itemNsv = parseFloat(cleanNumStr(item.impactValue)) || 0;
-        const weight = newTotalNsv !== 0 ? itemNsv / newTotalNsv : 1 / formData.value.childImpacts.length;
-        item.netFinancialImpactValue = String(parentGp * weight);
-     });
-  }
+  const newTotalGp = formData.value.childImpacts.reduce((sum, item) => sum + (parseFloat(cleanNumStr(item.netFinancialImpactValue)) || 0), 0);
+  formData.value.netFinancialImpactValue = formatNumStr(String(newTotalGp));
 
-  if (formData.value.lockNsvVolRatio && formData.value.fixedNsvVolRatio) {
-     const newTotalVol = formData.value.childImpacts.reduce((sum, item) => sum + (parseFloat(cleanNumStr(item.secondaryValue)) || 0), 0);
-     formData.value.secondaryValue = formatNumStr(String(newTotalVol));
-  } else {
-     const parentVol = parseFloat(cleanNumStr(formData.value.secondaryValue)) || 0;
-     formData.value.childImpacts.forEach((item) => {
-        const itemNsv = parseFloat(cleanNumStr(item.impactValue)) || 0;
-        const weight = newTotalNsv !== 0 ? itemNsv / newTotalNsv : 1 / formData.value.childImpacts.length;
-        item.secondaryValue = String(parentVol * weight);
-     });
-  }
+  const newTotalVol = formData.value.childImpacts.reduce((sum, item) => sum + (parseFloat(cleanNumStr(item.secondaryValue)) || 0), 0);
+  formData.value.secondaryValue = formatNumStr(String(newTotalVol));
 
   nextTick(() => { skipChildWatcher = false; });
 }
@@ -2000,17 +1982,8 @@ function onChildGpChange(idx: number) {
   const newTotalGp = formData.value.childImpacts.reduce((sum, item) => sum + (parseFloat(cleanNumStr(item.netFinancialImpactValue)) || 0), 0);
   formData.value.netFinancialImpactValue = formatNumStr(String(newTotalGp));
 
-  if (!formData.value.lockNsvVolRatio) {
-     const parentVol = parseFloat(cleanNumStr(formData.value.secondaryValue)) || 0;
-     formData.value.childImpacts.forEach((item) => {
-        const itemNsv = parseFloat(cleanNumStr(item.impactValue)) || 0;
-        const weight = newTotalNsv !== 0 ? itemNsv / newTotalNsv : 1 / formData.value.childImpacts.length;
-        item.secondaryValue = String(parentVol * weight);
-     });
-  } else {
-     const newTotalVol = formData.value.childImpacts.reduce((sum, item) => sum + (parseFloat(cleanNumStr(item.secondaryValue)) || 0), 0);
-     formData.value.secondaryValue = formatNumStr(String(newTotalVol));
-  }
+  const newTotalVol = formData.value.childImpacts.reduce((sum, item) => sum + (parseFloat(cleanNumStr(item.secondaryValue)) || 0), 0);
+  formData.value.secondaryValue = formatNumStr(String(newTotalVol));
 
   nextTick(() => { skipChildWatcher = false; });
 }
@@ -2037,17 +2010,8 @@ function onChildVolChange(idx: number) {
   const newTotalVol = formData.value.childImpacts.reduce((sum, item) => sum + (parseFloat(cleanNumStr(item.secondaryValue)) || 0), 0);
   formData.value.secondaryValue = formatNumStr(String(newTotalVol));
 
-  if (!formData.value.lockNsvGpRatio) {
-     const parentGp = parseFloat(cleanNumStr(formData.value.netFinancialImpactValue)) || 0;
-     formData.value.childImpacts.forEach((item) => {
-        const itemNsv = parseFloat(cleanNumStr(item.impactValue)) || 0;
-        const weight = newTotalNsv !== 0 ? itemNsv / newTotalNsv : 1 / formData.value.childImpacts.length;
-        item.netFinancialImpactValue = String(parentGp * weight);
-     });
-  } else {
-     const newTotalGp = formData.value.childImpacts.reduce((sum, item) => sum + (parseFloat(cleanNumStr(item.netFinancialImpactValue)) || 0), 0);
-     formData.value.netFinancialImpactValue = formatNumStr(String(newTotalGp));
-  }
+  const newTotalGp = formData.value.childImpacts.reduce((sum, item) => sum + (parseFloat(cleanNumStr(item.netFinancialImpactValue)) || 0), 0);
+  formData.value.netFinancialImpactValue = formatNumStr(String(newTotalGp));
 
   nextTick(() => { skipChildWatcher = false; });
 }
@@ -2637,11 +2601,11 @@ function addChild() {
     const count = 2;
     for (let i = 0; i < count; i++) {
       formData.value.childImpacts.push({
-        impactYear: i === 0 ? (formData.value.impactYear || String(currentYear)) : String(currentYear), 
+        impactYear: i === 0 ? (formData.value.impactYear || String(currentYear)) : String(currentYear),
         impactPeriod: i === 0 ? (formData.value.impactPeriod || "") : "",
-        impactValue: i === 0 ? formData.value.impactValue : "", impactUnit: formData.value.primaryImpact,
-        secondaryValue: i === 0 ? formData.value.secondaryValue : "", secondaryUnit: formData.value.secondaryUnit,
-        netFinancialImpactValue: i === 0 ? formData.value.netFinancialImpactValue : "",
+        impactValue: "", impactUnit: formData.value.primaryImpact,
+        secondaryValue: "", secondaryUnit: formData.value.secondaryUnit,
+        netFinancialImpactValue: "",
         _periodOpen: false, _periodSearch: "",
         _finFocus: false, _gpFocus: false, _volFocus: false
       });
@@ -2662,15 +2626,29 @@ function removeChild(idx: number) {
   formData.value.childImpacts.splice(idx, 1);
   if (formData.value.childImpacts.length === 1) {
     const last = formData.value.childImpacts[0];
-    formData.value.impactPeriod = last.impactPeriod || currentPeriod; 
+    formData.value.impactPeriod = last.impactPeriod || currentPeriod;
     formData.value.impactYear = last.impactYear || String(currentYear);
-    formData.value.impactValue = last.impactValue; 
+    formData.value.impactValue = last.impactValue;
     formData.value.secondaryValue = last.secondaryValue;
     formData.value.netFinancialImpactValue = last.netFinancialImpactValue || "";
     formData.value.childImpacts = [];
+
+    isSyncingPeriods = true;
+    periodRangeStart.value.period = formData.value.impactPeriod;
+    periodRangeStart.value.year = formData.value.impactYear;
+    periodRangeEnd.value.period = formData.value.impactPeriod;
+    periodRangeEnd.value.year = formData.value.impactYear;
+    nextTick(() => { isSyncingPeriods = false; });
   } else if (formData.value.childImpacts.length === 0) {
-    formData.value.impactPeriod = currentPeriod; 
+    formData.value.impactPeriod = currentPeriod;
     formData.value.impactYear = String(currentYear);
+
+    isSyncingPeriods = true;
+    periodRangeStart.value.period = currentPeriod;
+    periodRangeStart.value.year = String(currentYear);
+    periodRangeEnd.value.period = currentPeriod;
+    periodRangeEnd.value.year = String(currentYear);
+    nextTick(() => { isSyncingPeriods = false; });
   }
 }
 
