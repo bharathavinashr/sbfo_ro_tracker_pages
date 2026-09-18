@@ -38,23 +38,21 @@ def get_countries(
 @router.get("/brands")
 def get_brands(
     division: str = Query(..., description="Division name"),
-    country: Optional[str] = Query(None, description="Country name"),
     db: Session = Depends(get_db),
 ):
     """Get brands (code and name) for a specific division."""
-    brands = crud.get_brands_by_division(db, division, country)
+    brands = crud.get_brands_by_division(db, division)
     return {"options": [{"value": b["code"], "label": b["name"]} for b in brands]}
 
 
 @router.get("/brand-families")
 def get_brand_families(
     brand_names: List[str] = Query(..., description="List of brand names"),
-    country: Optional[str] = Query(None, description="Country name"),
     division: Optional[str] = Query(None, description="Division name"),
     db: Session = Depends(get_db),
 ):
     """Get brand families (code and name) for a list of brands."""
-    families = crud.get_brand_families_by_brands(db, brand_names, country, division)
+    families = crud.get_brand_families_by_brands(db, brand_names, division)
     return {"options": [{"value": f["code"], "label": f["name"]} for f in families]}
 
 
@@ -128,11 +126,10 @@ def get_account_details(
 def get_brand_family_details(
     division: str = Query(..., description="Division name"),
     brand_family_code: str = Query(..., description="Brand family code"),
-    country: Optional[str] = Query(None, description="Country name"),
     db: Session = Depends(get_db),
 ):
     """Get brand details for a specific brand_family (for auto-population)."""
-    details = crud.get_brand_by_brand_family(db, division, brand_family_code, country)
+    details = crud.get_brand_by_brand_family(db, division, brand_family_code)
     if details:
         return {"brand": details}
     return {"brand": None}
@@ -142,9 +139,8 @@ def get_brand_family_details(
 def get_brand_families_by_brand(
     division: str = Query(..., description="Division name"),
     brand_code: str = Query(..., description="Brand code"),
-    country: Optional[str] = Query(None, description="Country name"),
     db: Session = Depends(get_db),
 ):
     """Get brand families for a specific brand."""
-    families = crud.get_brand_families_by_brand_code(db, division, brand_code, country)
+    families = crud.get_brand_families_by_brand_code(db, division, brand_code)
     return {"options": [{"value": f["code"], "label": f["name"]} for f in families]}

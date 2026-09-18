@@ -1002,22 +1002,14 @@ async function onSubChannelFilterChange() {
 
 async function updateBrandFamilyOptions() {
   const selectedDiv = store.filters.division;
-  const countryCodes = store.filters.country;
   const brandCode = store.filters.brand;
 
   if (brandCode) {
     const divs = selectedDiv.length > 0 ? selectedDiv : (divisionOptions.value || ["Alcohol", "Non-Alcohol"]);
-    const countryNames = countryCodes.map(code => countryOptions.value.find(c => c.value === code)?.label).filter(Boolean) as string[];
-    const cNames = countryNames.length > 0 ? countryNames : [undefined];
 
     const bfMap = new Map<string, {value: string, label: string}>();
     try {
-      const promises = [];
-      for (const d of divs) {
-        for (const cN of cNames) {
-          promises.push(lookupApi.getBrandFamiliesByBrand(d, brandCode, cN));
-        }
-      }
+      const promises = divs.map(d => lookupApi.getBrandFamiliesByBrand(d, brandCode));
       const results = await Promise.all(promises);
       results.forEach(res => res.options.forEach(opt => bfMap.set(String(opt.value), opt)));
       brandFamilyOptions.value = Array.from(bfMap.values());

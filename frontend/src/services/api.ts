@@ -72,10 +72,10 @@ export const lookupApi = {
       .get("/api/lookups/divisions")
       .then((r) => r.data),
   
-  getBrands: (division: string, country?: string): Promise<{ options: { value: string; label: string }[] }> =>
+  getBrands: (division: string): Promise<{ options: { value: string; label: string }[] }> =>
     api
       .get("/api/lookups/brands", {
-        params: { division, country },
+        params: { division },
       })
       .then((r) => r.data),
 
@@ -86,10 +86,9 @@ export const lookupApi = {
       })
       .then((r) => r.data),
   
-  getBrandFamilies: (brandNames: string[], country?: string, division?: string): Promise<{ options: { value: string; label: string }[] }> => {
+  getBrandFamilies: (brandNames: string[], division?: string): Promise<{ options: { value: string; label: string }[] }> => {
     const params = new URLSearchParams();
     brandNames.forEach((n) => params.append("brand_names", n));
-    if (country) params.append("country", country);
     if (division) params.append("division", division);
     return api
       .get("/api/lookups/brand-families", { params })
@@ -131,17 +130,17 @@ export const lookupApi = {
       })
       .then((r) => r.data),
 
-  getBrandFamilyDetails: (division: string, brandFamilyCode: string, country?: string): Promise<{ brand: { code: string; name: string } | null }> =>
+  getBrandFamilyDetails: (division: string, brandFamilyCode: string): Promise<{ brand: { code: string; name: string } | null }> =>
     api
       .get("/api/lookups/brand-family-details", {
-        params: { division, brand_family_code: brandFamilyCode, country },
+        params: { division, brand_family_code: brandFamilyCode },
       })
       .then((r) => r.data),
 
-  getBrandFamiliesByBrand: (division: string, brandCode: string, country?: string): Promise<{ options: { value: string; label: string }[] }> =>
+  getBrandFamiliesByBrand: (division: string, brandCode: string): Promise<{ options: { value: string; label: string }[] }> =>
     api
       .get("/api/lookups/brand-families-by-brand", {
-        params: { division, brand_code: brandCode, country },
+        params: { division, brand_code: brandCode },
       })
       .then((r) => r.data),
 };

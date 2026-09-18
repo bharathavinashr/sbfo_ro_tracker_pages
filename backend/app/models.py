@@ -123,14 +123,12 @@ class ROProduct(Base):
     __tablename__ = "ro_products"
     __table_args__ = {"schema": SCHEMA}
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    k_brand_family_id = Column(Integer, primary_key=True, autoincrement=True)
     brand_family_code = Column(String(20), nullable=False, index=True)
     brand_family_name = Column(String(200), nullable=False)
     brand_code = Column(String(20), nullable=False, index=True)
     brand_name = Column(String(200), nullable=False)
     division = Column(String(255), nullable=False, index=True)
-    company_code = Column(String(50), nullable=True)
-    country = Column(String(255), nullable=True, index=True)
 
 
 class ROCustomer(Base):

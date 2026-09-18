@@ -346,16 +346,11 @@ def get_divisions(db: Session):
     )
 
 
-def get_brands_by_division(db: Session, division: str, country: str = None):
-    """Get distinct brand names from ro_products table filtered by division and country."""
-    query = db.query(models.ROProduct.brand_code, models.ROProduct.brand_name).filter(
-        models.ROProduct.division == division
-    )
-    if country:
-        query = query.filter(models.ROProduct.country == country)
-    
+def get_brands_by_division(db: Session, division: str):
+    """Get distinct brand names from ro_products table filtered by division."""
     rows = (
-        query
+        db.query(models.ROProduct.brand_code, models.ROProduct.brand_name)
+        .filter(models.ROProduct.division == division)
         .distinct()
         .order_by(models.ROProduct.brand_name)
         .all()
@@ -363,13 +358,11 @@ def get_brands_by_division(db: Session, division: str, country: str = None):
     return [{"code": r[0], "name": r[1]} for r in rows]
 
 
-def get_brand_families_by_brands(db: Session, brand_names: list, country: str = None, division: str = None):
-    """Get distinct brand families from ro_products table filtered by list of brand names, country and division."""
+def get_brand_families_by_brands(db: Session, brand_names: list, division: str = None):
+    """Get distinct brand families from ro_products table filtered by list of brand names and division."""
     query = db.query(models.ROProduct.brand_family_code, models.ROProduct.brand_family_name).filter(
         models.ROProduct.brand_name.in_(brand_names)
     )
-    if country:
-        query = query.filter(models.ROProduct.country == country)
     if division:
         query = query.filter(models.ROProduct.division == division)
 
@@ -382,7 +375,7 @@ def get_brand_families_by_brands(db: Session, brand_names: list, country: str = 
     return [{"code": r[0], "name": r[1]} for r in rows]
 
 
-def get_product_codes(db: Session, division: str, brand_name: str, brand_family, country: str = None):
+def get_product_codes(db: Session, division: str, brand_name: str, brand_family):
     """Get brand_code and brand_family_code for a product.
 
     Handles both single brand_family (string) and multiple (list).
@@ -390,26 +383,22 @@ def get_product_codes(db: Session, division: str, brand_name: str, brand_family,
     """
     # Handle brand_family as either string or list
     brand_families = brand_family if isinstance(brand_family, list) else [brand_family]
-    
+
     # Remove empty strings
     brand_families = [bf for bf in brand_families if bf]
-    
+
     if not brand_families:
         return {
             "brand_code": None,
             "brand_family_code": None,
         }
-    
+
     # Query for products matching division and brand_name
-    query = db.query(models.ROProduct).filter(
+    products = db.query(models.ROProduct).filter(
         models.ROProduct.division == division,
         models.ROProduct.brand_name == brand_name,
         models.ROProduct.brand_family_name.in_(brand_families),
-    )
-    if country:
-        query = query.filter(models.ROProduct.country == country)
-        
-    products = query.all()
+    ).all()
 
     if products:
         # Brand code is typically the same for all families of the same brand
@@ -426,32 +415,29 @@ def get_product_codes(db: Session, division: str, brand_name: str, brand_family,
     }
 
 
-def get_brand_by_brand_family(db: Session, division: str, brand_family_code: str, country: str = None):
+def get_brand_by_brand_family(db: Session, division: str, brand_family_code: str):
     """Get brand details (code and name) for a specific brand_family_code."""
-    query = db.query(models.ROProduct.brand_code, models.ROProduct.brand_name).filter(
-        models.ROProduct.division == division,
-        models.ROProduct.brand_family_code == brand_family_code
+    result = (
+        db.query(models.ROProduct.brand_code, models.ROProduct.brand_name)
+        .filter(
+            models.ROProduct.division == division,
+            models.ROProduct.brand_family_code == brand_family_code
+        )
+        .first()
     )
-    if country:
-        query = query.filter(models.ROProduct.country == country)
-    
-    result = query.first()
     if result:
         return {"code": result[0], "name": result[1]}
     return None
 
 
-def get_brand_families_by_brand_code(db: Session, division: str, brand_code: str, country: str = None):
+def get_brand_families_by_brand_code(db: Session, division: str, brand_code: str):
     """Get brand families for a specific brand_code."""
-    query = db.query(models.ROProduct.brand_family_code, models.ROProduct.brand_family_name).filter(
-        models.ROProduct.division == division,
-        models.ROProduct.brand_code == brand_code
-    )
-    if country:
-        query = query.filter(models.ROProduct.country == country)
-    
     rows = (
-        query
+        db.query(models.ROProduct.brand_family_code, models.ROProduct.brand_family_name)
+        .filter(
+            models.ROProduct.division == division,
+            models.ROProduct.brand_code == brand_code
+        )
         .distinct()
         .order_by(models.ROProduct.brand_family_name)
         .all()

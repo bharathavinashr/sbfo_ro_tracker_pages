@@ -1251,7 +1251,7 @@ async function syncBrandFromBrandFamilies() {
 
   try {
     const results = await Promise.all(
-      brandFamilyCodes.map(code => lookupApi.getBrandFamilyDetails(division, code, countryName))
+      brandFamilyCodes.map(code => lookupApi.getBrandFamilyDetails(division, code))
     );
 
     results.forEach(details => {
@@ -1286,12 +1286,11 @@ async function toggleBrand(code: string, name: string) {
     delete formData.value.brand[code];
 
     if (brandSelectionPriority.value === 'brandFamily') {
-      const countryName = Object.values(formData.value.country)[0];
       const division = Object.keys(formData.value.division || {})[0] || "";
-      
+
       const bfCodes = Object.keys(formData.value.brandFamily);
       for (const bfCode of bfCodes) {
-        const details = await lookupApi.getBrandFamilyDetails(division, bfCode, countryName);
+        const details = await lookupApi.getBrandFamilyDetails(division, bfCode);
         if (details?.brand?.code === code) {
           delete formData.value.brandFamily[bfCode];
         }
@@ -1320,13 +1319,12 @@ async function toggleAllBrands() {
   
   if (allBrandsSelected.value) {
     if (brandSelectionPriority.value === 'brandFamily') {
-      const countryName = Object.values(formData.value.country)[0];
       const division = Object.keys(formData.value.division || {})[0] || "";
       const codesToRemove = suggestions.map(b => b.value);
 
       const bfCodes = Object.keys(formData.value.brandFamily);
       for (const bfCode of bfCodes) {
-        const details = await lookupApi.getBrandFamilyDetails(division, bfCode, countryName);
+        const details = await lookupApi.getBrandFamilyDetails(division, bfCode);
         if (details?.brand?.code && codesToRemove.includes(details.brand.code)) {
           delete formData.value.brandFamily[bfCode];
         }
@@ -2215,11 +2213,11 @@ async function loadCountryBasedLookups(country: Record<string, string>, division
 
   if (hasCountry && division) {
     try {
-      const brandData = await lookupApi.getBrands(division, countryName);
+      const brandData = await lookupApi.getBrands(division);
       brandOptions.value = brandData.options;
       const brandNames = brandData.options.map(b => b.label);
       if (brandNames.length > 0) {
-        const brandFamilyData = await lookupApi.getBrandFamilies(brandNames, countryName, division);
+        const brandFamilyData = await lookupApi.getBrandFamilies(brandNames, division);
         brandFamilyOptions.value = brandFamilyData.options;
       } else {
         brandFamilyOptions.value = [];
@@ -2333,7 +2331,7 @@ watch(() => formData.value.brand, async (brandMap) => {
     try {
       const allBrands = brandOptions.value.map(b => b.label);
       if (allBrands.length > 0) {
-        const data = await lookupApi.getBrandFamilies(allBrands, countryName, division);
+        const data = await lookupApi.getBrandFamilies(allBrands, division);
         brandFamilyOptions.value = data.options;
       } else {
         brandFamilyOptions.value = [];
@@ -2348,7 +2346,7 @@ watch(() => formData.value.brand, async (brandMap) => {
       const brandFamiliesMap = new Map<string, {value: string, label: string}>();
       for (const brandCode of brandCodes) {
         if (brandCode) {
-          const data = await lookupApi.getBrandFamiliesByBrand(division, brandCode, countryName);
+          const data = await lookupApi.getBrandFamiliesByBrand(division, brandCode);
           data.options.forEach(opt => brandFamiliesMap.set(opt.value, opt));
         }
       }
@@ -2357,7 +2355,7 @@ watch(() => formData.value.brand, async (brandMap) => {
       try {
         const allBrands = brandOptions.value.map(b => b.label);
         if (allBrands.length > 0) {
-          const data = await lookupApi.getBrandFamilies(allBrands, countryName, division);
+          const data = await lookupApi.getBrandFamilies(allBrands, division);
           brandFamilyOptions.value = data.options;
         } else {
           brandFamilyOptions.value = [];
@@ -2389,7 +2387,7 @@ watch(brandFamilyOpen, async (isOpen) => {
         try {
           const allBrands = brandOptions.value.map(b => b.label);
           if (allBrands.length > 0) {
-            const data = await lookupApi.getBrandFamilies(allBrands, countryName, division);
+            const data = await lookupApi.getBrandFamilies(allBrands, division);
             brandFamilyOptions.value = data.options;
           }
         } catch (e) {
