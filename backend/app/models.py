@@ -5,6 +5,7 @@ from sqlalchemy.sql import func
 from .database import Base
 
 SCHEMA = "sbfo_ro"
+PRODUCT_SCHEMA = "dl_dmt"
 
 
 class Entry(Base):
@@ -120,8 +121,8 @@ class LookupOption(Base):
 
 
 class ROProduct(Base):
-    __tablename__ = "ro_products"
-    __table_args__ = {"schema": SCHEMA}
+    __tablename__ = "vw_ro_product_sync"
+    __table_args__ = {"schema": PRODUCT_SCHEMA}
 
     k_brand_family_id = Column(Integer, primary_key=True, autoincrement=True)
     brand_family_code = Column(String(20), nullable=False, index=True)
