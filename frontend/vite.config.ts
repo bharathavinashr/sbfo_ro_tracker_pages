@@ -4,6 +4,8 @@ import { resolve } from "path";
 import VueInspector from 'vite-plugin-vue-inspector'
 
 export default defineConfig({
+  // GitHub Pages serves the app under /<repo>/; Databricks and local dev serve it at /
+  base: process.env.VITE_BASE_PATH || "/",
   plugins: [
     vue(),
     VueInspector({

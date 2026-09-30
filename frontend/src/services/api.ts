@@ -2,7 +2,8 @@ import axios from "axios";
 import type { Entry, AppUser } from "@/types";
 
 const api = axios.create({
-  baseURL: "/",
+  // Set VITE_API_BASE_URL when the backend lives on another origin (e.g. GitHub Pages build)
+  baseURL: import.meta.env.VITE_API_BASE_URL || "/",
   timeout: 30000,
 });
 

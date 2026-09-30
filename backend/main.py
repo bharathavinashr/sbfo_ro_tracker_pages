@@ -2,7 +2,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
-from app import models  # noqa: F401 - registers models with Base
+from app import models, config  # noqa: F401 - registers models with Base
 from app.api import entries, lookups, users, auth, snapshots
 
 # Create tables on startup (schema sbfo_ro must already exist in PostgreSQL)
@@ -12,7 +12,7 @@ app = FastAPI(title="SBFO R&O Tracker API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", *config.CORS_ORIGINS],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
