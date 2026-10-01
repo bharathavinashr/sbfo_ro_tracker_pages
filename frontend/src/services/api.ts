@@ -5,6 +5,11 @@ const api = axios.create({
   // Set VITE_API_BASE_URL when the backend lives on another origin (e.g. GitHub Pages build)
   baseURL: import.meta.env.VITE_API_BASE_URL || "/",
   timeout: 30000,
+  // Static demo build (GitHub Pages): answer requests in-browser with fictional data
+  adapter:
+    import.meta.env.VITE_USE_MOCK === "true"
+      ? async (config) => (await import("@/mock/server")).mockAdapter(config)
+      : undefined,
 });
 
 export const entryApi = {
